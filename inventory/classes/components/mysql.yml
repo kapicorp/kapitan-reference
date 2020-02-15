@@ -1,0 +1,48 @@
+parameters:
+  components:
+    mysql:
+      type: statefulset
+      image: mysql:5.7.28 
+      ports:
+        mysql:
+          service_port: 3306
+      env:
+        MYSQL_ROOT_PASSWORD:
+          secretKeyRef:
+            key: mysql-root-password
+        MYSQL_PASSWORD:
+          secretKeyRef:
+            key: mysql-password
+        MYSQL_USER: ""
+        MYSQL_DATABASE: ""
+      volume_mounts:
+        datadir:
+          mountPath: /var/lib/mysql
+      volume_claims:
+        datadir:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "standard"
+            resources:
+              requests: 
+                storage: 10Gi
+
+      config_maps:
+        config:
+          mount: /etc/mysql/conf.d/
+          data:
+            mysql.cnf: 
+              value: |-
+                ignore-db-dir=lost+found
+            mytemplate.cnf:
+              template: components/mysql/mytemplate.cnf.j2
+                
+
+      secrets:
+        secrets:
+          data:
+            mysql-root-password: 
+              value: ?{plain:targets/${target_name}/mysql-root-password||randomstr:32|base64}
+            mysql-password:
+              value: ?{plain:targets/${target_name}/mysql-password||randomstr|base64}
+

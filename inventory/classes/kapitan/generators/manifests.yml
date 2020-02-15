@@ -1,0 +1,15 @@
+parameters:
+
+  generators:
+    manifest:
+      default_config:
+        type: deployment
+        annotations: {}
+
+  kapitan:
+    compile:
+      - output_path: manifests
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - components/generators/manifests/main.jsonnet

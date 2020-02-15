@@ -1,0 +1,18 @@
+#!/bin/bash
+set -o nounset -o pipefail -o noclobber -o errexit
+
+DIR=$(dirname ${BASH_SOURCE[0]})
+ABS_PATH=$(cd "${DIR}"; pwd)
+
+KAPITAN_IMAGE=deepmind/kapitan:0.27.0-ci
+
+if hash kapitan 
+then
+  KAPITAN_BINARY=kapitan
+else
+  KAPITAN_BINARY="docker run --rm -i --network host -w /src \
+   -v ./:/src:delegated \
+   $KAPITAN_IMAGE"
+fi
+
+exec ${KAPITAN_BINARY} "$@"

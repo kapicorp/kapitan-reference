@@ -1,0 +1,7 @@
+classes:
+  - common
+  - components.echo-server
+
+
+parameters:
+  target_name: echo-server

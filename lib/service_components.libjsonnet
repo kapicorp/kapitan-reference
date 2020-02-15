@@ -1,0 +1,223 @@
+local kap = import 'lib/kap.libjsonnet';
+local utils = kap.utils;
+local p = kap.parameters;
+
+local fallback_service_config = p.generators.manifest.default_config;
+
+local default_config_by_app = {
+  [app_name]: utils.objectGet(p.applications[app_name], 'component_defaults', {})
+  for app_name in std.objectFields(utils.objectGet(p, 'applications', {}))
+};
+
+local SCHEMA = {
+  type: 'object',
+  required: ['name', 'image', 'type'],
+  additionalProperties: false,
+  properties: {
+    application: { type: 'string' },
+    annotations: { type: 'object', additionalProperties: { type: 'string' } },
+    args: { type: 'array', items: { type: 'string' } },
+    command: { type: 'array', items: { type: 'string' } },
+    config_maps: utils.jsonSchema.nullable({
+      type: 'object',
+      additionalProperties: { '$ref': '#/definitions/config' },
+    }),
+    deployment_progress_deadline_seconds: utils.jsonSchema.nullable({ type: 'integer' }),
+    dns_policy: { type: 'string', enum: ['ClusterFirst'] },
+    vpa: { type: 'string', enum: ['Off', 'Auto'] },
+    enable_prometheus: { type: 'boolean' },
+    pdb_min_available: { type: 'integer' },
+    env: utils.jsonSchema.nullable({ type: 'object' }),
+    healthcheck: {
+      type: 'object',
+      properties: {
+        enabled: { type: 'boolean' },
+        path: { type: 'string' },
+        port: {
+          oneOf: [
+            { type: 'string' },
+            { type: 'integer' },
+          ],
+        },
+        probes: {
+          type: 'array',
+          items: { type: 'string', enum: ['readiness', 'liveness'] },
+        },
+        type: { type: 'string' },
+        timeout_seconds: { type: 'integer' },
+      },
+      additionalProperties: false,
+      required: ['type', 'probes'],
+    },
+    image: { type: 'string' },
+    labels: { type: 'object', additionalProperties: { type: 'string' } },
+    name: { type: 'string' },
+    service_account: { type: 'boolean' },
+    min_ready_seconds: { type: 'integer' },
+    ports: {
+      type: 'object',
+      additionalProperties: { '$ref': '#/definitions/port_set' },
+    },
+    secrets: utils.jsonSchema.nullable({
+      type: 'object',
+      additionalProperties: { '$ref': '#/definitions/secret' },
+    }),
+    security: utils.jsonSchema.nullable({
+      type: 'object',
+      properties: {
+        allow_privilege_escalation: { type: 'boolean' },
+        user_id: { type: 'integer' },
+      },
+      additionalProperties: false,
+    }),
+    service: {
+      type: 'object',
+      properties: {
+        annotations: { type: 'object', additionalValues: { type: 'string' } },
+        externalTrafficPolicy: { type: 'string', enum: ['Cluster'] },
+        grpc: { type: 'object' },
+        type: { type: 'string', enum: ['NodePort', 'ClusterIP', 'LoadBalancer'] },
+      },
+      additionalProperties: false,
+    },
+    replicas: { type: 'integer' },
+    prefer_pods_in_different_nodes: { type: 'boolean' },
+    prefer_pods_in_different_zones: { type: 'boolean' },
+    prefer_pods_in_node_type: { type: 'string' },
+    type: { type: 'string', enum: ['statefulset', 'deployment'] },
+    volume_claims: { type: 'object', additionalProperties: { '$ref': '#/definitions/volume_claim'}},
+    volume_mounts: { type: 'object', additionalProperties: { type: 'object'} },
+    volumes: { type: 'object', additionalProperties: { type: 'object'} }
+    
+  },
+  definitions: {
+    volume_claim: {
+      type: 'object',
+      properties: {
+        spec: { type: 'object' }
+      }
+    },
+    config: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          additionalProperties: {
+          type: 'object',
+          properties: {
+            value: { type: 'string' },
+            values: { type: 'object' },
+            template: { type: 'string'},
+            b64_encode: { type: 'boolean'}
+          },
+          additionalProperties: false
+          },
+        },
+        items: { type: 'array', items: { type: 'string' } },
+        mount: { type: 'string' }
+      },
+      required: ['data'],
+    },
+    secret: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          additionalProperties: {
+          type: 'object',
+          properties: {
+            value: { type: 'string' },
+            values: { type: 'object' },
+            template: { type: 'string'},
+            b64_encode: { type: 'boolean'}
+          },
+          additionalProperties: false
+          },
+        },
+        items: { type: 'array', items: { type: 'string' } },
+        mount: { type: 'string' }
+      },
+      required: ['data'],
+    },
+    kube_env: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          value: { type: 'string' },
+          valueFrom: {
+            anyOf: [
+              {
+                type: 'object',
+                properties: {
+                  secretKeyRef: {
+                    type: 'object',
+                    properties: {
+                      key: { type: 'string' },
+                      optional: { type: 'boolean' },
+                    },
+                    additionalProperties: false,
+                    required: ['key'],
+                  },
+                },
+                required: ['secretKeyRef'],
+                additionalProperties: false,
+              },
+              {
+                type: 'object',
+                properties: {
+                  fieldRef: {
+                    type: 'object',
+                    properties: {
+                      fieldPath: { type: 'string' },
+                    },
+                    required: ['fieldPath'],
+                    additionalProperties: false,
+                  },
+                },
+                required: ['fieldRef'],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+        additionalProperties: false,
+        required: ['name'],
+      },
+    },
+    port_set: {
+      type: 'object',
+      properties: {
+        container_port: { type: 'integer' },
+        node_port: { type: 'integer' },
+        service_port: { type: 'integer' },
+      },
+      additionalProperties: false,
+    },
+  },
+};
+
+local ServiceComponent = function(component_name, component_data)
+
+  local application = utils.objectGet(component_data, 'application', '');
+  local application_defaults = utils.objectGet(default_config_by_app, application, {});
+  local all_defaults = utils.deepMerge(fallback_service_config, application_defaults);
+  local component_data_with_defaults = utils.deepMerge(all_defaults, component_data);
+
+  local final_component_data = component_data_with_defaults
+                               {
+    name: component_name,
+  }
+  ;
+
+  local validation = kap.jsonschema(final_component_data, SCHEMA);
+  assert validation.valid : 'Could not validate %s: %s' % [component_name, validation.reason];
+
+  final_component_data
+;
+
+{
+  [component_name]: ServiceComponent(component_name, p.components[component_name])
+  for component_name in std.objectFields(utils.objectGet(p, 'components', {}))
+}

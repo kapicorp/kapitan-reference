@@ -1,0 +1,10 @@
+parameters:
+  spinnaker: {}
+  kapitan:
+    dependencies:
+      - type: https
+        source: https://raw.githubusercontent.com/spinnaker/sponnet/master/pipeline.libsonnet
+        output_path: lib/spinnaker-pipeline.libjsonnet
+      - type: https
+        source: https://raw.githubusercontent.com/spinnaker/sponnet/master/application.libsonnet
+        output_path: lib/spinnaker-application.libjsonnet

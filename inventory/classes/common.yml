@@ -1,0 +1,5 @@
+classes:
+  - kapitan.common
+
+parameters:
+  namespace: ${target_name}

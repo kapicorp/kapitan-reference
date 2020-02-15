@@ -1,0 +1,6 @@
+classes:
+  - common
+  - components.mysql
+
+parameters:
+  target_name: mysql

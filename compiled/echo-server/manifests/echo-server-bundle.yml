@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: echo-server
+  name: echo-server
+  namespace: echo-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: echo-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - echo-server
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - image: jmalloc/echo-server
+          imagePullPolicy: IfNotPresent
+          name: echo-server
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /_health
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: autoscaling.k8s.io/v1beta2
+kind: VerticalPodAutoscaler
+metadata:
+  labels:
+    app: echo-server
+    name: echo-server
+  name: echo-server
+  namespace: echo-server
+spec:
+  resourcePolicy:
+    containerPolicies:
+      - containerName: istio-proxy
+        mode: 'Off'
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: echo-server
+  updatePolicy:
+    updateMode: Auto
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: echo-server
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+  namespace: echo-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: echo-server
+  name: echo-server
+  namespace: echo-server
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: echo-server
+  sessionAffinity: None
+  type: LoadBalancer
