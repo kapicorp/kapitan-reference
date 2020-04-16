@@ -1,0 +1,7 @@
+classes:
+  - common
+  - components.postgres-proxy
+
+parameters:
+  target_name: postgres-proxy
+  google_project: example-project

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: postgres-proxy
+    tier: db
+  name: postgres-proxy
+  namespace: postgres-proxy
+spec:
+  minReadySeconds: 30
+  progressDeadlineSeconds: 600
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgres-proxy
+      tier: db
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: postgres-proxy
+        tier: db
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - postgres-proxy
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - args:
+            - -instances=$(CLOUDSQL_INSTANCE_NAME)=tcp:0.0.0.0:5432
+          command:
+            - /cloud_sql_proxy
+          env:
+            - name: CLOUDSQL_INSTANCE_NAME
+              value: example:instance
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /opt/secrets/service_account_file
+          image: gcr.io/cloudsql-docker/gce-proxy:1.16
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: postgresql
+            timeoutSeconds: 1
+          name: postgres-proxy
+          ports:
+            - containerPort: 5432
+              name: postgresql
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 2
+          volumeMounts:
+            - mountPath: /opt/secrets
+              name: secrets
+              readOnly: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            items:
+              - key: service_account_file
+                path: service_account_file
+            secretName: postgres-proxy
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: postgres-proxy
+  name: postgres-proxy
+  namespace: postgres-proxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgres-proxy
+    tier: db
+  name: postgres-proxy
+  namespace: postgres-proxy
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: postgresql
+  selector:
+    app: postgres-proxy
+    tier: db
+  sessionAffinity: None
+  type: ClusterIP
