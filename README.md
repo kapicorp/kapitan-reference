@@ -68,6 +68,7 @@ The manifests generator allows you to quickly generate Kubernetes manifests from
 The aim for this approach is to allow you to cover the vast majority of the needs you will have for your components.
 More complex scenarios can also be achieved by expanding the library, or implementing your own template.
 
+### Examples
 To help you get started, please look at the following examples:
 
 | source | output |
@@ -76,5 +77,12 @@ To help you get started, please look at the following examples:
 |[echo-server](inventory/classes/components/echo-server.yml)|  [manifests](compiled/echo-server/manifests)|
 
 Please find the generated manifests in the [compiled](compiled) folder
+
+### Request or submit your examples
+We have used this generator extensively, and we know it covers the majority of the use cases.
+If you want a specific example, please let us know (or submit your PR)
+
+By adding more example we will be able to stress test the library to make sure we really satisfy all the most common use cases.
+
 
 [Documentation](components/generators/manifests/README.md) [TBD]
