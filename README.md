@@ -25,6 +25,12 @@ For now, you can see that the [`./kapitan`](kapitan) file is a wrapper script th
 
 *Note*: For speed, if kapitan is already installed, it will prefer the non-docker version.
 
+| Script | Description |
+| ------ | ----------- |
+| ./kapitan | Wrapper script to invoke kapitan |
+| [generate_sa_secrets.sh](templates/scripts/generate_sa_secrets.sh) | Templated script to automatically inject service accounts into refs |
+| [import_kubernetes_cluster.sh](scripts/import_kubernetes_cluster.sh) | Helper scripts that looks for GKE cluster and automatically imports them into the inventory |
+
 ### Libraries
 
 This repo already packs some important libraries that you will want to have when working with kapitan.
@@ -71,10 +77,11 @@ More complex scenarios can also be achieved by expanding the library, or impleme
 ### Examples
 To help you get started, please look at the following examples:
 
-| source | output |
-| ------ | -----  |
-|[mysql](inventory/classes/components/mysql.yml)| [manifests](compiled/mysql/manifests)|
-|[echo-server](inventory/classes/components/echo-server.yml)|  [manifests](compiled/echo-server/manifests)|
+| source | description | output |
+| ------ | ----------- | ------ |
+|[mysql](inventory/classes/components/mysql.yml)| Example MySQL statefulset | [manifests](compiled/mysql/manifests)|
+|[echo-server](inventory/classes/components/echo-server.yml)| Example using [echo-server](https://github.com/jmalloc/echo-server) | [manifests](compiled/echo-server/manifests)|
+|[gke-pvm-killer](inventory/classes/components/gke-pvm-killer.yml)| Example using [estafette-gke-preemptible-killer](https://github.com/estafette/estafette-gke-preemptible-killer)| [manifests](compiled/gke-pvm-killer/manifests)|
 
 Please find the generated manifests in the [compiled](compiled) folder
 

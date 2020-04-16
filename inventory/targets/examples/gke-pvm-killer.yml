@@ -1,0 +1,7 @@
+classes:
+  - common
+  - components.gke-pvm-killer
+
+parameters:
+  target_name: gke-pvm-killer
+  google_project: example-gce-project

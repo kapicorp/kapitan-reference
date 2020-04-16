@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gke-pvm-killer
+  name: gke-pvm-killer
+  namespace: gke-pvm-killer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gke-pvm-killer
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: gke-pvm-killer
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - gke-pvm-killer
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - env:
+            - name: DRAIN_TIMEOUT
+              value: '300'
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /opt/secrets/service_account_file
+            - name: INTERVAL
+              value: '600'
+          image: estafette/estafette-gke-preemptible-killer:1.2.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /liveness
+              port: liveness
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          name: gke-pvm-killer
+          ports:
+            - containerPort: 5000
+              name: liveness
+              protocol: TCP
+            - containerPort: 9001
+              name: prom-metrics
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /liveness
+              port: liveness
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /opt/secrets
+              name: secrets
+              readOnly: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            items:
+              - key: service_account_file
+                path: service_account_file
+            secretName: gke-pvm-killer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: gke-pvm-killer
+  name: gke-pvm-killer
+  namespace: gke-pvm-killer
