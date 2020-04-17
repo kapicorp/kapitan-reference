@@ -5,6 +5,12 @@ parameters:
       image: jmalloc/echo-server
       service:
         type: LoadBalancer
+      healthcheck:
+        type: http
+        port: http
+        probes: ['readiness']
+        path: /_health
+        timeout_seconds: 3
       ports:
         http:
           service_port: 80

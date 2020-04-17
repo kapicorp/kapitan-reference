@@ -173,3 +173,38 @@ Which will produce the following effect:
 +  sessionAffinity: None
 +  type: LoadBalancer
 ```
+
+You can also quickly add a `readiness`/`liveness` check:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      healthcheck:
+        type: http
+        port: http
+        probes: ['readiness']
+        path: /_health
+        timeout_seconds: 3
+```
+
+which produces:
+```diff
+--- a/compiled/echo-server/manifests/echo-server-bundle.yml
++++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+@@ -42,6 +42,15 @@ spec:
+             - containerPort: 8080
+               name: http
+               protocol: TCP
++          readinessProbe:
++            failureThreshold: 3
++            httpGet:
++              path: /_health
++              port: http
++              scheme: HTTP
++            periodSeconds: 10
++            successThreshold: 1
++            timeoutSeconds: 3
+```
+
