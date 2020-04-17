@@ -3,6 +3,7 @@ data:
   echo-service.conf: '# A configuration file
 
     example: True'
+  simple_config: not mounted
 kind: ConfigMap
 metadata:
   labels:

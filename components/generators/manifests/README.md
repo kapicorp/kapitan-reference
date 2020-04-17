@@ -211,11 +211,41 @@ which produces:
 +            timeoutSeconds: 3
 ```
 
-## Secrets and Config Maps
+## Config Maps
 
 Creating secrets and config is very simple with Kapitan, and the interface is very similar with minor differences.
 
 ### Simple config
+
+```yaml
+      config_maps:
+        config:
+          data:
+            echo-service.conf: 
+              value: |-
+                # A configuration file
+                example: true
+```
+
+A configMap manifest was created. The name is taken from the component.
+
+```yaml
+cat compiled/tutorial/manifests/echo-server-config.yml
+apiVersion: v1
+data:
+  echo-service.conf: '# A configuration file
+
+    example: true'
+kind: ConfigMap
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+  namespace: tutorial
+```
+
+### Mounting a config map
+Note that in the previous example the config map is not mounted, because the `mount` directive is missing.
 
 ```yaml
       config_maps:
@@ -244,23 +274,6 @@ Simply adding the above configuration, will immediately configure the component 
 +          name: config
 ```
 
-We can also observe that a configMap manifest was created. Again, the name is taken from the component:
-
-```yaml
-cat compiled/tutorial/manifests/echo-server-config.yml
-apiVersion: v1
-data:
-  echo-service.conf: '# A configuration file
-
-    example: true'
-kind: ConfigMap
-metadata:
-  labels:
-    name: echo-server
-  name: echo-server
-  namespace: tutorial
-```
-
 ### Templated config
 A more advanced way to create the configuration file, is to use an external `jinja` file as source:
 
@@ -279,6 +292,72 @@ with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.
 
 As expected, we can inject any value from the inventory into the the file.
 
+### Filtering files to mount
 
+We do not always expect to mount all files available in a config map. Sometimes in the config map we have a mix of files and other values destined to be consumed by environment variables instead.
 
+For instance, given the following setup, we can restrict the mount only to files defined in the `items` directive:
+
+```yaml
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          items:
+            - echo-service.conf
+          data:
+            echo-service.conf:
+              template: 'components/echo-server/echo-server.conf.j2'
+              values:
+                example: true
+            simple_config:
+              value: "not mounted"
+```
+
+the diff shows that the generator makes use of the items directive in the manifest:
+
+```diff
+--- a/compiled/echo-server/manifests/echo-server-config.yml
++++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+@@ -60,6 +60,9 @@ spec:
+       volumes:
+         - configMap:
+             defaultMode: 420
++            items:
++              - key: echo-service.conf
++                path: echo-service.conf
+             name: echo-server
+```
+
+## Secrets
+
+What discussed with Config Maps also applies to Secrets.
+However, in the case of secrets, we have a coupld of extra features:
+
+### Auto base64 encode
+
+We can automatically base64 encode secrets that are not already encoded:
+```yaml
+      secrets:
+        secret:
+          data:
+            encoded_secret:
+              value: my_secret
+              b64_encode: true
+```
+
+```yaml
+cat compiled/tutorial/manifests/echo-server-secret.yml
+apiVersion: v1
+data:
+  encoded_secret: bXlfc2VjcmV0    # ENCODED my_secret
+kind: Secret
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+  namespace: tutorial
+type: Opaque
+
+```
+Note that, because the mount directive is missing, the secret will not be mounted automatically.
 

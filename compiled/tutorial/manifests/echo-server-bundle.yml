@@ -63,8 +63,15 @@ spec:
       volumes:
         - configMap:
             defaultMode: 420
+            items:
+              - key: echo-service.conf
+                path: echo-service.conf
             name: echo-server
           name: config
+        - name: secret
+          secret:
+            defaultMode: 420
+            secretName: echo-server
 ---
 apiVersion: v1
 kind: ServiceAccount

@@ -15,11 +15,21 @@ parameters:
         http:
           service_port: 80
           container_port: 8080
+      secrets:
+        secret:
+          data:
+            encoded_secret:
+              value: my_secret
+              b64_encode: true
       config_maps:
         config:
           mount: /opt/echo-service
+          items:
+            - echo-service.conf
           data:
             echo-service.conf:
               template: 'components/echo-server/echo-server.conf.j2'
               values:
                 example: true
+            simple_config:
+              value: "not mounted"
