@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="main.css">
+    <meta charset="UTF-8">
+    <title>Bootprint</title>
+                                                         </head>
+<body>
+<div class="container">
+    <div id="definition-manifest-generator" class="panel panel-definition">
+            <div class="panel-heading">
+                    <h3 class="panel-title">manifest generator</h3>
+            </div>
+        <div class="panel-body">
+                    <section class="json-schema-description">
+                        <p>Schema for Kapitan manifest generator</p>
+                
+                    </section>
+                
+                        <section class="json-schema-properties">
+                            <dl>
+                                    <dt data-property-name="annotations">
+                                        <span class="json-property-name">annotations:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        <p>Annotations to pass to the workload</p>
+                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">string</span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="application">
+                                        <span class="json-property-name">application:</span>
+                                        
+                                        <span class="json-property-type">string</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        <p>Associates this component to an application.</p>
+                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="args">
+                                        <span class="json-property-name">args:</span>
+                                        
+                                        <span class="json-property-type">string[]</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        <p>Args to pass to the workload</p>
+                        
+                                        <div class="json-inner-schema">
+                                            
+                                                            <section class="json-schema-array-items">
+                                                                
+                                                                <span class="json-property-type">string</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                                <div class="json-inner-schema">
+                                                                    
+                                                                </div>
+                                                            </section>                </div>
+                                    </dd>
+                                    <dt data-property-name="command">
+                                        <span class="json-property-name">command:</span>
+                                        
+                                        <span class="json-property-type">string[]</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        <p>command to pass to the workload</p>
+                        
+                                        <div class="json-inner-schema">
+                                            
+                                                            <section class="json-schema-array-items">
+                                                                
+                                                                <span class="json-property-type">string</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                                <div class="json-inner-schema">
+                                                                    
+                                                                </div>
+                                                            </section>                </div>
+                                    </dd>
+                                    <dt data-property-name="config_maps">
+                                        <span class="json-property-name">config_maps:</span>
+                                        
+                                        <span class="json-property-type"></span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        <p>Config maps for the workload</p>
+                        
+                                        <div class="json-inner-schema">
+                                            
+                                                <section class="json-schema-anyOf">
+                                                    <dl>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">null</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">object</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                                            <section class="json-schema-additionalProperties">
+                                                                                <span class="json-property-type">
+                                                                            <span class="json-property-type">    <a class="json-schema-ref" href="#/definitions/config">config</a>
+                                                                            </span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                            </span>
+                                                                                
+                                                                            </section>
+                                                            </dd>
+                                                    </dl>
+                                                
+                                                </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="deployment_progress_deadline_seconds">
+                                        <span class="json-property-name">deployment_progress_deadline_seconds:</span>
+                                        
+                                        <span class="json-property-type"></span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                <section class="json-schema-anyOf">
+                                                    <dl>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">null</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">integer</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                    </dl>
+                                                
+                                                </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="dns_policy">
+                                        <span class="json-property-name">dns_policy:</span>
+                                        
+                                        <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                        <span class="json-property-enum-item">ClusterFirst</span>
+                                                    
+                                                }
+                                                </span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="enable_prometheus">
+                                        <span class="json-property-name">enable_prometheus:</span>
+                                        
+                                        <span class="json-property-type">boolean</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="env">
+                                        <span class="json-property-name">env:</span>
+                                        
+                                        <span class="json-property-type"></span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                <section class="json-schema-anyOf">
+                                                    <dl>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">null</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">object</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                    </dl>
+                                                
+                                                </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="healthcheck">
+                                        <span class="json-property-name">healthcheck:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                    <section class="json-schema-properties">
+                                                        <dl>
+                                                                <dt data-property-name="enabled">
+                                                                    <span class="json-property-name">enabled:</span>
+                                                                    
+                                                                    <span class="json-property-type">boolean</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="path">
+                                                                    <span class="json-property-name">path:</span>
+                                                                    
+                                                                    <span class="json-property-type">string</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="port">
+                                                                    <span class="json-property-name">port:</span>
+                                                                    
+                                                                    <span class="json-property-type"></span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="probes">
+                                                                    <span class="json-property-name">probes:</span>
+                                                                    
+                                                                    <span class="json-property-type">string[]</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                        <span class="json-property-required"></span>
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                                        <section class="json-schema-array-items">
+                                                                                            
+                                                                                            <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                                                                            <span class="json-property-enum-item">readiness</span>
+                                                                                                        ,
+                                                                                                            <span class="json-property-enum-item">liveness</span>
+                                                                                                        
+                                                                                                    }
+                                                                                                    </span>
+                                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                                            
+                                                                                            <div class="json-inner-schema">
+                                                                                                
+                                                                                            </div>
+                                                                                        </section>                </div>
+                                                                </dd>
+                                                                <dt data-property-name="timeout_seconds">
+                                                                    <span class="json-property-name">timeout_seconds:</span>
+                                                                    
+                                                                    <span class="json-property-type">integer</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="type">
+                                                                    <span class="json-property-name">type:</span>
+                                                                    
+                                                                    <span class="json-property-type">string</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                        <span class="json-property-required"></span>
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                        </dl>
+                                                    </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="image">
+                                        <span class="json-property-name">image:</span>
+                                        
+                                        <span class="json-property-type">string</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                            <span class="json-property-required"></span>
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="labels">
+                                        <span class="json-property-name">labels:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">string</span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="min_ready_seconds">
+                                        <span class="json-property-name">min_ready_seconds:</span>
+                                        
+                                        <span class="json-property-type">integer</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="name">
+                                        <span class="json-property-name">name:</span>
+                                        
+                                        <span class="json-property-type">string</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                            <span class="json-property-required"></span>
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="pdb_min_available">
+                                        <span class="json-property-name">pdb_min_available:</span>
+                                        
+                                        <span class="json-property-type">integer</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="ports">
+                                        <span class="json-property-name">ports:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">    <a class="json-schema-ref" href="#/definitions/port_set">port_set</a>
+                                                        </span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="prefer_pods_in_different_nodes">
+                                        <span class="json-property-name">prefer_pods_in_different_nodes:</span>
+                                        
+                                        <span class="json-property-type">boolean</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="prefer_pods_in_different_zones">
+                                        <span class="json-property-name">prefer_pods_in_different_zones:</span>
+                                        
+                                        <span class="json-property-type">boolean</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="prefer_pods_in_node_type">
+                                        <span class="json-property-name">prefer_pods_in_node_type:</span>
+                                        
+                                        <span class="json-property-type">string</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="replicas">
+                                        <span class="json-property-name">replicas:</span>
+                                        
+                                        <span class="json-property-type">integer</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="secrets">
+                                        <span class="json-property-name">secrets:</span>
+                                        
+                                        <span class="json-property-type"></span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                <section class="json-schema-anyOf">
+                                                    <dl>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">null</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">object</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                                            <section class="json-schema-additionalProperties">
+                                                                                <span class="json-property-type">
+                                                                            <span class="json-property-type">    <a class="json-schema-ref" href="#/definitions/secret">secret</a>
+                                                                            </span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                            </span>
+                                                                                
+                                                                            </section>
+                                                            </dd>
+                                                    </dl>
+                                                
+                                                </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="security">
+                                        <span class="json-property-name">security:</span>
+                                        
+                                        <span class="json-property-type"></span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                <section class="json-schema-anyOf">
+                                                    <dl>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">null</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                            </dd>
+                                                            <dt>
+                                                                
+                                                                <span class="json-property-type">object</span>
+                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                
+                                                            </dt>
+                                                            <dd>
+                                                                
+                                                                        <section class="json-schema-properties">
+                                                                            <dl>
+                                                                                    <dt data-property-name="allow_privilege_escalation">
+                                                                                        <span class="json-property-name">allow_privilege_escalation:</span>
+                                                                                        
+                                                                                        <span class="json-property-type">boolean</span>
+                                                                                        <span class="json-property-range" title="Value limits"></span>
+                                                                                        
+                                                                                    </dt>
+                                                                                    <dd>
+                                                                                        
+                                                                                        <div class="json-inner-schema">
+                                                                                            
+                                                                                        </div>
+                                                                                    </dd>
+                                                                                    <dt data-property-name="user_id">
+                                                                                        <span class="json-property-name">user_id:</span>
+                                                                                        
+                                                                                        <span class="json-property-type">integer</span>
+                                                                                        <span class="json-property-range" title="Value limits"></span>
+                                                                                        
+                                                                                    </dt>
+                                                                                    <dd>
+                                                                                        
+                                                                                        <div class="json-inner-schema">
+                                                                                            
+                                                                                        </div>
+                                                                                    </dd>
+                                                                            </dl>
+                                                                        </section>
+                                                            </dd>
+                                                    </dl>
+                                                
+                                                </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="service">
+                                        <span class="json-property-name">service:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                    <section class="json-schema-properties">
+                                                        <dl>
+                                                                <dt data-property-name="annotations">
+                                                                    <span class="json-property-name">annotations:</span>
+                                                                    
+                                                                    <span class="json-property-type">object</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="externalTrafficPolicy">
+                                                                    <span class="json-property-name">externalTrafficPolicy:</span>
+                                                                    
+                                                                    <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                                                    <span class="json-property-enum-item">Cluster</span>
+                                                                                
+                                                                            }
+                                                                            </span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="grpc">
+                                                                    <span class="json-property-name">grpc:</span>
+                                                                    
+                                                                    <span class="json-property-type">object</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                                <dt data-property-name="type">
+                                                                    <span class="json-property-name">type:</span>
+                                                                    
+                                                                    <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                                                    <span class="json-property-enum-item">NodePort</span>
+                                                                                ,
+                                                                                    <span class="json-property-enum-item">ClusterIP</span>
+                                                                                ,
+                                                                                    <span class="json-property-enum-item">LoadBalancer</span>
+                                                                                
+                                                                            }
+                                                                            </span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                </dt>
+                                                                <dd>
+                                                                    
+                                                                    <div class="json-inner-schema">
+                                                                        
+                                                                    </div>
+                                                                </dd>
+                                                        </dl>
+                                                    </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="service_account">
+                                        <span class="json-property-name">service_account:</span>
+                                        
+                                        <span class="json-property-type">boolean</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="type">
+                                        <span class="json-property-name">type:</span>
+                                        
+                                        <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                        <span class="json-property-enum-item">statefulset</span>
+                                                    ,
+                                                        <span class="json-property-enum-item">deployment</span>
+                                                    
+                                                }
+                                                </span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                            <span class="json-property-required"></span>
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="volume_claims">
+                                        <span class="json-property-name">volume_claims:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">    <a class="json-schema-ref" href="#/definitions/volume_claim">volume_claim</a>
+                                                        </span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="volume_mounts">
+                                        <span class="json-property-name">volume_mounts:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">object</span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="volumes">
+                                        <span class="json-property-name">volumes:</span>
+                                        
+                                        <span class="json-property-type">object</span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                                        <section class="json-schema-additionalProperties">
+                                                            <span class="json-property-type">
+                                                        <span class="json-property-type">object</span>
+                                                        <span class="json-property-range" title="Value limits"></span>
+                                                        
+                                                        </span>
+                                                            
+                                                        </section>
+                                        </div>
+                                    </dd>
+                                    <dt data-property-name="vpa">
+                                        <span class="json-property-name">vpa:</span>
+                                        
+                                        <span class="json-property-type">string</span>    <span class="json-property-enum" title="Possible values">, x &isin; {
+                                                        <span class="json-property-enum-item">Off</span>
+                                                    ,
+                                                        <span class="json-property-enum-item">Auto</span>
+                                                    
+                                                }
+                                                </span>
+                                        <span class="json-property-range" title="Value limits"></span>
+                                        
+                                    </dt>
+                                    <dd>
+                                        
+                                        <div class="json-inner-schema">
+                                            
+                                        </div>
+                                    </dd>
+                            </dl>
+                        </section>
+        </div>
+    </div>    <h2>Definitions</h2>
+                <div id="definition-config" class="panel panel-definition">
+                        <div class="panel-heading">
+                                <h3 class="panel-title"><a name="/definitions/config"></a>config:
+                                    <span class="json-property-type">
+                <span class="json-property-type">object</span>
+                <span class="json-property-range" title="Value limits"></span>
+                
+                </span>
+                                </h3>
+                        </div>
+                    <div class="panel-body">
+                            
+                                    <section class="json-schema-properties">
+                                        <dl>
+                                                <dt data-property-name="data">
+                                                    <span class="json-property-name">data:</span>
+                                                    
+                                                    <span class="json-property-type">object</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                        <span class="json-property-required"></span>
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                                    <section class="json-schema-additionalProperties">
+                                                                        <span class="json-property-type">
+                                                                    <span class="json-property-type">object</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                    </span>
+                                                                        
+                                                                                <section class="json-schema-properties">
+                                                                                    <dl>
+                                                                                            <dt data-property-name="b64_encode">
+                                                                                                <span class="json-property-name">b64_encode:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">boolean</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="template">
+                                                                                                <span class="json-property-name">template:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">string</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="value">
+                                                                                                <span class="json-property-name">value:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">string</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="values">
+                                                                                                <span class="json-property-name">values:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">object</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                    </dl>
+                                                                                </section>
+                                                                    </section>
+                                                    </div>
+                                                </dd>
+                                                <dt data-property-name="items">
+                                                    <span class="json-property-name">items:</span>
+                                                    
+                                                    <span class="json-property-type">string[]</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                                        <section class="json-schema-array-items">
+                                                                            
+                                                                            <span class="json-property-type">string</span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                            <div class="json-inner-schema">
+                                                                                
+                                                                            </div>
+                                                                        </section>                </div>
+                                                </dd>
+                                                <dt data-property-name="mount">
+                                                    <span class="json-property-name">mount:</span>
+                                                    
+                                                    <span class="json-property-type">string</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                        </dl>
+                                    </section>
+                    </div>
+                </div>        <div id="definition-kube_env" class="panel panel-definition">
+                        <div class="panel-heading">
+                                <h3 class="panel-title"><a name="/definitions/kube_env"></a>kube_env:
+                                    <span class="json-property-type">
+                <span class="json-property-type">object[]</span>
+                <span class="json-property-range" title="Value limits"></span>
+                
+                </span>
+                                </h3>
+                        </div>
+                    <div class="panel-body">
+                            
+                                            <section class="json-schema-array-items">
+                                                
+                                                <span class="json-property-type">object</span>
+                                                <span class="json-property-range" title="Value limits"></span>
+                                                
+                                                <div class="json-inner-schema">
+                                                    
+                                                            <section class="json-schema-properties">
+                                                                <dl>
+                                                                        <dt data-property-name="name">
+                                                                            <span class="json-property-name">name:</span>
+                                                                            
+                                                                            <span class="json-property-type">string</span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                                <span class="json-property-required"></span>
+                                                                        </dt>
+                                                                        <dd>
+                                                                            
+                                                                            <div class="json-inner-schema">
+                                                                                
+                                                                            </div>
+                                                                        </dd>
+                                                                        <dt data-property-name="value">
+                                                                            <span class="json-property-name">value:</span>
+                                                                            
+                                                                            <span class="json-property-type">string</span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                        </dt>
+                                                                        <dd>
+                                                                            
+                                                                            <div class="json-inner-schema">
+                                                                                
+                                                                            </div>
+                                                                        </dd>
+                                                                        <dt data-property-name="valueFrom">
+                                                                            <span class="json-property-name">valueFrom:</span>
+                                                                            
+                                                                            <span class="json-property-type"></span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                        </dt>
+                                                                        <dd>
+                                                                            
+                                                                            <div class="json-inner-schema">
+                                                                                
+                                                                                    <section class="json-schema-anyOf">
+                                                                                        <dl>
+                                                                                                <dt>
+                                                                                                    
+                                                                                                    <span class="json-property-type">object</span>
+                                                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                                                    
+                                                                                                </dt>
+                                                                                                <dd>
+                                                                                                    
+                                                                                                            <section class="json-schema-properties">
+                                                                                                                <dl>
+                                                                                                                        <dt data-property-name="secretKeyRef">
+                                                                                                                            <span class="json-property-name">secretKeyRef:</span>
+                                                                                                                            
+                                                                                                                            <span class="json-property-type">object</span>
+                                                                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                                                                            
+                                                                                                                                <span class="json-property-required"></span>
+                                                                                                                        </dt>
+                                                                                                                        <dd>
+                                                                                                                            
+                                                                                                                            <div class="json-inner-schema">
+                                                                                                                                
+                                                                                                                                        <section class="json-schema-properties">
+                                                                                                                                            <dl>
+                                                                                                                                                    <dt data-property-name="key">
+                                                                                                                                                        <span class="json-property-name">key:</span>
+                                                                                                                                                        
+                                                                                                                                                        <span class="json-property-type">string</span>
+                                                                                                                                                        <span class="json-property-range" title="Value limits"></span>
+                                                                                                                                                        
+                                                                                                                                                            <span class="json-property-required"></span>
+                                                                                                                                                    </dt>
+                                                                                                                                                    <dd>
+                                                                                                                                                        
+                                                                                                                                                        <div class="json-inner-schema">
+                                                                                                                                                            
+                                                                                                                                                        </div>
+                                                                                                                                                    </dd>
+                                                                                                                                                    <dt data-property-name="optional">
+                                                                                                                                                        <span class="json-property-name">optional:</span>
+                                                                                                                                                        
+                                                                                                                                                        <span class="json-property-type">boolean</span>
+                                                                                                                                                        <span class="json-property-range" title="Value limits"></span>
+                                                                                                                                                        
+                                                                                                                                                    </dt>
+                                                                                                                                                    <dd>
+                                                                                                                                                        
+                                                                                                                                                        <div class="json-inner-schema">
+                                                                                                                                                            
+                                                                                                                                                        </div>
+                                                                                                                                                    </dd>
+                                                                                                                                            </dl>
+                                                                                                                                        </section>
+                                                                                                                            </div>
+                                                                                                                        </dd>
+                                                                                                                </dl>
+                                                                                                            </section>
+                                                                                                </dd>
+                                                                                                <dt>
+                                                                                                    
+                                                                                                    <span class="json-property-type">object</span>
+                                                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                                                    
+                                                                                                </dt>
+                                                                                                <dd>
+                                                                                                    
+                                                                                                            <section class="json-schema-properties">
+                                                                                                                <dl>
+                                                                                                                        <dt data-property-name="fieldRef">
+                                                                                                                            <span class="json-property-name">fieldRef:</span>
+                                                                                                                            
+                                                                                                                            <span class="json-property-type">object</span>
+                                                                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                                                                            
+                                                                                                                                <span class="json-property-required"></span>
+                                                                                                                        </dt>
+                                                                                                                        <dd>
+                                                                                                                            
+                                                                                                                            <div class="json-inner-schema">
+                                                                                                                                
+                                                                                                                                        <section class="json-schema-properties">
+                                                                                                                                            <dl>
+                                                                                                                                                    <dt data-property-name="fieldPath">
+                                                                                                                                                        <span class="json-property-name">fieldPath:</span>
+                                                                                                                                                        
+                                                                                                                                                        <span class="json-property-type">string</span>
+                                                                                                                                                        <span class="json-property-range" title="Value limits"></span>
+                                                                                                                                                        
+                                                                                                                                                            <span class="json-property-required"></span>
+                                                                                                                                                    </dt>
+                                                                                                                                                    <dd>
+                                                                                                                                                        
+                                                                                                                                                        <div class="json-inner-schema">
+                                                                                                                                                            
+                                                                                                                                                        </div>
+                                                                                                                                                    </dd>
+                                                                                                                                            </dl>
+                                                                                                                                        </section>
+                                                                                                                            </div>
+                                                                                                                        </dd>
+                                                                                                                </dl>
+                                                                                                            </section>
+                                                                                                </dd>
+                                                                                        </dl>
+                                                                                    
+                                                                                    </section>
+                                                                            </div>
+                                                                        </dd>
+                                                                </dl>
+                                                            </section>
+                                                </div>
+                                            </section>    </div>
+                </div>        <div id="definition-port_set" class="panel panel-definition">
+                        <div class="panel-heading">
+                                <h3 class="panel-title"><a name="/definitions/port_set"></a>port_set:
+                                    <span class="json-property-type">
+                <span class="json-property-type">object</span>
+                <span class="json-property-range" title="Value limits"></span>
+                
+                </span>
+                                </h3>
+                        </div>
+                    <div class="panel-body">
+                            
+                                    <section class="json-schema-properties">
+                                        <dl>
+                                                <dt data-property-name="container_port">
+                                                    <span class="json-property-name">container_port:</span>
+                                                    
+                                                    <span class="json-property-type">integer</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                                <dt data-property-name="node_port">
+                                                    <span class="json-property-name">node_port:</span>
+                                                    
+                                                    <span class="json-property-type">integer</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                                <dt data-property-name="service_port">
+                                                    <span class="json-property-name">service_port:</span>
+                                                    
+                                                    <span class="json-property-type">integer</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                        </dl>
+                                    </section>
+                    </div>
+                </div>        <div id="definition-secret" class="panel panel-definition">
+                        <div class="panel-heading">
+                                <h3 class="panel-title"><a name="/definitions/secret"></a>secret:
+                                    <span class="json-property-type">
+                <span class="json-property-type">object</span>
+                <span class="json-property-range" title="Value limits"></span>
+                
+                </span>
+                                </h3>
+                        </div>
+                    <div class="panel-body">
+                            
+                                    <section class="json-schema-properties">
+                                        <dl>
+                                                <dt data-property-name="data">
+                                                    <span class="json-property-name">data:</span>
+                                                    
+                                                    <span class="json-property-type">object</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                        <span class="json-property-required"></span>
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                                    <section class="json-schema-additionalProperties">
+                                                                        <span class="json-property-type">
+                                                                    <span class="json-property-type">object</span>
+                                                                    <span class="json-property-range" title="Value limits"></span>
+                                                                    
+                                                                    </span>
+                                                                        
+                                                                                <section class="json-schema-properties">
+                                                                                    <dl>
+                                                                                            <dt data-property-name="b64_encode">
+                                                                                                <span class="json-property-name">b64_encode:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">boolean</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="template">
+                                                                                                <span class="json-property-name">template:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">string</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="value">
+                                                                                                <span class="json-property-name">value:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">string</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                            <dt data-property-name="values">
+                                                                                                <span class="json-property-name">values:</span>
+                                                                                                
+                                                                                                <span class="json-property-type">object</span>
+                                                                                                <span class="json-property-range" title="Value limits"></span>
+                                                                                                
+                                                                                            </dt>
+                                                                                            <dd>
+                                                                                                
+                                                                                                <div class="json-inner-schema">
+                                                                                                    
+                                                                                                </div>
+                                                                                            </dd>
+                                                                                    </dl>
+                                                                                </section>
+                                                                    </section>
+                                                    </div>
+                                                </dd>
+                                                <dt data-property-name="items">
+                                                    <span class="json-property-name">items:</span>
+                                                    
+                                                    <span class="json-property-type">string[]</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                                        <section class="json-schema-array-items">
+                                                                            
+                                                                            <span class="json-property-type">string</span>
+                                                                            <span class="json-property-range" title="Value limits"></span>
+                                                                            
+                                                                            <div class="json-inner-schema">
+                                                                                
+                                                                            </div>
+                                                                        </section>                </div>
+                                                </dd>
+                                                <dt data-property-name="mount">
+                                                    <span class="json-property-name">mount:</span>
+                                                    
+                                                    <span class="json-property-type">string</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                        </dl>
+                                    </section>
+                    </div>
+                </div>        <div id="definition-volume_claim" class="panel panel-definition">
+                        <div class="panel-heading">
+                                <h3 class="panel-title"><a name="/definitions/volume_claim"></a>volume_claim:
+                                    <span class="json-property-type">
+                <span class="json-property-type">object</span>
+                <span class="json-property-range" title="Value limits"></span>
+                
+                </span>
+                                </h3>
+                        </div>
+                    <div class="panel-body">
+                            
+                                    <section class="json-schema-properties">
+                                        <dl>
+                                                <dt data-property-name="spec">
+                                                    <span class="json-property-name">spec:</span>
+                                                    
+                                                    <span class="json-property-type">object</span>
+                                                    <span class="json-property-range" title="Value limits"></span>
+                                                    
+                                                </dt>
+                                                <dd>
+                                                    
+                                                    <div class="json-inner-schema">
+                                                        
+                                                    </div>
+                                                </dd>
+                                        </dl>
+                                    </section>
+                    </div>
+                </div></div>
+
+</body>
+</html>
