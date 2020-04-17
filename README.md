@@ -92,4 +92,4 @@ If you want a specific example, please let us know (or submit your PR)
 By adding more example we will be able to stress test the library to make sure we really satisfy all the most common use cases.
 
 
-[Documentation](components/generators/manifests/README.md) [TBD]
+[Documentation](components/generators/manifests/README.md)

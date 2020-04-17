@@ -6,9 +6,9 @@ metadata:
   labels:
     app: echo-server
   name: echo-server
-  namespace: echo-server
+  namespace: tutorial
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: echo-server
@@ -35,7 +35,10 @@ spec:
                 topologyKey: kubernetes.io/hostname
               weight: 1
       containers:
-        - image: jmalloc/echo-server
+        - env:
+            - name: KAPITAN_APPLICATION
+              value: microservices
+          image: jmalloc/echo-server
           imagePullPolicy: IfNotPresent
           name: echo-server
           ports:
@@ -76,7 +79,7 @@ metadata:
   labels:
     name: echo-server
   name: echo-server
-  namespace: echo-server
+  namespace: tutorial
 ---
 apiVersion: v1
 kind: Service
@@ -84,7 +87,7 @@ metadata:
   labels:
     app: echo-server
   name: echo-server
-  namespace: echo-server
+  namespace: tutorial
 spec:
   ports:
     - name: http
