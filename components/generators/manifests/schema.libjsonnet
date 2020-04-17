@@ -1,24 +1,35 @@
-local kap = import 'lib/kap.libjsonnet';
-local utils = kap.utils;
 {
   type: 'object',
+  title: "manifest generator",
+  description: "Schema for Kapitan manifest generator",
   required: ['name', 'image', 'type'],
   additionalProperties: false,
   properties: {
-    application: { type: 'string' },
-    annotations: { type: 'object', additionalProperties: { type: 'string' } },
-    args: { type: 'array', items: { type: 'string' } },
-    command: { type: 'array', items: { type: 'string' } },
-    config_maps: utils.jsonSchema.nullable({
+    application: { 
+      description: "Associates this component to an application.",
+      type: 'string' 
+    },
+    annotations: { 
+      description: "Annotations to pass to the workload",
+      type: 'object', additionalProperties: { type: 'string' } },
+    args: { 
+      description: "Args to pass to the workload",
+      type: 'array', items: { type: 'string' } },
+    command: { 
+      description: "command to pass to the workload",
+      type: 'array', items: { type: 'string' } },
+    config_maps: { 
+      description: "Config maps for the workload",
+      anyOf: [{type: 'null'}, {
       type: 'object',
       additionalProperties: { '$ref': '#/definitions/config' },
-    }),
-    deployment_progress_deadline_seconds: utils.jsonSchema.nullable({ type: 'integer' }),
+    }]},
+    deployment_progress_deadline_seconds: { anyOf: [{type: 'null'}, { type: 'integer' }]},
     dns_policy: { type: 'string', enum: ['ClusterFirst'] },
     vpa: { type: 'string', enum: ['Off', 'Auto'] },
     enable_prometheus: { type: 'boolean' },
     pdb_min_available: { type: 'integer' },
-    env: utils.jsonSchema.nullable({ type: 'object' }),
+    env: { anyOf: [{type: 'null'}, { type: 'object' }]},
     healthcheck: {
       type: 'object',
       properties: {
@@ -49,18 +60,18 @@ local utils = kap.utils;
       type: 'object',
       additionalProperties: { '$ref': '#/definitions/port_set' },
     },
-    secrets: utils.jsonSchema.nullable({
+    secrets: { anyOf: [{type: 'null'}, {
       type: 'object',
       additionalProperties: { '$ref': '#/definitions/secret' },
-    }),
-    security: utils.jsonSchema.nullable({
+    }]},
+    security: { anyOf: [{type: 'null'}, {
       type: 'object',
       properties: {
         allow_privilege_escalation: { type: 'boolean' },
         user_id: { type: 'integer' },
       },
       additionalProperties: false,
-    }),
+    }]},
     service: {
       type: 'object',
       properties: {

@@ -39,15 +39,15 @@ local p = kap.parameters;
     .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', { probes: [] }), service_component.healthcheck)
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
-    .WithMount({ [secret_name]: { 
-      [if "subPath" in secrets_configs[secret_name].config then "subPath"]: secrets_configs[secret_name].config.subPath,
-      mountPath: secrets_configs[secret_name].config.mount, 
-      readOnly: true 
-    } for secret_name in std.objectFields(secrets_configs) if "mount" in secrets_configs[secret_name].config }, secrets_configs != null)
-    .WithMount({ [config_map_name]: { 
-      [if "subPath" in config_map_configs[config_map_name].config then "subPath"]: config_map_configs[config_map_name].config.subPath,
-      mountPath: config_map_configs[config_map_name].config.mount, 
-      readOnly: true 
+    .WithMount({ [secret_name]: {
+      [if 'subPath' in secrets_configs[secret_name].config then 'subPath']: secrets_configs[secret_name].config.subPath,
+      mountPath: secrets_configs[secret_name].config.mount,
+      readOnly: true,
+    } for secret_name in std.objectFields(secrets_configs) if 'mount' in secrets_configs[secret_name].config }, secrets_configs != null)
+    .WithMount({ [config_map_name]: {
+      [if 'subPath' in config_map_configs[config_map_name].config then 'subPath']: config_map_configs[config_map_name].config.subPath,
+      mountPath: config_map_configs[config_map_name].config.mount,
+      readOnly: true,
     } for config_map_name in std.objectFields(config_map_configs) }, config_map_configs != null)
     .WithMount(utils.objectGet(service_component, 'volume_mounts', {}))
     {
@@ -72,7 +72,7 @@ local p = kap.parameters;
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
     local container = $.Container(service_component, config_map_configs, secrets_configs);
     kap.K8sStatefulSet(name)
-    .WithPodAntiAffinity(name, "kubernetes.io/hostname", utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
+    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
     .WithNamespace()
     .WithAnnotations(service_component.annotations)
     .WithContainer({ [service_component.name]: container })
@@ -94,9 +94,9 @@ local p = kap.parameters;
   Deployment(name, service_component, config_map_configs, secrets_configs)::
     local container = $.Container(service_component, config_map_configs, secrets_configs);
     kap.K8sDeployment(name)
-    .WithPodAntiAffinity(name, "kubernetes.io/hostname", utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
-    .WithPodAntiAffinity(name, "failure-domain.beta.kubernetes.io/zone", utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
-    .WithNodeAffinity("synthace.com/node-type", utils.objectGet(service_component, 'prefer_pods_in_node_type', 'standard'), "In", utils.objectHas(service_component, 'prefer_pods_in_node_type', false))
+    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
+    .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
+    .WithNodeAffinity('synthace.com/node-type', utils.objectGet(service_component, 'prefer_pods_in_node_type', 'standard'), 'In', utils.objectHas(service_component, 'prefer_pods_in_node_type', false))
     .WithNamespace()
     .WithAnnotations(service_component.annotations)
     .WithContainer({ [service_component.name]: container })
@@ -132,12 +132,11 @@ local p = kap.parameters;
     local config_map_config = utils.objectGet(service_component, 'config_maps', {});
 
 
-
     local MergeConfig(name, object, generating_class) = {
       name:: if std.length(object) == 1 then service_component.name else '%s-%s' % [service_component.name, name],
       manifest: generating_class(self.name, object[name].data)
-                  .WithNamespace(),
-      config: {items: []} + object[name],
+                .WithNamespace(),
+      config: { items: [] } + object[name],
     };
 
     local CreateConfigDefinition(object_config, generating_class) = {
@@ -165,23 +164,23 @@ local p = kap.parameters;
       },
     };
 
-    local vpa_mode=utils.objectGet(service_component, 'vpa', 'Auto');
+    local vpa_mode = utils.objectGet(service_component, 'vpa', 'Auto');
     local vpa = kap.createVPAFor(workload, mode=vpa_mode) {
       spec+: {
         resourcePolicy+: {
           containerPolicies+: [{
             containerName: 'istio-proxy',
-            mode: "Off"
-          }]
-        }
-      }
+            mode: 'Off',
+          }],
+        },
+      },
     };
 
     local pdb = kap.PodDisruptionBudget(service_component.name) {
       target_pod:: workload.spec.template,
       spec+: {
-        minAvailable: utils.objectGet(service_component, 'pdb_min_available')
-      } 
+        minAvailable: utils.objectGet(service_component, 'pdb_min_available'),
+      },
     };
 
 
