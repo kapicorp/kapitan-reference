@@ -3,3 +3,9 @@ parameters:
     echo-server:
       application: microservices
       image: jmalloc/echo-server
+      service:
+        type: LoadBalancer
+      ports:
+        http:
+          service_port: 80
+          container_port: 8080

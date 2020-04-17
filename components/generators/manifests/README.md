@@ -20,9 +20,9 @@ parameters:
 
 Compiling, `kapitan` will generate a simple deployment with the above image.
 
-## Defaults
+## Defining default values
 
-Sometimes, when defining many components, you and up repeating lots of similar configurations.
+Sometimes, when defining many components, you and up repeating many repeating configurations.
 With this generator, you can define defaults in 2 ways:
 
 ### Global Generator Defaults
@@ -102,5 +102,74 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ```
- 
- 
+
+## Ports and Services
+
+You can define the ports your component uses by adding them under the `ports` directive:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      ports:
+        http:
+          container_port: 8080
+```
+
+The above will produce the following effect:
+
+```diff
+--- a/compiled/echo-server/manifests/echo-server-bundle.yml
++++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+@@ -38,6 +38,10 @@ spec:
+         - image: jmalloc/echo-server
+           imagePullPolicy: IfNotPresent
+           name: echo-server
++          ports:
++            - containerPort: 8080
++              name: http
++              protocol: TCP
+
+```
+
+If you want to expose the service, add the `service` directive with the desired service `type`, and define the `service_port`:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      ports:
+        http:
+          service_port: 80
+          container_port: 8080
+```
+
+Which will produce the following effect:
+```diff
+--- a/compiled/echo-server/manifests/echo-server-bundle.yml
++++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+@@ -52,3 +52,21 @@ metadata:
+     name: echo-server
+   name: echo-server
+   namespace: echo-server
++---
++apiVersion: v1
++kind: Service
++metadata:
++  labels:
++    app: echo-server
++  name: echo-server
++  namespace: echo-server
++spec:
++  ports:
++    - name: http
++      port: 80
++      protocol: TCP
++      targetPort: http
++  selector:
++    app: echo-server
++  sessionAffinity: None
++  type: LoadBalancer
+```

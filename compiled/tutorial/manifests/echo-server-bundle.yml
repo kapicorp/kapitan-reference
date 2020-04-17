@@ -41,6 +41,10 @@ spec:
           image: jmalloc/echo-server
           imagePullPolicy: IfNotPresent
           name: echo-server
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
@@ -51,3 +55,21 @@ metadata:
     name: echo-server
   name: echo-server
   namespace: tutorial
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: echo-server
+  name: echo-server
+  namespace: tutorial
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: echo-server
+  sessionAffinity: None
+  type: LoadBalancer
