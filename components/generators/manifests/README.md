@@ -105,6 +105,7 @@ spec:
 
 ## Ports and Services
 
+### Defining ports
 You can define the ports your component uses by adding them under the `ports` directive:
 
 ```yaml
@@ -133,6 +134,7 @@ The above will produce the following effect:
 
 ```
 
+### Exposing a service
 If you want to expose the service, add the `service` directive with the desired service `type`, and define the `service_port`:
 
 ```yaml
@@ -174,6 +176,7 @@ Which will produce the following effect:
 +  type: LoadBalancer
 ```
 
+### Liveness and Readiness checks
 You can also quickly add a `readiness`/`liveness` check:
 
 ```yaml
@@ -207,4 +210,6 @@ which produces:
 +            successThreshold: 1
 +            timeoutSeconds: 3
 ```
+
+
 
