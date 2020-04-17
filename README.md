@@ -42,7 +42,6 @@ This repo already packs some important libraries that you will want to have when
 | [manifests-generator](components/generators/manifests) | [Synthace](www.synthace.com) manifests generator | [generators/manifests.yml](inventory/classes/kapitan/generators/manifests.yml)|
 | [utils](lib/utils.libjsonnet) | helpful utilites ||
 | [kap](lib/kap.libjsonnet) | Kapitan boilerplate in one file ||
-| [service_components](lib/service_components.libjsonnet)| Library used by multiple generators ||
 
 Kapitan allows you to manage external dependencies like the above libraries.
 For instance, in the  [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml) file, the "dependencies" directive tells Kapitan where to find the library.

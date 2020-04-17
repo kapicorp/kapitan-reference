@@ -1,6 +1,6 @@
 local resources = import './resources.libjsonnet';
 local kap = import 'lib/kap.libjsonnet';
-local service_components = import 'lib/service_components.libjsonnet';
+local service_components = import './service_components.libjsonnet';
 local p = kap.parameters;
 
 local manifest_set_by_service = {
