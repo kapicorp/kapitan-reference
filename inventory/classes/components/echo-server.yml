@@ -15,3 +15,11 @@ parameters:
         http:
           service_port: 80
           container_port: 8080
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          data:
+            echo-service.conf:
+              template: 'components/echo-server/echo-server.conf.j2'
+              values:
+                example: true

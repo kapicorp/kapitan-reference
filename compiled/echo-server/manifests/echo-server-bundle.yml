@@ -51,8 +51,17 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /opt/echo-service
+              name: config
+              readOnly: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: echo-server
+          name: config
 ---
 apiVersion: v1
 kind: ServiceAccount

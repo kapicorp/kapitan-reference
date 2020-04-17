@@ -148,7 +148,7 @@ parameters:
           container_port: 8080
 ```
 
-Which will produce the following effect:
+Which will create a service manifest with the same name as the component, and will produce the following effect:
 ```diff
 --- a/compiled/echo-server/manifests/echo-server-bundle.yml
 +++ b/compiled/echo-server/manifests/echo-server-bundle.yml
@@ -210,6 +210,75 @@ which produces:
 +            successThreshold: 1
 +            timeoutSeconds: 3
 ```
+
+## Secrets and Config Maps
+
+Creating secrets and config is very simple with Kapitan, and the interface is very similar with minor differences.
+
+### Simple config
+
+```yaml
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          data:
+            echo-service.conf: 
+              value: |-
+                # A configuration file
+                example: true
+```
+
+Simply adding the above configuration, will immediately configure the component to mount the config map we have just defined:
+
+```diff
++          volumeMounts:
++            - mountPath: /opt/echo-service
++              name: config
++              readOnly: true
+       restartPolicy: Always
+       terminationGracePeriodSeconds: 30
++      volumes:
++        - configMap:
++            defaultMode: 420
++            name: echo-server
++          name: config
+```
+
+We can also observe that a configMap manifest was created. Again, the name is taken from the component:
+
+```yaml
+cat compiled/tutorial/manifests/echo-server-config.yml
+apiVersion: v1
+data:
+  echo-service.conf: '# A configuration file
+
+    example: true'
+kind: ConfigMap
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+  namespace: tutorial
+```
+
+### Templated config
+A more advanced way to create the configuration file, is to use an external `jinja` file as source:
+
+```yaml
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          data:
+            echo-service.conf:
+              template: 'components/echo-server/echo-server.conf.j2'
+              values:
+                example: true
+```
+
+with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.conf.j2) being a jinja template file. 
+
+As expected, we can inject any value from the inventory into the the file.
+
 
 
 
