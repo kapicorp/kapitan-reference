@@ -21,6 +21,9 @@ parameters:
             encoded_secret:
               value: my_secret
               b64_encode: true
+            better_secret:
+              value: ?{base64:targets/${target_name}/password||randomstr|base64}
+
       config_maps:
         config:
           mount: /opt/echo-service

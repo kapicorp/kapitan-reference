@@ -361,3 +361,20 @@ type: Opaque
 ```
 Note that, because the mount directive is missing, the secret will not be mounted automatically.
 
+Please review the generic way of Kapitan to manage secrets at [https://kapitan.dev/secrets/](https://kapitan.dev/secrets/) and [Secrets management with Kapitan](https://medium.com/kapitan-blog/secrets-management-with-kapitan-47a0476bab10)
+
+In summary, remember that you can summon the power of Google KMS (once setup) and use kapitan secrets like this:
+
+```yaml
+      secrets:
+        secret:
+          data:
+            encoded_secret:
+              value: my_secret
+              b64_encode: true
+            better_secret:
+              value: ?{gkms:targets/${target_name}/password||randomstr|base64}
+```
+
+which will generate an truly encrypted secret using Google KMS (other backends also available)
+
