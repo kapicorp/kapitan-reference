@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app: gke-pvm-killer
   name: gke-pvm-killer

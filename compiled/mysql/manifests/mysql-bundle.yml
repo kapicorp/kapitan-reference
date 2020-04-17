@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app: mysql
   name: mysql
