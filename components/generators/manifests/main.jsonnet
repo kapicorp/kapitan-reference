@@ -1,5 +1,5 @@
-local resources = import './resources.libjsonnet';
-local service_components = import './service_components.libjsonnet';
+local resources = import './resources.libsonnet';
+local service_components = import './service_components.libsonnet';
 local kap = import 'lib/kap.libsonnet';
 local p = kap.parameters;
 
