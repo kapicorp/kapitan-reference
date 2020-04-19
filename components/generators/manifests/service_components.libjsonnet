@@ -1,7 +1,7 @@
 local kap = import 'lib/kap.libjsonnet';
 local utils = kap.utils;
 local p = kap.parameters;
-local SCHEMA = import 'components/generators/manifests/schema.json';
+local SCHEMA = import 'components/generators/manifests/schema.libjsonnet';
 
 local fallback_service_config = utils.objectGet(p.generators.manifest, 'default_config', {});
 
@@ -18,11 +18,9 @@ local ServiceComponent = function(component_name, component_data)
   local all_defaults = utils.deepMerge(fallback_service_config, application_defaults);
   local component_data_with_defaults = utils.deepMerge(all_defaults, component_data);
 
-  local final_component_data = component_data_with_defaults
-                               {
-    name: component_name,
-  }
-  ;
+  local final_component_data = component_data_with_defaults {
+    name: utils.objectGet(component_data, 'name', component_name)
+  };
 
   local validation = kap.jsonschema(final_component_data, SCHEMA);
   assert validation.valid : 'Could not validate %s: %s' % [component_name, validation.reason];
