@@ -1,0 +1,7 @@
+classes:
+  - common
+  - components.mysql
+  - components.logstash
+
+parameters:
+  target_name: examples

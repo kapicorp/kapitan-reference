@@ -1,0 +1,33 @@
+parameters:
+  components:
+    logstash:
+      application: splunk
+      prefer_pods_in_different_nodes: true
+      prefer_pods_in_different_zones: true
+      replicas: 2
+      ports:
+        http:
+          container_port: 9600
+      healthcheck:
+        type: http
+        port: 9600
+        probes: ['readiness']
+        path: /
+        timeout_seconds: 3
+      image: eu.gcr.io/antha-images/logstash:7.5.1
+      config_maps:
+        config:
+          mount: /usr/share/logstash/config/
+          data:
+            logstash.yml:
+              template: components/logstash/templates/logstash.yml.j2 
+              values: {}
+            pipelines.yml:
+              template: components/logstash/templates/pipelines.yml.j2 
+              values: {}
+        pipelines:
+          mount: /usr/share/logstash/pipeline/
+          data:
+            example.conf:
+              template: components/logstash/templates/example.conf.j2
+              values: {}

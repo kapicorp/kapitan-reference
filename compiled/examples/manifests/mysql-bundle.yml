@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: mysql
+  name: mysql
+  namespace: examples
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mysql
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: ''
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: mysql
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-root-password
+                  name: mysql
+            - name: MYSQL_USER
+              value: ''
+          image: mysql:5.7.28
+          imagePullPolicy: IfNotPresent
+          name: mysql
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/mysql/conf.d/
+              name: config
+              readOnly: true
+            - mountPath: /var/lib/mysql
+              name: datadir
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: mysql
+          name: config
+        - name: secrets
+          secret:
+            defaultMode: 420
+            secretName: mysql
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        labels:
+          name: datadir
+        name: datadir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: mysql
+  name: mysql
+  namespace: examples
