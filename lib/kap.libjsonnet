@@ -72,8 +72,14 @@ kapitan + kube + {
                   },
                   topologyKey: topology_key,
                 },
-    }]}}}}}},
-  NodeAffinityPreferred(label, value, operator="In"): {
+              }],
+            },
+          },
+        },
+      },
+    },
+  },
+  NodeAffinityPreferred(label, value, operator='In'): {
     spec+: {
       template+: {
         spec+: {
@@ -88,7 +94,13 @@ kapitan + kube + {
                     values: [value],
                   }],
                 },
-    }]}}}}}},
+              }],
+            },
+          },
+        },
+      },
+    },
+  },
 
   IstioAnnotation(): {
     local istio = self,
@@ -134,7 +146,7 @@ kapitan + kube + {
       revisionHistoryLimit: utils.objectGet(p, 'revisionHistoryLimit', null),
     },
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
-    WithNodeAffinity(label, value, operator="In", enabled=true):: self + if enabled then $.NodeAffinityPreferred(label, value, operator) else {},
+    WithNodeAffinity(label, value, operator='In', enabled=true):: self + if enabled then $.NodeAffinityPreferred(label, value, operator) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
@@ -255,7 +267,7 @@ kapitan + kube + {
       [key]: if utils.objectGet(data[key], 'b64_encode', false) then
         std.base64(data[key].value)
       else if utils.objectGet(data[key], 'template', false) != false then
-        std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {})))
+        std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {})))
       else
         data[key].value
       for key in std.objectFields(data)
@@ -264,7 +276,7 @@ kapitan + kube + {
   K8sConfigMap(name, data): $.K8sCommon(name) + kube.ConfigMap(name) {
     data: {
       [key]: if utils.objectGet(data[key], 'template', false) != false then
-        kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {}))
+        kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {}))
       else
         data[key].value
       for key in std.objectFields(data)

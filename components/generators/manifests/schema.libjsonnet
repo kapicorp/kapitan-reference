@@ -1,35 +1,42 @@
 {
   type: 'object',
-  title: "manifest generator",
-  description: "Schema for Kapitan manifest generator",
+  title: 'manifest generator',
+  description: 'Schema for Kapitan manifest generator',
   required: ['name', 'image', 'type'],
   additionalProperties: false,
   properties: {
-    application: { 
-      description: "Associates this component to an application.",
-      type: 'string' 
+    application: {
+      description: 'Associates this component to an application.',
+      type: 'string',
     },
-    annotations: { 
-      description: "Annotations to pass to the workload",
-      type: 'object', additionalProperties: { type: 'string' } },
-    args: { 
-      description: "Args to pass to the workload",
-      type: 'array', items: { type: 'string' } },
-    command: { 
-      description: "command to pass to the workload",
-      type: 'array', items: { type: 'string' } },
-    config_maps: { 
-      description: "Config maps for the workload",
-      anyOf: [{type: 'null'}, {
+    annotations: {
+      description: 'Annotations to pass to the workload',
       type: 'object',
-      additionalProperties: { '$ref': '#/definitions/config' },
-    }]},
-    deployment_progress_deadline_seconds: { anyOf: [{type: 'null'}, { type: 'integer' }]},
+      additionalProperties: { type: 'string' },
+    },
+    args: {
+      description: 'Args to pass to the workload',
+      type: 'array',
+      items: { type: 'string' },
+    },
+    command: {
+      description: 'command to pass to the workload',
+      type: 'array',
+      items: { type: 'string' },
+    },
+    config_maps: {
+      description: 'Config maps for the workload',
+      anyOf: [{ type: 'null' }, {
+        type: 'object',
+        additionalProperties: { '$ref': '#/definitions/config' },
+      }],
+    },
+    deployment_progress_deadline_seconds: { anyOf: [{ type: 'null' }, { type: 'integer' }] },
     dns_policy: { type: 'string', enum: ['ClusterFirst'] },
     vpa: { type: 'string', enum: ['Off', 'Auto'] },
     enable_prometheus: { type: 'boolean' },
     pdb_min_available: { type: 'integer' },
-    env: { anyOf: [{type: 'null'}, { type: 'object' }]},
+    env: { anyOf: [{ type: 'null' }, { type: 'object' }] },
     healthcheck: {
       type: 'object',
       properties: {
@@ -60,18 +67,18 @@
       type: 'object',
       additionalProperties: { '$ref': '#/definitions/port_set' },
     },
-    secrets: { anyOf: [{type: 'null'}, {
+    secrets: { anyOf: [{ type: 'null' }, {
       type: 'object',
       additionalProperties: { '$ref': '#/definitions/secret' },
-    }]},
-    security: { anyOf: [{type: 'null'}, {
+    }] },
+    security: { anyOf: [{ type: 'null' }, {
       type: 'object',
       properties: {
         allow_privilege_escalation: { type: 'boolean' },
         user_id: { type: 'integer' },
       },
       additionalProperties: false,
-    }]},
+    }] },
     service: {
       type: 'object',
       properties: {
@@ -87,17 +94,17 @@
     prefer_pods_in_different_zones: { type: 'boolean' },
     prefer_pods_in_node_type: { type: 'string' },
     type: { type: 'string', enum: ['statefulset', 'deployment'] },
-    volume_claims: { type: 'object', additionalProperties: { '$ref': '#/definitions/volume_claim'}},
-    volume_mounts: { type: 'object', additionalProperties: { type: 'object'} },
-    volumes: { type: 'object', additionalProperties: { type: 'object'} }
-    
+    volume_claims: { type: 'object', additionalProperties: { '$ref': '#/definitions/volume_claim' } },
+    volume_mounts: { type: 'object', additionalProperties: { type: 'object' } },
+    volumes: { type: 'object', additionalProperties: { type: 'object' } },
+
   },
   definitions: {
     volume_claim: {
       type: 'object',
       properties: {
-        spec: { type: 'object' }
-      }
+        spec: { type: 'object' },
+      },
     },
     config: {
       type: 'object',
@@ -105,18 +112,18 @@
         data: {
           type: 'object',
           additionalProperties: {
-          type: 'object',
-          properties: {
-            value: { type: 'string' },
-            values: { type: 'object' },
-            template: { type: 'string'},
-            b64_encode: { type: 'boolean'}
-          },
-          additionalProperties: false
+            type: 'object',
+            properties: {
+              value: { type: 'string' },
+              values: { type: 'object' },
+              template: { type: 'string' },
+              b64_encode: { type: 'boolean' },
+            },
+            additionalProperties: false,
           },
         },
         items: { type: 'array', items: { type: 'string' } },
-        mount: { type: 'string' }
+        mount: { type: 'string' },
       },
       required: ['data'],
     },
@@ -126,18 +133,18 @@
         data: {
           type: 'object',
           additionalProperties: {
-          type: 'object',
-          properties: {
-            value: { type: 'string' },
-            values: { type: 'object' },
-            template: { type: 'string'},
-            b64_encode: { type: 'boolean'}
-          },
-          additionalProperties: false
+            type: 'object',
+            properties: {
+              value: { type: 'string' },
+              values: { type: 'object' },
+              template: { type: 'string' },
+              b64_encode: { type: 'boolean' },
+            },
+            additionalProperties: false,
           },
         },
         items: { type: 'array', items: { type: 'string' } },
-        mount: { type: 'string' }
+        mount: { type: 'string' },
       },
       required: ['data'],
     },
