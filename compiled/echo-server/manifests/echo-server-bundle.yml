@@ -22,18 +22,6 @@ spec:
       labels:
         app: echo-server
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - echo-server
-                topologyKey: kubernetes.io/hostname
-              weight: 1
       containers:
         - image: jmalloc/echo-server
           imagePullPolicy: IfNotPresent
@@ -69,14 +57,6 @@ spec:
           secret:
             defaultMode: 420
             secretName: echo-server
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: echo-server
-  name: echo-server
-  namespace: echo-server
 ---
 apiVersion: v1
 kind: Service

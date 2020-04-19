@@ -58,8 +58,12 @@ To update them, run:
 Dependency lib/kube.libjsonnet : already exists. Ignoring
 Dependency lib/spinnaker-pipeline.libjsonnet : already exists. Ignoring
 Dependency lib/spinnaker-application.libjsonnet : already exists. Ignoring
-Compiled echo-server (0.31s)
-Compiled mysql (0.37s)
+Compiled examples/gke-pvm-killer (0.36s)
+Compiled examples/postgres-proxy (0.37s)
+Compiled examples/echo-server (0.39s)
+Compiled examples/mysql (0.40s)
+Compiled examples/tutorial (0.31s)
+Compiled examples/examples (0.43s)
 ``` 
 
 ## Generators
@@ -88,6 +92,7 @@ To help you get started, please look at the following examples:
 |[gke-pvm-killer](inventory/classes/components/gke-pvm-killer.yml)| Example using [estafette-gke-preemptible-killer](https://github.com/estafette/estafette-gke-preemptible-killer)| [manifests](compiled/gke-pvm-killer/manifests)|
 |[postgres-proxy](inventory/classes/components/postgres-proxy.yml)| Example using [cloud-sql-proxy](https://github.com/GoogleCloudPlatform/cloudsql-proxy) to connect to a Cloud SQL Postgres instance| [manifests](compiled/postgres-proxy/manifests)|
 |[logstash](inventory/classes/components/logstash.yml)| Example of [Logstash](https://www.elastic.co/logstash) configuration | [manifests](compiled/examples/manifests)
+
 Please find the generated manifests in the [compiled](compiled) folder
 
 ### Request or submit your examples

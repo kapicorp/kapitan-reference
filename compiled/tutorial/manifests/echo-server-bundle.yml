@@ -22,18 +22,6 @@ spec:
       labels:
         app: echo-server
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - echo-server
-                topologyKey: kubernetes.io/hostname
-              weight: 1
       containers:
         - env:
             - name: KAPITAN_APPLICATION
@@ -72,14 +60,6 @@ spec:
           secret:
             defaultMode: 420
             secretName: echo-server
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: echo-server
-  name: echo-server
-  namespace: tutorial
 ---
 apiVersion: v1
 kind: Service

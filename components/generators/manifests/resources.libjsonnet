@@ -72,7 +72,7 @@ local p = kap.parameters;
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
     local container = $.Container(service_component, config_map_configs, secrets_configs);
     kap.K8sStatefulSet(name)
-    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
+    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithNamespace()
     .WithAnnotations(service_component.annotations)
     .WithContainer({ [service_component.name]: container })
@@ -94,7 +94,7 @@ local p = kap.parameters;
   Deployment(name, service_component, config_map_configs, secrets_configs)::
     local container = $.Container(service_component, config_map_configs, secrets_configs);
     kap.K8sDeployment(name)
-    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', true))
+    .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
     .WithNodeAffinity('synthace.com/node-type', utils.objectGet(service_component, 'prefer_pods_in_node_type', 'standard'), 'In', utils.objectHas(service_component, 'prefer_pods_in_node_type', false))
     .WithNamespace()
@@ -191,6 +191,5 @@ local p = kap.parameters;
     .WithBundled('sa', serviceAccount, has_service_account)
     .WithBundled('vpa', vpa, utils.objectHas(service_component, 'vpa', false))
     .WithBundled('pdb', pdb, utils.objectHas(service_component, 'pdb_min_available'))
-    .WithBundled('sa', serviceAccount)
     .WithBundled('service', service),
 }

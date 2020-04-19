@@ -3,7 +3,7 @@ local utils = kap.utils;
 local p = kap.parameters;
 local SCHEMA = import 'components/generators/manifests/schema.json';
 
-local fallback_service_config = p.generators.manifest.default_config;
+local fallback_service_config = utils.objectGet(p.generators.manifest, 'default_config', {});
 
 local default_config_by_app = {
   [app_name]: utils.objectGet(p.applications[app_name], 'component_defaults', {})

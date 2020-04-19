@@ -18,18 +18,6 @@ spec:
       labels:
         app: mysql
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - mysql
-                topologyKey: kubernetes.io/hostname
-              weight: 1
       containers:
         - env:
             - name: MYSQL_DATABASE
@@ -86,11 +74,3 @@ spec:
           requests:
             storage: 10Gi
         storageClassName: standard
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: mysql
-  name: mysql
-  namespace: examples
