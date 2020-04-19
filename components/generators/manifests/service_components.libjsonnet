@@ -1,7 +1,7 @@
-local kap = import 'lib/kap.libjsonnet';
+local kap = import 'lib/kap.libsonnet';
 local utils = kap.utils;
 local p = kap.parameters;
-local SCHEMA = import 'components/generators/manifests/schema.libjsonnet';
+local SCHEMA = import 'components/generators/manifests/schema.libsonnet';
 
 local fallback_service_config = utils.objectGet(p.generators.manifest, 'default_config', {});
 

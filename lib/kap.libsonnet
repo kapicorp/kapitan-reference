@@ -3,8 +3,8 @@
  */
 
 local kapitan = import 'lib/kapitan.libjsonnet';
-local kube = import 'lib/kube.libjsonnet';
-local utils = import 'lib/utils.libjsonnet';
+local kube = import 'lib/kube.libsonnet';
+local utils = import 'lib/utils.libsonnet';
 
 local inventory = kapitan.inventory();
 local p = inventory.parameters;

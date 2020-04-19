@@ -45,8 +45,8 @@ This repo already packs some important libraries that you will want to have when
 | [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet) | bitnami-labs kube library | [kube.yml](inventory/classes/kapitan/kube.yml) |
 | [sponnet](https://github.com/spinnaker/sponnet) | Jsonnet library specifically for Spinnaker | [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml)|
 | [manifests-generator](components/generators/manifests) | [Synthace](www.synthace.com) manifests generator | [generators/manifests.yml](inventory/classes/kapitan/generators/manifests.yml)|
-| [utils](lib/utils.libjsonnet) | helpful utilites ||
-| [kap](lib/kap.libjsonnet) | Kapitan boilerplate in one file ||
+| [utils](lib/utils.libsonnet) | helpful utilites ||
+| [kap](lib/kap.libsonnet) | Kapitan boilerplate in one file ||
 
 Kapitan allows you to manage external dependencies like the above libraries.
 For instance, in the  [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml) file, the "dependencies" directive tells Kapitan where to find the library.

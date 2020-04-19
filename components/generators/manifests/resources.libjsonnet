@@ -1,5 +1,4 @@
-local istio = import 'lib/istio.libjsonnet';
-local kap = import 'lib/kap.libjsonnet';
+local kap = import 'lib/kap.libsonnet';
 
 local utils = kap.utils;
 local p = kap.parameters;
