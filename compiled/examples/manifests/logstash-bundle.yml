@@ -78,11 +78,3 @@ spec:
             defaultMode: 420
             name: logstash-pipelines
           name: pipelines
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: logstash
-  name: logstash
-  namespace: examples

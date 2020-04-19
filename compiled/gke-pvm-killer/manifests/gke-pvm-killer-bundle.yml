@@ -22,18 +22,6 @@ spec:
       labels:
         app: gke-pvm-killer
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - gke-pvm-killer
-                topologyKey: kubernetes.io/hostname
-              weight: 1
       containers:
         - env:
             - name: DRAIN_TIMEOUT
@@ -84,11 +72,3 @@ spec:
               - key: service_account_file
                 path: service_account_file
             secretName: gke-pvm-killer
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: gke-pvm-killer
-  name: gke-pvm-killer
-  namespace: gke-pvm-killer

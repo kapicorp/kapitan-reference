@@ -27,18 +27,6 @@ spec:
         app: postgres-proxy
         tier: db
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - postgres-proxy
-                topologyKey: kubernetes.io/hostname
-              weight: 1
       containers:
         - args:
             - -instances=$(CLOUDSQL_INSTANCE_NAME)=tcp:0.0.0.0:5432
@@ -80,14 +68,6 @@ spec:
               - key: service_account_file
                 path: service_account_file
             secretName: postgres-proxy
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: postgres-proxy
-  name: postgres-proxy
-  namespace: postgres-proxy
 ---
 apiVersion: v1
 kind: Service
