@@ -1,9 +1,7 @@
 parameters:
   components:
     echo-server:
-      replicas: 3
-      vpa: Auto
-      pdb_min_available: 2
+      application: microservices
       image: jmalloc/echo-server
       service:
         type: LoadBalancer
@@ -17,3 +15,24 @@ parameters:
         http:
           service_port: 80
           container_port: 8080
+      secrets:
+        secret:
+          data:
+            encoded_secret:
+              value: my_secret
+              b64_encode: true
+            better_secret:
+              value: ?{base64:targets/${target_name}/password||randomstr|base64}
+
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          items:
+            - echo-service.conf
+          data:
+            echo-service.conf:
+              template: 'components/echo-server/echo-server.conf.j2'
+              values:
+                example: true
+            simple_config:
+              value: "not mounted"

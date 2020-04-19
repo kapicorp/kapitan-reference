@@ -6,7 +6,7 @@ metadata:
   labels:
     app: mysql
   name: mysql
-  namespace: mysql
+  namespace: examples
 spec:
   replicas: 1
   selector:
@@ -93,4 +93,4 @@ metadata:
   labels:
     name: mysql
   name: mysql
-  namespace: mysql
+  namespace: examples

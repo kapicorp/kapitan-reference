@@ -4,7 +4,8 @@ parameters:
     manifest:
       default_config:
         type: deployment
-        annotations: {}
+        annotations:
+          "manifests.kapicorp.com/generated": "true"
 
   kapitan:
     compile:

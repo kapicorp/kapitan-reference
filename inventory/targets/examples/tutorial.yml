@@ -1,0 +1,8 @@
+classes:
+  - common
+  - applications.microservices
+  - components.echo-server
+
+
+parameters:
+  target_name: tutorial

@@ -4,14 +4,14 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: echo-server
-  name: echo-server
-  namespace: echo-server
+    app: logstash
+  name: logstash
+  namespace: examples
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: echo-server
+      app: logstash
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        app: echo-server
+        app: logstash
     spec:
       affinity:
         podAntiAffinity:
@@ -31,67 +31,58 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - echo-server
+                        - logstash
                 topologyKey: kubernetes.io/hostname
               weight: 1
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - logstash
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+              weight: 1
       containers:
-        - image: jmalloc/echo-server
+        - image: eu.gcr.io/antha-images/logstash:7.5.1
           imagePullPolicy: IfNotPresent
-          name: echo-server
+          name: logstash
           ports:
-            - containerPort: 8080
+            - containerPort: 9600
               name: http
               protocol: TCP
           readinessProbe:
             failureThreshold: 3
             httpGet:
-              path: /_health
-              port: http
+              path: /
+              port: 9600
               scheme: HTTP
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
           volumeMounts:
-            - mountPath: /opt/echo-service
+            - mountPath: /usr/share/logstash/config/
               name: config
+              readOnly: true
+            - mountPath: /usr/share/logstash/pipeline/
+              name: pipelines
               readOnly: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
         - configMap:
             defaultMode: 420
-            items:
-              - key: echo-service.conf
-                path: echo-service.conf
-            name: echo-server
+            name: logstash-config
           name: config
-        - name: secret
-          secret:
+        - configMap:
             defaultMode: 420
-            secretName: echo-server
+            name: logstash-pipelines
+          name: pipelines
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    name: echo-server
-  name: echo-server
-  namespace: echo-server
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: echo-server
-  name: echo-server
-  namespace: echo-server
-spec:
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
-  selector:
-    app: echo-server
-  sessionAffinity: None
-  type: LoadBalancer
+    name: logstash
+  name: logstash
+  namespace: examples
