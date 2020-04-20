@@ -45,6 +45,7 @@ This repo already packs some important libraries that you will want to have when
 | [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet) | bitnami-labs kube library | [kube.yml](inventory/classes/kapitan/kube.yml) |
 | [sponnet](https://github.com/spinnaker/sponnet) | Jsonnet library specifically for Spinnaker | [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml)|
 | [manifests-generator](components/generators/manifests) | [Synthace](www.synthace.com) manifests generator | [generators/manifests.yml](inventory/classes/kapitan/generators/manifests.yml)|
+| [ingresses-generator](components/generators/ingresses) | [Synthace](www.synthace.com) ingresses generator | [generators/ingresses.yml](inventory/classes/kapitan/generators/ingresses.yml)|
 | [utils](lib/utils.libsonnet) | helpful utilites ||
 | [kap](lib/kap.libsonnet) | Kapitan boilerplate in one file ||
 
@@ -73,11 +74,11 @@ powerful idea to simplify the management your setup.
 
 We will release initially generators for kubernetes manifests, terraform and spinnaker pipelines.
 
-For now, only the manifest generator is available
+For now, only the `manifests` and `ingresses` generators are available
 
 ### Manifests generator
 
-The manifests generator allows you to quickly generate Kubernetes manifests from a much simpler yaml configuration.
+The `manifests` generator allows you to quickly generate Kubernetes manifests from a much simpler yaml configuration.
 
 The aim for this approach is to allow you to cover the vast majority of the needs you will have for your components.
 More complex scenarios can also be achieved by expanding the library, or implementing your own template.
@@ -95,6 +96,21 @@ To help you get started, please look at the following examples:
 
 Please find the generated manifests in the [compiled](compiled) folder
 
+[Documentation](components/generators/manifests/README.md)
+
+### Ingresses generator
+
+The `ingresses` generator adds to the `manifests` generator the ability to easily define ingress resources.
+
+### Examples
+To help you get started, please look at the following examples:
+
+| source | description | output |
+| ------ | ----------- | ------ |
+|[echo-server](inventory/classes/components/echo-server.yml)| Defining ingress paths using [echo-server](https://github.com/jmalloc/echo-server) | [manifests](compiled/echo-server/manifests)|
+
+[Documentation](components/generators/ingresses/README.md)
+
 ### Request or submit your examples
 We have used this generator extensively, and we know it covers the majority of the use cases.
 If you want a specific example, please let us know (or submit your PR)
@@ -102,4 +118,4 @@ If you want a specific example, please let us know (or submit your PR)
 By adding more example we will be able to stress test the library to make sure we really satisfy all the most common use cases.
 
 
-[Documentation](components/generators/manifests/README.md)
+
