@@ -2,6 +2,7 @@ classes:
   - kapitan.kube
   - kapitan.spinnaker
   - kapitan.generators.manifests
+  - kapitan.generators.ingresses
 
 parameters:
   scripts: []
