@@ -102,21 +102,6 @@ kapitan + kube + {
     },
   },
 
-  IstioAnnotation(): {
-    local istio = self,
-    IstioInject:: true,
-    IstioRewrite:: true,
-    [if 'istio' in inventory.parameters && inventory.parameters.istio.enabled == true then 'spec']+: {
-      template+: {
-        metadata+: {
-          annotations+: {
-            'sidecar.istio.io/inject': std.toString(istio.IstioInject),
-            'sidecar.istio.io/rewriteAppHTTPProbers': std.toString(istio.IstioRewrite),
-          },
-        },
-      },
-    },
-  },
   K8sCommon(name): {
     WithAnnotations(annotations):: self + { metadata+: { annotations+: annotations } },
     WithLabels(labels):: self + { metadata+: { labels: labels } },
@@ -166,7 +151,6 @@ kapitan + kube + {
     spec+: {
       revisionHistoryLimit: utils.objectGet(p, 'revisionHistoryLimit', null),
     },
-    EnableIstio(enabled=true):: self + if enabled then $.IstioAnnotation() else {},
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
@@ -281,5 +265,11 @@ kapitan + kube + {
         data[key].value
       for key in std.objectFields(data)
     },
+  },
+  K8sIngress(name): $.K8sCommon(name) + kube.Ingress(name) {
+    spec+: { rules+: []},
+    WithDefaultBackend(backend):: self + { spec+: { backend: backend }},
+    WithRules(rules):: self + { spec+: { rules+: rules }},
+    WithPaths(paths):: self + { spec+: { rules+: [ { http+: { paths+: paths } }] }},
   },
 }

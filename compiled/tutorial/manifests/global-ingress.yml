@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    name: global
+  name: global
+  namespace: tutorial
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              serviceName: echo-server
+              servicePort: 80
+            path: /echo/*

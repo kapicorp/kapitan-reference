@@ -1,0 +1,8 @@
+parameters:
+  kapitan:
+    compile:
+      - output_path: manifests
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - components/generators/ingresses/main.jsonnet
