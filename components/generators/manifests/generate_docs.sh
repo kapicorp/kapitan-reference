@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR=$(dirname ${BASH_SOURCE[0]})
 pushd $DIR
-jsonnet schema.libjsonnet > schema.json
-bootprint json-schema schema.json target
+jsonnet schemas.libsonnet -m .
+bootprint json-schema service_component target
 popd

@@ -1,7 +1,7 @@
 local kap = import 'lib/kap.libsonnet';
 local utils = kap.utils;
 local p = kap.parameters;
-local SCHEMA = import 'components/generators/manifests/schema.libsonnet';
+local SCHEMAS = import 'components/generators/manifests/schemas.libsonnet';
 
 local fallback_service_config = utils.objectGet(p.generators.manifest, 'default_config', {});
 
@@ -22,7 +22,7 @@ local ServiceComponent = function(component_name, component_data)
     name: utils.objectGet(component_data, 'name', component_name)
   };
 
-  local validation = kap.jsonschema(final_component_data, SCHEMA);
+  local validation = kap.jsonschema(final_component_data, SCHEMAS.service_component);
   assert validation.valid : 'Could not validate %s: %s' % [component_name, validation.reason];
 
   final_component_data
