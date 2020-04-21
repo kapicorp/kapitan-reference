@@ -4,7 +4,7 @@ set -o nounset -o pipefail -o noclobber -o errexit
 DIR=$(dirname ${BASH_SOURCE[0]})
 ABS_PATH=$(cd "${DIR}"; pwd)
 
-KAPITAN_IMAGE=deepmind/kapitan:0.27.0-ci
+KAPITAN_IMAGE=deepmind/kapitan:0.27.2-ci
 
 if hash kapitan 
 then
