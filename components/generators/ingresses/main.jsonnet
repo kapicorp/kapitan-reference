@@ -14,6 +14,6 @@ local ingresses = utils.objectGet(p, 'ingresses', {});
     .WithPaths(utils.objectGet(ingress, 'paths', {}))
   for ingress_name in std.objectFields(ingresses)
 } + {
-# see https://github.com/deepmind/kapitan/issues/443
-fixme: {}
+  # see https://github.com/deepmind/kapitan/issues/491
+  fixme: {}
 }
