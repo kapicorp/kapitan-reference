@@ -1,6 +1,5 @@
 # gke-pvm-killer 
 
-|  |  |
 | --- | --- |
 | *Target* | gke-pvm-killer |
 | *Project*     | `example-gce-project`|

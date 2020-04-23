@@ -1,6 +1,5 @@
 # tutorial 
 
-|  |  |
 | --- | --- |
 | *Target* | tutorial |
 | *Project*     | `not defined`|

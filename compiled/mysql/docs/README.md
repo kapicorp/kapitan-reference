@@ -1,6 +1,5 @@
 # mysql 
 
-|  |  |
 | --- | --- |
 | *Target* | mysql |
 | *Project*     | `not defined`|

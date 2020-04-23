@@ -1,6 +1,5 @@
 # echo-server 
 
-|  |  |
 | --- | --- |
 | *Target* | echo-server |
 | *Project*     | `not defined`|

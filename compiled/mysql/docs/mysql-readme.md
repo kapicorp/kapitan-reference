@@ -1,11 +1,10 @@
 # Documentation for mysql on mysql
 
-|||
 | --- | ---- |
-| *Component name* | mysql |
-| *Application* | Not Defined |
-| Replicas | 1 |
-| Image | mysql:5.7.28 |
+| **Component name** | mysql |
+| **Application** | Not Defined |
+| **Replicas** | 1 |
+| **Image** | mysql:5.7.28 |
 
 | ENV | VALUE |
 | --- | -----  |

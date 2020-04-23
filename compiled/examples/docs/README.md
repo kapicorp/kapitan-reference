@@ -1,6 +1,5 @@
 # examples 
 
-|  |  |
 | --- | --- |
 | *Target* | examples |
 | *Project*     | `not defined`|
