@@ -1,20 +1,28 @@
 #!/bin/bash
+# Import kubernetes cluster configuration using gcloud
+# Usage: ./import_kubernetes_clusters [ gcp_project [..] ]
 
+set -e
 GCLOUD="gcloud"
 GCLOUD_CLUSTER_LIST="${GCLOUD} container clusters list"
-GCLOUD_PROJECTS_LIST=$(${GCLOUD} projects list --format="value(project_id)")
 
-for PROJECT in ${GCLOUD_PROJECTS_LIST}
+PROJECTS_LIST=()
+if [[ ${#@} -gt 0 ]]
+then
+  PROJECTS_LIST+=${@}
+else
+  PROJECTS_LIST+=$(${GCLOUD} projects list --format="value(project_id)")
+fi
+
+for PROJECT in ${PROJECTS_LIST}
 do
 
+set +e
 read -r -d '' VAR << EOM
 {
-  "classes": [ "kapitan.templates.gke" ],
+  "classes": [ "kapitan.templates.kubernetes" ],
   "parameters": {
     "google_project": "${PROJECT}",
-    "federation": {
-      "clusters": ["\${\(.name)}"]
-    },
     "cluster": "\${\(.name)}",
     (.name) : {
       "name": .name,
