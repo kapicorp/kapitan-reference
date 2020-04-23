@@ -6,13 +6,13 @@ ABS_PATH=$(cd "${DIR}"; pwd)
 
 KAPITAN_IMAGE=deepmind/kapitan:0.27.2-ci
 
-if hash kapitan 
+if hash kapitan 2> /dev/null
 then
   KAPITAN_BINARY=kapitan
 else
   KAPITAN_BINARY="docker run --rm -i --network host -w /src \
-   -v ./:/src:delegated \
-   $KAPITAN_IMAGE"
+   -v $PWD:/src:delegated \
+   $KAPITAN_IMAGE kapitan"
 fi
 
 exec ${KAPITAN_BINARY} "$@"
