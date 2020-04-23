@@ -1,5 +1,6 @@
 # Documentation for echo-server on echo-server
 
+|||
 | --- | ---- |
 | **Component name** | echo-server |
 | **Application** | microservices |

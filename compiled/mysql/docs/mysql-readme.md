@@ -1,5 +1,6 @@
 # Documentation for mysql on mysql
 
+|||
 | --- | ---- |
 | **Component name** | mysql |
 | **Application** | Not Defined |

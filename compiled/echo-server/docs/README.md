@@ -1,10 +1,11 @@
 # echo-server 
 
+|||
 | --- | --- |
-| *Target* | echo-server |
-| *Project*     | `not defined`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `echo-server` |
+| **Target** | echo-server |
+| **Project**     | `not defined`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `echo-server` |
 
 ## Components
 | Inventory definition | Documentation |

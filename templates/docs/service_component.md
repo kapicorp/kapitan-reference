@@ -1,5 +1,6 @@
 # Documentation for {{service_component.name}} on {{inventory.target_name}}
 
+|||
 | --- | ---- |
 | **Component name** | {{service_component.name}} |
 | **Application** | {{service_component.application | default('Not Defined')}} |

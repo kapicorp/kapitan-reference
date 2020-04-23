@@ -1,5 +1,6 @@
 # Documentation for postgres-proxy on postgres-proxy
 
+|||
 | --- | ---- |
 | **Component name** | postgres-proxy |
 | **Application** | Not Defined |

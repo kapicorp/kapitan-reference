@@ -1,10 +1,11 @@
 # examples 
 
+|||
 | --- | --- |
-| *Target* | examples |
-| *Project*     | `not defined`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `examples` |
+| **Target** | examples |
+| **Project**     | `not defined`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `examples` |
 
 ## Components
 | Inventory definition | Documentation |

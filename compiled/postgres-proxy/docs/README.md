@@ -1,10 +1,11 @@
 # postgres-proxy 
 
+|||
 | --- | --- |
-| *Target* | postgres-proxy |
-| *Project*     | `example-project`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `postgres-proxy` |
+| **Target** | postgres-proxy |
+| **Project**     | `example-project`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `postgres-proxy` |
 
 ## Components
 | Inventory definition | Documentation |

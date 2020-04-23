@@ -1,5 +1,6 @@
 # Documentation for logstash on examples
 
+|||
 | --- | ---- |
 | **Component name** | logstash |
 | **Application** | splunk |

@@ -1,10 +1,11 @@
 # gke-pvm-killer 
 
+|||
 | --- | --- |
-| *Target* | gke-pvm-killer |
-| *Project*     | `example-gce-project`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `gke-pvm-killer` |
+| **Target** | gke-pvm-killer |
+| **Project**     | `example-gce-project`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `gke-pvm-killer` |
 
 ## Components
 | Inventory definition | Documentation |

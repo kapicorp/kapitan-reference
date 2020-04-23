@@ -1,10 +1,11 @@
 # tutorial 
 
+|||
 | --- | --- |
-| *Target* | tutorial |
-| *Project*     | `not defined`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `tutorial` |
+| **Target** | tutorial |
+| **Project**     | `not defined`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `tutorial` |
 
 ## Components
 | Inventory definition | Documentation |

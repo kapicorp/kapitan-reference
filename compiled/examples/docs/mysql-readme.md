@@ -1,5 +1,6 @@
 # Documentation for mysql on examples
 
+|||
 | --- | ---- |
 | **Component name** | mysql |
 | **Application** | Not Defined |

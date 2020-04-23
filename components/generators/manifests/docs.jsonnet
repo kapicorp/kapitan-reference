@@ -7,7 +7,7 @@ local manifest_set_by_service = {
     local service_component = service_components[service_name];
     local jinja_context = { service_component: service_component,
                             inventory: p};
-  { 'readme.md': kap.jinja2_template('templates/docs/service_component.md.j2', jinja_context)}
+  { 'readme.md': kap.jinja2_template('templates/docs/service_component.md', jinja_context)}
   for service_name in std.objectFields(service_components)
 };
 

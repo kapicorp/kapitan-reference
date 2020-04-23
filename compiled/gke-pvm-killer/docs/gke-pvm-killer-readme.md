@@ -1,5 +1,6 @@
 # Documentation for gke-pvm-killer on gke-pvm-killer
 
+|||
 | --- | ---- |
 | **Component name** | gke-pvm-killer |
 | **Application** | Not Defined |

@@ -1,10 +1,11 @@
 # mysql 
 
+|||
 | --- | --- |
-| *Target* | mysql |
-| *Project*     | `not defined`|
-| *Cluster*     |  'Not defined'  |
-| *Namespace*   | `mysql` |
+| **Target** | mysql |
+| **Project**     | `not defined`|
+| **Cluster**     |  'Not defined'  |
+| **Namespace**   | `mysql` |
 
 ## Components
 | Inventory definition | Documentation |
