@@ -1,0 +1,11 @@
+classes:
+  - common
+
+parameters:
+  target_name: global
+  kapitan:
+    compile:
+    - output_path: .
+      input_type: jinja2
+      input_paths:
+      - templates/docs/global/

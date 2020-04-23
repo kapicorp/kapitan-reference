@@ -19,4 +19,7 @@ local manifest_groups = [
   for service_name in std.objectFields(manifest_set_by_service)
 ];
 
-kap.utils.mergeObjects(manifest_groups)
+kap.utils.mergeObjects(manifest_groups) + {
+  # see https://github.com/deepmind/kapitan/issues/491
+  fixme: {}
+}
