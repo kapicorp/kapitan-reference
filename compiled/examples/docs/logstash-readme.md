@@ -1,9 +1,9 @@
 # Documentation for logstash on examples
 
-| Configuration ||
+|||
 | --- | ---- |
-| Component name | logstash |
-| Application | splunk |
+| *Component name* | logstash |
+| *Application* | splunk |
 | Replicas | 2 |
 | Image | eu.gcr.io/antha-images/logstash:7.5.1 |
 

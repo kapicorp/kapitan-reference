@@ -1,6 +1,6 @@
 # examples 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | examples |
 | *Project*     | `not defined`|

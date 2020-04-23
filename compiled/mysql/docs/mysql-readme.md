@@ -1,9 +1,9 @@
 # Documentation for mysql on mysql
 
-| Configuration ||
+|||
 | --- | ---- |
-| Component name | mysql |
-| Application | Not Defined |
+| *Component name* | mysql |
+| *Application* | Not Defined |
 | Replicas | 1 |
 | Image | mysql:5.7.28 |
 

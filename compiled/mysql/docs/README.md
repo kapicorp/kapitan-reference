@@ -1,6 +1,6 @@
 # mysql 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | mysql |
 | *Project*     | `not defined`|

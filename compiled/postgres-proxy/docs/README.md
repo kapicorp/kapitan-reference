@@ -1,6 +1,6 @@
 # postgres-proxy 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | postgres-proxy |
 | *Project*     | `example-project`|

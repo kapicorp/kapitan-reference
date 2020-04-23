@@ -1,6 +1,6 @@
 # echo-server 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | echo-server |
 | *Project*     | `not defined`|

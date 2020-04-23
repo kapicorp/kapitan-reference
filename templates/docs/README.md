@@ -1,7 +1,7 @@
 {% set p = inventory.parameters %}
 # {{p.target_name}} 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | {{ p.target_name }} |
 | *Project*     | `{{p.google_project | default('not defined')}}`|

@@ -1,9 +1,9 @@
 # Documentation for postgres-proxy on postgres-proxy
 
-| Configuration ||
+|||
 | --- | ---- |
-| Component name | postgres-proxy |
-| Application | Not Defined |
+| *Component name* | postgres-proxy |
+| *Application* | Not Defined |
 | Replicas | 3 |
 | Image | gcr.io/cloudsql-docker/gce-proxy:1.16 |
 

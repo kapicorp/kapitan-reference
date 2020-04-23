@@ -1,9 +1,9 @@
 # Documentation for gke-pvm-killer on gke-pvm-killer
 
-| Configuration ||
+|||
 | --- | ---- |
-| Component name | gke-pvm-killer |
-| Application | Not Defined |
+| *Component name* | gke-pvm-killer |
+| *Application* | Not Defined |
 | Replicas | 1 |
 | Image | estafette/estafette-gke-preemptible-killer:1.2.5 |
 

@@ -1,6 +1,6 @@
 # tutorial 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | tutorial |
 | *Project*     | `not defined`|

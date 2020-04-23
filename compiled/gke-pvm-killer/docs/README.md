@@ -1,6 +1,6 @@
 # gke-pvm-killer 
 
-| KEY | VALUE |
+|  |  |
 | --- | --- |
 | *Target* | gke-pvm-killer |
 | *Project*     | `example-gce-project`|
