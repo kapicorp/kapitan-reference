@@ -10,6 +10,6 @@
 ## Components
 | Inventory definition | Documentation |
 | --- | --- |
-|[gke-pvm-killer.yml](../../inventory/classes/components/gke-pvm-killer.yml)| [gke-pvm-killer](docs/gke-pvm-killer-readme.md)|
+|[gke-pvm-killer.yml](../../inventory/classes/components/gke-pvm-killer.yml)| [gke-pvm-killer](gke-pvm-killer-readme.md)|
 
 ## Deployments

@@ -10,6 +10,6 @@
 ## Components
 | Inventory definition | Documentation |
 | --- | --- |
-|[echo-server.yml](../../inventory/classes/components/echo-server.yml)| [echo-server](docs/echo-server-readme.md)|
+|[echo-server.yml](../../inventory/classes/components/echo-server.yml)| [echo-server](echo-server-readme.md)|
 
 ## Deployments

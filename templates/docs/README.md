@@ -13,7 +13,7 @@
 | Inventory definition | Documentation |
 | --- | --- |
 {% for component in p.components|sort %}
-|[{{component}}.yml](../../inventory/classes/components/{{component}}.yml)| [{{component}}](docs/{{component}}-readme.md)|
+|[{{component}}.yml](../../inventory/classes/components/{{component}}.yml)| [{{component}}]({{component}}-readme.md)|
 {% endfor %}
 {% endif %}
 

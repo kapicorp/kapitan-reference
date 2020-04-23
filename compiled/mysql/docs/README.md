@@ -10,6 +10,6 @@
 ## Components
 | Inventory definition | Documentation |
 | --- | --- |
-|[mysql.yml](../../inventory/classes/components/mysql.yml)| [mysql](docs/mysql-readme.md)|
+|[mysql.yml](../../inventory/classes/components/mysql.yml)| [mysql](mysql-readme.md)|
 
 ## Deployments

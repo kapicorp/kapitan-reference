@@ -10,6 +10,6 @@
 ## Components
 | Inventory definition | Documentation |
 | --- | --- |
-|[postgres-proxy.yml](../../inventory/classes/components/postgres-proxy.yml)| [postgres-proxy](docs/postgres-proxy-readme.md)|
+|[postgres-proxy.yml](../../inventory/classes/components/postgres-proxy.yml)| [postgres-proxy](postgres-proxy-readme.md)|
 
 ## Deployments
