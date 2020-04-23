@@ -6,5 +6,5 @@ then
     INPUT=$( cat )
 fi
 {% set i = inventory.parameters %}
-KUBECTL="kubectl --context {{i.target_name}}-{{i.cluster.name}}"
+KUBECTL="kubectl --context {{i.target_name}}"
 echo "${INPUT}" | ${KUBECTL} "$@"

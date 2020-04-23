@@ -5,5 +5,5 @@ if [[ -p /dev/stdin ]]
 then
     INPUT=$( cat )
 fi
-KUBECTL="kubectl --context tutorial-kind"
+KUBECTL="kubectl --context tutorial"
 echo "${INPUT}" | ${KUBECTL} "$@"
