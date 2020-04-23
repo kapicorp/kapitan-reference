@@ -1,9 +1,9 @@
 | *Target* |
 | -------- | 
-|[echo-server](../echo-server/README.md)|
-|[examples](../examples/README.md)|
-|[gke-pvm-killer](../gke-pvm-killer/README.md)|
-|[global](../global/README.md)|
-|[mysql](../mysql/README.md)|
-|[postgres-proxy](../postgres-proxy/README.md)|
-|[tutorial](../tutorial/README.md)|
+|[echo-server](../echo-server/docs/README.md)|
+|[examples](../examples/docs/README.md)|
+|[gke-pvm-killer](../gke-pvm-killer/docs/README.md)|
+|[global](../global/docs/README.md)|
+|[mysql](../mysql/docs/README.md)|
+|[postgres-proxy](../postgres-proxy/docs/README.md)|
+|[tutorial](../tutorial/docs/README.md)|
