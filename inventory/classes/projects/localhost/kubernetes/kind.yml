@@ -1,0 +1,10 @@
+classes:
+- kapitan.templates.kubernetes
+- kapitan.templates.kind
+parameters:
+  cluster: ${kind}
+  kind:
+    name: kind
+    type: kind
+    id: kind-kind
+    user: kind-kind
