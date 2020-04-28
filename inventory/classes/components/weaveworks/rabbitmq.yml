@@ -1,0 +1,13 @@
+parameters:
+  components:
+    rabbit-mq:
+      application: sock-shop
+      image: rabbitmq:3.6.8-management
+      replicas: 2
+      service:
+        type: ClusterIP
+      ports:
+        management:
+          service_port: 15672
+        rabbitmq:
+          service_port: 5672

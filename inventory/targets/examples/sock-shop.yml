@@ -1,0 +1,7 @@
+classes:
+  - common
+  - applications.sock-shop
+
+
+parameters:
+  target_name: sock-shop

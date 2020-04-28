@@ -1,0 +1,9 @@
+parameters:
+  components:
+    session-db:
+      image: redis:alpine
+      service:
+        type: ClusterIP
+      ports:
+        redis:
+          service_port: 6379

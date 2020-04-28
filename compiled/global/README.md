@@ -6,4 +6,5 @@
 |[global](../global/docs/README.md)|
 |[mysql](../mysql/docs/README.md)|
 |[postgres-proxy](../postgres-proxy/docs/README.md)|
+|[sock-shop](../sock-shop/docs/README.md)|
 |[tutorial](../tutorial/docs/README.md)|

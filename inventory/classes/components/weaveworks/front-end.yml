@@ -1,0 +1,18 @@
+parameters:
+  components:
+    frontend:
+      application: sock-shop
+      image: weaveworksdemos/front-end:0.3.12
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: 8079
+      healthcheck:
+        type: http
+        port: http
+        probes: ['readiness', 'liveness']
+        path: /health
+        timeout_seconds: 3
+      env:
+        SESSION_REDIS: 'true'

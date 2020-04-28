@@ -1,0 +1,18 @@
+parameters:
+  components:
+    catalogue:
+      application: sock-shop
+      image: weaveworksdemos/catalogue:0.3.5
+      command: ['/app']
+      args: ['-port=80']
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: 80
+      healthcheck:
+        type: http
+        port: http
+        probes: ['readiness', 'liveness']
+        path: /health
+        timeout_seconds: 3

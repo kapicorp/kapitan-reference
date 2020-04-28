@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: carts-db
+    app.kubernetes.io/part-of: sock-shop
+  name: carts-db
+  namespace: sock-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: carts-db
+      app.kubernetes.io/part-of: sock-shop
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: carts-db
+        app.kubernetes.io/part-of: sock-shop
+    spec:
+      containers:
+        - image: mongo
+          imagePullPolicy: IfNotPresent
+          name: carts-db
+          ports:
+            - containerPort: 27017
+              name: mongo
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: carts-db
+    app.kubernetes.io/part-of: sock-shop
+  name: carts-db
+  namespace: sock-shop
+spec:
+  ports:
+    - name: mongo
+      port: 27017
+      protocol: TCP
+      targetPort: mongo
+  selector:
+    app: carts-db
+    app.kubernetes.io/part-of: sock-shop
+  sessionAffinity: None
+  type: ClusterIP

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: queue-master
+    app.kubernetes.io/part-of: sock-shop
+  name: queue-master
+  namespace: sock-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-master
+      app.kubernetes.io/part-of: sock-shop
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: queue-master
+        app.kubernetes.io/part-of: sock-shop
+    spec:
+      containers:
+        - env:
+            - name: JAVA_OPTS
+              value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC
+                -Djava.security.egd=file:/dev/urandom
+            - name: ZIPKIN
+              value: zipkin.jaeger.svc.cluster.local
+          image: weaveworksdemos/queue-master:0.3.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          name: queue-master
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: queue-master
+    app.kubernetes.io/part-of: sock-shop
+  name: queue-master
+  namespace: sock-shop
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: queue-master
+    app.kubernetes.io/part-of: sock-shop
+  sessionAffinity: None
+  type: ClusterIP

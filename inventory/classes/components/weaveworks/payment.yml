@@ -1,0 +1,16 @@
+parameters:
+  components:
+    payment:
+      application: sock-shop
+      image: weaveworksdemos/payment:0.4.3
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: 80
+      healthcheck:
+        type: http
+        port: http
+        probes: ['readiness', 'liveness']
+        path: /health
+        timeout_seconds: 3
