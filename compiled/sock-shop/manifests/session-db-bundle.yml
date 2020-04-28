@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: session-db
+  name: session-db
+  namespace: sock-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: session-db
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: session-db
+    spec:
+      containers:
+        - image: redis:alpine
+          imagePullPolicy: IfNotPresent
+          name: session-db
+          ports:
+            - containerPort: 6379
+              name: redis
+              protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: session-db
+  name: session-db
+  namespace: sock-shop
+spec:
+  ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+  selector:
+    app: session-db
+  sessionAffinity: None
+  type: ClusterIP

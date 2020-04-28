@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: rabbit-mq
+    app.kubernetes.io/part-of: sock-shop
+  name: rabbit-mq
+  namespace: sock-shop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rabbit-mq
+      app.kubernetes.io/part-of: sock-shop
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: rabbit-mq
+        app.kubernetes.io/part-of: sock-shop
+    spec:
+      containers:
+        - image: rabbitmq:3.6.8-management
+          imagePullPolicy: IfNotPresent
+          name: rabbit-mq
+          ports:
+            - containerPort: 15672
+              name: management
+              protocol: TCP
+            - containerPort: 5672
+              name: rabbitmq
+              protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: rabbit-mq
+    app.kubernetes.io/part-of: sock-shop
+  name: rabbit-mq
+  namespace: sock-shop
+spec:
+  ports:
+    - name: management
+      port: 15672
+      protocol: TCP
+      targetPort: management
+    - name: rabbitmq
+      port: 5672
+      protocol: TCP
+      targetPort: rabbitmq
+  selector:
+    app: rabbit-mq
+    app.kubernetes.io/part-of: sock-shop
+  sessionAffinity: None
+  type: ClusterIP

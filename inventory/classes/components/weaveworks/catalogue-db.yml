@@ -1,0 +1,13 @@
+parameters:
+  components:
+    catalogue-db:
+      application: sock-shop
+      image: weaveworksdemos/catalogue-db:0.3.0
+      service:
+        type: ClusterIP
+      ports:
+        mysql:
+          service_port: 3306
+      env:
+        MYSQL_ROOT_PASSWORD: ?{plain:targets/${target_name}/mysql_password||randomstr}
+        MYSQL_DATABASE: socksdb
