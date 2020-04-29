@@ -16,8 +16,8 @@ spec:
       app.kubernetes.io/part-of: sock-shop
   strategy:
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
     type: RollingUpdate
   template:
     metadata:
