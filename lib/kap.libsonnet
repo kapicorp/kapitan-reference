@@ -136,7 +136,7 @@ kapitan + kube + {
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
     WithReplicas(replicas):: self + { spec+: { replicas: replicas } },
-    WithRollingUpdateStrategy():: self + { spec+: { strategy: { type: 'RollingUpdate', rollingUpdate: { maxSurge: 1, maxUnavailable: 1 } } } },
+    WithUpdateStrategy(strategy):: self + { spec+: { strategy+: strategy } },
     WithPrometheusScrapeAnnotation(enabled=true, port=6060):: self + if enabled then { spec+: { template+: { metadata+: { annotations+: {
       'prometheus.io/port': std.toString(port),
       'prometheus.io/scrape': std.toString(enabled),
@@ -154,6 +154,7 @@ kapitan + kube + {
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
+    WithUpdateStrategy(strategy):: self + { spec+: { updateStrategy+: strategy } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
     WithReplicas(replicas):: self + { spec+: { replicas: replicas } },
     WithPrometheusScrapeAnnotation(enabled=true, port=6060):: self + if enabled then { spec+: { template+: { metadata+: { annotations+: {

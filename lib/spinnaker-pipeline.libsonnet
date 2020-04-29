@@ -106,6 +106,7 @@
     withAddress(address):: self + { address: address },
     withCC(cc):: self + { cc: cc },
     withLevel(level):: self + { level: level },
+    withPublisherName(publisherName):: self + { publisherName: publisherName },
     // Custom notification messages are optional
     withWhen(when, message=false):: self + {
       when+: [when],
@@ -238,7 +239,7 @@
           type: 'expression',
         }],
       },
-      withCloudProvider(provider):: self + { cloudProvider: provider },
+      withCloudProvider(provider):: self + {cloudProvider: provider},
       withClusterSize(cluster, comparison, credentials, expected, moniker, regions, failPipeline):: self + {
         preconditions+: [{
           context: {

@@ -63,6 +63,7 @@
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
       service_account: { type: 'boolean' },
+      update_strategy: { type: 'object' },
       min_ready_seconds: { type: 'integer' },
       ports: {
         type: 'object',
