@@ -11,3 +11,12 @@ parameters:
           service_port: 15672
         rabbitmq:
           service_port: 5672
+      security_context:
+        capabilities:
+          drop:
+            - all
+          add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            - DAC_OVERRIDE

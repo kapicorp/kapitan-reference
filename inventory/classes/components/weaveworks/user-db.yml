@@ -7,6 +7,14 @@ parameters:
       ports:
         mongo:
           service_port: 27017
+      security_context:
+        capabilities:
+          drop:
+            all
+          add:
+            - CHOWN
+            - SETGID
+            - SETUID
       volume_mounts:
         tmp-volume:
           mountPath: /tmp

@@ -57,6 +57,8 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          securityContext:
+            readOnlyRootFilesystem: true
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume

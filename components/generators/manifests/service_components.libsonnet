@@ -15,8 +15,8 @@ local ServiceComponent = function(component_name, component_data)
 
   local application = utils.objectGet(component_data, 'application', '');
   local application_defaults = utils.objectGet(default_config_by_app, application, {});
-  local all_defaults = utils.deepMerge(fallback_service_config, application_defaults);
-  local component_data_with_defaults = utils.deepMerge(all_defaults, component_data);
+  local all_defaults = std.mergePatch(fallback_service_config, application_defaults);
+  local component_data_with_defaults = std.mergePatch(all_defaults, component_data);
 
   local final_component_data = component_data_with_defaults {
     name: utils.objectGet(component_data, 'name', component_name)

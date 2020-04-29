@@ -38,6 +38,8 @@ spec:
             - containerPort: 3306
               name: mysql
               protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---

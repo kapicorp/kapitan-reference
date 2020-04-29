@@ -30,6 +30,14 @@ spec:
             - containerPort: 6379
               name: redis
               protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - CHOWN
+                - SETGID
+                - SETUID
+              drop:
+                - all
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
