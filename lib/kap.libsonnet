@@ -190,6 +190,7 @@ kapitan + kube + {
     WithArgs(args):: self + { args: args },
     WithImage(image):: self + { image_:: image },
     WithEnvs(envs):: self + { env_: envs },
+    WithSecurityContext(security_context):: self + { securityContext +: security_context },
     WithMount(mount, enabled=true):: self + if enabled then { volumeMounts_+: mount } else {},
     WithAllowPrivilegeEscalation(bool, enabled=true):: self + if enabled then { securityContext+: { allowPrivilegeEscalation: bool } } else {},
     WithRunAsUser(user, enabled=true):: self + if enabled then { securityContext+: { runAsUser: user } } else {},
