@@ -33,6 +33,15 @@ spec:
             - containerPort: 27017
               name: mongo
               protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - CHOWN
+                - SETGID
+                - SETUID
+              drop:
+                - all
+            readOnlyRootFilesystem: true
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume

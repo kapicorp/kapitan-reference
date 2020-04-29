@@ -5,6 +5,14 @@ parameters:
       image: mongo
       service:
         type: ClusterIP
+      security_context:
+        capabilities:
+          drop:
+            - all
+          add:
+            - CHOWN
+            - SETGID
+            - SETUID
       ports:
         mongo:
           service_port: 27017

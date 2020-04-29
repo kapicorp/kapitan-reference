@@ -8,11 +8,17 @@ parameters:
       ports:
         http:
           service_port: 8079
+      security_context:
+        runAsNonRoot: true
+        runAsUser: 10001
+        capabilities:
+          drop:
+            - all
       healthcheck:
         type: http
         port: http
         probes: ['readiness', 'liveness']
-        path: /health
+        path: /
         timeout_seconds: 3
       env:
         SESSION_REDIS: 'true'
