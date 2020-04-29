@@ -64,6 +64,7 @@
       name: { type: 'string' },
       service_account: { type: 'boolean' },
       update_strategy: { type: 'object' },
+      security_context: { type: 'object' },
       min_ready_seconds: { type: 'integer' },
       ports: {
         type: 'object',

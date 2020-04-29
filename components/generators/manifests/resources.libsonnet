@@ -37,6 +37,7 @@ local p = kap.parameters;
     .WithPorts(utils.objectGet(service_component, 'ports', {}))
     .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', { probes: [] }), service_component.healthcheck)
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
+    .WithSecurityContext(utils.objectGet(service_component, 'security_context', {}))
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
     .WithMount({ [secret_name]: {
       [if 'subPath' in secrets_configs[secret_name].config then 'subPath']: secrets_configs[secret_name].config.subPath,
