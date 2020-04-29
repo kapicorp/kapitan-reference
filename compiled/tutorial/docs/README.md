@@ -4,7 +4,7 @@
 | --- | --- |
 | **Target** | tutorial |
 | **Project**     | `not defined`|
-| **Cluster**     |  'Not defined'  |
+| **Cluster**     |  kind  |
 | **Namespace**   | `tutorial` |
 
 ## Components
