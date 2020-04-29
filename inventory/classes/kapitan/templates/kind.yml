@@ -1,3 +1,2 @@
 parameters:
-  scripts:
-    - templates/scripts/kind
+  scripts: []

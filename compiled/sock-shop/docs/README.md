@@ -4,7 +4,7 @@
 | --- | --- |
 | **Target** | sock-shop |
 | **Project**     | `not defined`|
-| **Cluster**     |  'Not defined'  |
+| **Cluster**     |  kind  |
 | **Namespace**   | `sock-shop` |
 
 ## Components
