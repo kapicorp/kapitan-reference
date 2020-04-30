@@ -13,9 +13,9 @@ on:
 jobs:
   # This workflow contains a single jb called "build"
   build:
-    runs-on: deepmind/kapitan:ci
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
     - name: Kapitan compile
-      run: kapitan compile
+      uses: ademaria/kapitan/kapitan-compile-action@v1
