@@ -18,4 +18,4 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Kapitan compile
-      uses: ademaria/kapitan/kapitan-compile-action@v1
+      uses: ademariag/kapitan/kapitan-compile-action@v1
