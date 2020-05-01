@@ -50,11 +50,15 @@
               { type: 'integer' },
             ],
           },
+          command: {
+            type: 'array',
+            items: {type: 'string'},
+          },
           probes: {
             type: 'array',
             items: { type: 'string', enum: ['readiness', 'liveness'] },
           },
-          type: { type: 'string' },
+          type: { type: 'string', enum: ['command', 'http', 'tcp'] },
           timeout_seconds: { type: 'integer' },
         },
         additionalProperties: false,

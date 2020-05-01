@@ -84,7 +84,7 @@ spec:
       targetPort: http
     - name: vpn
       port: 1194
-      protocol: UDP
+      protocol: TCP
       targetPort: vpn
     - name: webui
       port: 443

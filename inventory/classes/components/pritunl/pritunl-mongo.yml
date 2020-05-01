@@ -2,25 +2,35 @@ parameters:
   components:
     pritunl-mongo:
       type: statefulset
-      image: mongo
+      image: docker.io/bitnami/mongodb:4.2.6-debian-10-r23
       service:
         type: ClusterIP
+      service_account: true
       security_context:
-        capabilities:
-          drop:
-            - all
-          add:
-            - CHOWN
-            - SETGID
-            - SETUID
+        runAsNonRoot: true
+        runAsUser: 1001
       ports:
         mongo:
           service_port: 27017
+      env:
+        MONGODB_ROOT_PASSWORD:
+          secretKeyRef:
+            key: mongodb-root-password
+        MONGODB_ENABLE_IPV6: no
+        MONGODB_DISABLE_SYSTEM_LOG: no
+        MONGODB_SYSTEM_LOG_VERBOSITY: 0
+        MONGODB_ENABLE_DIRECTORY_PER_DB: no
+        MONGODB_USERNAME: ${pritunl:auth:username}
+        MONGODB_PASSWORD: ${pritunl:auth:password}
+        MONGODB_DATABASE: ${pritunl:database:name}
       healthcheck:
-        type: tcp
-        port: mongo
+        type: command
+        command:
+          - mongo
+          - --eval
+          - "db.adminCommand('ping')"
         probes: ['readiness', 'liveness']
-        timeout_seconds: 3
+        timeout_seconds: 5
       volume_mounts:
         datadir:
           mountPath: /bitnami/mongodb
@@ -32,3 +42,8 @@ parameters:
             resources:
               requests: 
                 storage: 10Gi
+      secrets:
+        secrets:
+          data:
+            mongodb-root-password: 
+              value: ?{plain:targets/${target_name}/mongodb_password||randomstr|base64}
