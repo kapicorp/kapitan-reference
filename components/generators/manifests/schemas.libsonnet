@@ -43,6 +43,7 @@
         properties: {
           enabled: { type: 'boolean' },
           path: { type: 'string' },
+          scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
           port: {
             oneOf: [
               { type: 'string' },

@@ -1,0 +1,4 @@
+classes:
+  - common
+  - components.pritunl.pritunl
+  - components.pritunl.pritunl-mongo
