@@ -23,10 +23,7 @@ spec:
         app: pritunl
     spec:
       containers:
-        - env:
-            - name: MONGO_HOST
-              value: pritunl-mongo
-          image: alledm/pritunl
+        - image: alledm/pritunl
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3
@@ -87,7 +84,7 @@ spec:
       targetPort: http
     - name: vpn
       port: 1194
-      protocol: TCP
+      protocol: UDP
       targetPort: vpn
     - name: webui
       port: 443

@@ -205,6 +205,7 @@
           container_port: { type: 'integer' },
           node_port: { type: 'integer' },
           service_port: { type: 'integer' },
+          protocol: { type: 'string', enum: ['UDP', 'TCP']}
         },
         additionalProperties: false,
       },

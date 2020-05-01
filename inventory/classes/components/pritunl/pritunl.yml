@@ -3,13 +3,12 @@ parameters:
     pritunl:
       image: alledm/pritunl
       replicas: 1
-      env:
-        MONGO_HOST: pritunl-mongo
       ports:
         http:
           service_port: 80
         vpn:
           service_port: 1194
+          protocol: UDP
         webui:
           service_port: 443
       healthcheck:

@@ -7,6 +7,3 @@
 | **Replicas** | 1 |
 | **Image** | alledm/pritunl |
 
-| ENV | VALUE |
-| --- | -----  |
-|MONGO_HOST | pritunl-mongo|

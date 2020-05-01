@@ -118,8 +118,8 @@ kapitan + kube + {
       {
         port_info:: ports[port_name],
         name: port_name,
-        port: self.port_info.service_port,
-        protocol: 'TCP',
+        port: utils.objectGet(self.port_info, 'service_port'),
+        protocol: utils.objectGet(self.port_info, 'protocol', 'TCP'),
         nodePort: utils.objectGet(self.port_info, 'node_port'),
         targetPort: port_name,
       }
