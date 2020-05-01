@@ -1,4 +1,13 @@
 parameters:
+
+  pritunl:
+    database: 
+      name: pritunl
+      connection_string: mongodb://${pritunl:auth:username}:${pritunl:auth:password}@pritunl-mongo:27017/${pritunl:database:name}
+    auth:
+      username: pritunl
+      password: ?{plain:targets/${target_name}/pritunl_password||randomstr}
+
   components:
     pritunl:
       image: alledm/pritunl
@@ -8,7 +17,6 @@ parameters:
           service_port: 80
         vpn:
           service_port: 1194
-          protocol: UDP
         webui:
           service_port: 443
       healthcheck:
@@ -36,5 +44,5 @@ parameters:
                   "log_path": "/var/log/pritunl.log",
                   "temp_path": "/tmp/pritunl_%r",
                   "local_address_interface": "auto",
-                  "mongodb_uri": "mongodb://pritunl-mongo:27017/pritunl"
+                  "mongodb_uri": "${pritunl:database:connection_string}"
                 }

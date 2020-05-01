@@ -4,7 +4,7 @@
 | --- | --- |
 | **Target** | pritunl |
 | **Project**     | `not defined`|
-| **Cluster**     |  'Not defined'  |
+| **Cluster**     |  kind  |
 | **Namespace**   | `pritunl` |
 
 ## Components
