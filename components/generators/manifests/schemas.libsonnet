@@ -43,6 +43,7 @@
         properties: {
           enabled: { type: 'boolean' },
           path: { type: 'string' },
+          scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
           port: {
             oneOf: [
               { type: 'string' },
@@ -204,6 +205,7 @@
           container_port: { type: 'integer' },
           node_port: { type: 'integer' },
           service_port: { type: 'integer' },
+          protocol: { type: 'string', enum: ['UDP', 'TCP']}
         },
         additionalProperties: false,
       },

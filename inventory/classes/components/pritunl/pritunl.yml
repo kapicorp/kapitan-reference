@@ -1,0 +1,40 @@
+parameters:
+  components:
+    pritunl:
+      image: alledm/pritunl
+      replicas: 1
+      ports:
+        http:
+          service_port: 80
+        vpn:
+          service_port: 1194
+          protocol: UDP
+        webui:
+          service_port: 443
+      healthcheck:
+        type: http
+        scheme: HTTPS
+        path: /
+        port: webui
+        probes: ['readiness', 'liveness']
+        timeout_seconds: 3
+      service:
+        type: LoadBalancer
+      security_context:
+        privileged: true
+      config_maps:
+        config:
+          mount: /etc/pritunl.conf
+          subPath: pritunl.conf
+          data:
+            pritunl.conf: 
+              value: |-
+                {
+                  "debug": false,
+                  "bind_addr": "0.0.0.0",
+                  "port": 443,
+                  "log_path": "/var/log/pritunl.log",
+                  "temp_path": "/tmp/pritunl_%r",
+                  "local_address_interface": "auto",
+                  "mongodb_uri": "mongodb://pritunl-mongo:27017/pritunl"
+                }

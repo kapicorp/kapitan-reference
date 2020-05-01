@@ -3,3 +3,4 @@ classes:
 
 parameters:
   namespace: ${target_name}
+  target_name: ${_reclass_:name:short}
