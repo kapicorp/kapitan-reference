@@ -21,5 +21,10 @@ parameters:
         input_type: jsonnet
         output_type: yaml
         input_paths: ${manifests}
+      - output_path: pre-deploy
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - components/pre-deploy/main.jsonnet
     vars:
       target: ${target_name}
