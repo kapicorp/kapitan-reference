@@ -243,10 +243,7 @@ kapitan + kube + {
 
     data_digest:: std.md5(std.toString(data_resolved)),
     metadata+: {
-      name: if version_secrets then '%s-%s' % [name, std.substr(secret.data_digest, 0, 8)] else name,
-      annotations+: {
-        'sealedsecrets.bitnami.com/managed': 'true',
-      },
+      name: if version_secrets then '%s-%s' % [name, std.substr(secret.data_digest, 0, 8)] else name
     },
     short_name:: name,
     data: {
