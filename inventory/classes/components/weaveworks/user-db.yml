@@ -10,7 +10,7 @@ parameters:
       security_context:
         capabilities:
           drop:
-            all
+            - all
           add:
             - CHOWN
             - SETGID

@@ -4,10 +4,11 @@ parameters:
       application: sock-shop
       image: weaveworksdemos/front-end:0.3.12
       service:
-        type: ClusterIP
+        type: LoadBalancer
       ports:
         http:
-          service_port: 8079
+          service_port: 80
+          container_port: 8079
       security_context:
         runAsNonRoot: true
         runAsUser: 10001
