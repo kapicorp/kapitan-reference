@@ -9,13 +9,13 @@ parameters:
         mongo:
           service_port: 27017
       security_context:
-        runAsNonRoot: true
-        runAsUser: 10001
         capabilities:
           drop:
             - all
           add:
-            - NET_BIND_SERVICE
+            - CHOWN
+            - SETGID
+            - SETUID
       volume_mounts:
         tmp-volume:
           mountPath: /tmp

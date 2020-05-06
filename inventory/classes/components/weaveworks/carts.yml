@@ -21,6 +21,7 @@ parameters:
         port: http
         probes: ['readiness', 'liveness']
         path: /health
+        initialDelaySeconds: 120
         timeout_seconds: 3
       env:
         ZIPKIN: zipkin.jaeger.svc.cluster.local

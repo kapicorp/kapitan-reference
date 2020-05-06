@@ -3,7 +3,7 @@
  */
 
 local kapitan = import 'lib/kapitan.libjsonnet';
-local kube = import 'lib/kube.libsonnet';
+local kube = import 'lib/kube-platforms.libsonnet';
 local utils = import 'lib/utils.libsonnet';
 
 local inventory = kapitan.inventory();
@@ -33,6 +33,7 @@ local HealthCheck = function(healthcheck_config) if utils.objectGet(healthcheck_
   failureThreshold: 3,
   periodSeconds: 10,
   successThreshold: 1,
+  initialDelaySeconds: utils.objectGet(healthcheck_config, 'initialDelaySeconds'),
   timeoutSeconds: utils.objectGet(healthcheck_config, 'timeout_seconds', 1),
   [if healthcheck_config.type == 'command' then 'exec']: {
     command: healthcheck_config.command,
@@ -270,5 +271,9 @@ kapitan + kube + {
     WithDefaultBackend(backend):: self + { spec+: { backend: backend }},
     WithRules(rules):: self + { spec+: { rules+: rules }},
     WithPaths(paths):: self + { spec+: { rules+: [ { http+: { paths+: paths } }] }},
+  },
+  K8sGKEManagedCertificate(name): $.K8sCommon(name) + kube.gke.ManagedCertificate(name) {
+    spec+: { rules+: []},
+    WithDomains(domains):: self + { spec+: { domains+: domains }},
   },
 }

@@ -3,6 +3,8 @@ parameters:
     catalogue-db:
       application: sock-shop
       image: weaveworksdemos/catalogue-db:0.3.0
+      security_context:
+        readOnlyRootFilesystem: false
       service:
         type: ClusterIP
       ports:

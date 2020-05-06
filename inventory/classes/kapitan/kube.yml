@@ -4,3 +4,6 @@ parameters:
       - type: https
         source: https://raw.githubusercontent.com/bitnami-labs/kube-libsonnet/master/kube.libsonnet
         output_path: lib/kube.libsonnet
+      - type: https
+        source: https://raw.githubusercontent.com/bitnami-labs/kube-libsonnet/master/kube-platforms.libsonnet
+        output_path: lib/kube-platforms.libsonnet

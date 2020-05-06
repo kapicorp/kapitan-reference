@@ -36,7 +36,8 @@ spec:
                 - CHOWN
                 - SETGID
                 - SETUID
-              drop: all
+              drop:
+                - all
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume

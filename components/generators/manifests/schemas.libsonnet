@@ -60,6 +60,7 @@
           },
           type: { type: 'string', enum: ['command', 'http', 'tcp'] },
           timeout_seconds: { type: 'integer' },
+          initialDelaySeconds: { anyOf: [{ type: 'null' }, { type: 'integer'}]}
         },
         additionalProperties: false,
         required: ['type', 'probes'],

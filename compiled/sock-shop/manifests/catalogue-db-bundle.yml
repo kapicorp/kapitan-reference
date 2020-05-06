@@ -39,7 +39,7 @@ spec:
               name: mysql
               protocol: TCP
           securityContext:
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
