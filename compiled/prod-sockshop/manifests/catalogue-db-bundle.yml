@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: catalogue-db
+    app.kubernetes.io/part-of: sock-shop
+  name: catalogue-db
+  namespace: prod-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalogue-db
+      app.kubernetes.io/part-of: sock-shop
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: catalogue-db
+        app.kubernetes.io/part-of: sock-shop
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: socksdb
+            - name: MYSQL_ROOT_PASSWORD
+              value: 64MnOIqcXhO5yY5EETJsh6flWQYTmQ-mziB7MAgrMW8
+          image: weaveworksdemos/catalogue-db:0.3.0
+          imagePullPolicy: IfNotPresent
+          name: catalogue-db
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: catalogue-db
+    app.kubernetes.io/part-of: sock-shop
+  name: catalogue-db
+  namespace: prod-sockshop
+spec:
+  ports:
+    - name: mysql
+      port: 3306
+      protocol: TCP
+      targetPort: mysql
+  selector:
+    app: catalogue-db
+    app.kubernetes.io/part-of: sock-shop
+  sessionAffinity: None
+  type: ClusterIP

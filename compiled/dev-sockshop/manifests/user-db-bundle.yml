@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: user-db
+  name: user-db
+  namespace: dev-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-db
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: user-db
+    spec:
+      containers:
+        - image: weaveworksdemos/user-db:0.3.0
+          imagePullPolicy: IfNotPresent
+          name: user-db
+          ports:
+            - containerPort: 27017
+              name: mongo
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - CHOWN
+                - SETGID
+                - SETUID
+              drop:
+                - all
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: tmp-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: user-db
+  name: user-db
+  namespace: dev-sockshop
+spec:
+  ports:
+    - name: mongo
+      port: 27017
+      protocol: TCP
+      targetPort: mongo
+  selector:
+    app: user-db
+  sessionAffinity: None
+  type: ClusterIP

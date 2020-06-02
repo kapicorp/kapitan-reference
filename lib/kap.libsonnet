@@ -269,8 +269,8 @@ kapitan + kube + {
   K8sIngress(name): $.K8sCommon(name) + kube.Ingress(name) {
     spec+: { rules+: []},
     WithDefaultBackend(backend):: self + { spec+: { backend: backend }},
-    WithRules(rules):: self + { spec+: { rules+: rules }},
-    WithPaths(paths):: self + { spec+: { rules+: [ { http+: { paths+: paths } }] }},
+    WithRules(rules):: self + if std.length(rules)>0 then { spec+: { rules+: rules }} else {},
+    WithPaths(paths):: self + if std.length(paths)>0 then { spec+: { rules+: [ { http+: { paths+: paths } }] }} else {},
   },
   K8sGKEManagedCertificate(name): $.K8sCommon(name) + kube.gke.ManagedCertificate(name) {
     spec+: { rules+: []},
