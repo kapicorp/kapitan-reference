@@ -38,6 +38,7 @@
       enable_prometheus: { type: 'boolean' },
       pdb_min_available: { type: 'integer' },
       env: { anyOf: [{ type: 'null' }, { type: 'object' }] },
+      cluster_role: { anyOf: [{ type: 'null' }, { type: 'object' }] },
       healthcheck: {
         type: 'object',
         properties: {
@@ -60,7 +61,10 @@
           },
           type: { type: 'string', enum: ['command', 'http', 'tcp'] },
           timeout_seconds: { type: 'integer' },
-          initialDelaySeconds: { anyOf: [{ type: 'null' }, { type: 'integer'}]}
+          initial_delay_seconds: { type: 'integer' },
+          failure_threshold: { type: 'integer' },
+          success_threshold: { type: 'integer' },
+          period_seconds: { type: 'integer' },
         },
         additionalProperties: false,
         required: ['type', 'probes'],
@@ -68,7 +72,17 @@
       image: { type: 'string' },
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
-      service_account: { type: 'boolean' },
+      service_account: { anyOf: [{ type: 'null' }, { 
+        type: 'object', 
+        properties: {
+          name: {type: 'string'},
+          create: {type: 'boolean'},
+          enabled: {type: 'boolean'},
+          annotations: { type: 'object', additionalValues: { type: 'string' } },
+        },
+        additionalProperties: false,
+        }]
+      },
       update_strategy: { type: 'object' },
       security_context: { type: 'object' },
       min_ready_seconds: { type: 'integer' },

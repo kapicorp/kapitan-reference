@@ -57,6 +57,7 @@ spec:
               path: /
               port: 9600
               scheme: HTTP
+            initialDelaySeconds: 0
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3

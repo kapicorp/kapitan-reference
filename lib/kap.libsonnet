@@ -30,10 +30,10 @@ local loadRefFile = function(potential_ref_tag)
 local version_secrets = utils.objectGet(p, 'version_secrets', false);
 
 local HealthCheck = function(healthcheck_config) if utils.objectGet(healthcheck_config, 'enabled', true) then {
-  failureThreshold: 3,
-  periodSeconds: 10,
-  successThreshold: 1,
-  initialDelaySeconds: utils.objectGet(healthcheck_config, 'initialDelaySeconds'),
+  failureThreshold: utils.objectGet(healthcheck_config, 'failure_threshold', 3),
+  periodSeconds: utils.objectGet(healthcheck_config, 'period_seconds', 10),
+  successThreshold: utils.objectGet(healthcheck_config, 'sucess_threshold', 1),
+  initialDelaySeconds: utils.objectGet(healthcheck_config, 'initial_delay_seconds', 0),
   timeoutSeconds: utils.objectGet(healthcheck_config, 'timeout_seconds', 1),
   [if healthcheck_config.type == 'command' then 'exec']: {
     command: healthcheck_config.command,
@@ -47,6 +47,13 @@ local HealthCheck = function(healthcheck_config) if utils.objectGet(healthcheck_
     port: utils.objectGet(healthcheck_config, 'port', 80),
   },
 };
+
+local ClusterRole = function(cluster_role) if utils.objectGet(cluster_role, 'rbac_role', true) then {
+  rules: {
+
+  },
+};
+
 
 kapitan + kube + {
   inventory: inventory,
@@ -144,7 +151,7 @@ kapitan + kube + {
     } } } } } else {},
     WithDNSPolicy(policy):: self + { spec+: { template+: { spec+: { dnsPolicy: policy } } } },
     WithRestartPolicy(policy):: self + { spec+: { template+: { spec+: { restartPolicy: policy } } } },
-    WithServiceAccountName(serviceAccountName, enabled):: self + if enabled then { spec+: { template+: { spec+: { serviceAccountName: serviceAccountName } } } } else {},
+    WithServiceAccountName(sa):: self + if utils.objectGet(sa, 'enabled', false) then { spec+: { template+: { spec+: { serviceAccountName: utils.objectGet(sa, 'name', name) } } } } else {},
     WithVolume(volume, enabled=true):: self + if enabled then { spec+: { template+: { spec+: { volumes_+: volume } } } } else {},
   },
 
@@ -164,7 +171,7 @@ kapitan + kube + {
     } } } } } else {},
     WithDNSPolicy(policy):: self + { spec+: { template+: { spec+: { dnsPolicy: policy } } } },
     WithRestartPolicy(policy):: self + { spec+: { template+: { spec+: { restartPolicy: policy } } } },
-    WithServiceAccountName(serviceAccountName, enabled):: self + if enabled then { spec+: { template+: { spec+: { serviceAccountName: serviceAccountName } } } } else {},
+    WithServiceAccountName(sa):: self + if utils.objectGet(sa, 'enabled', false) then { spec+: { template+: { spec+: { serviceAccountName: utils.objectGet(sa, 'name', name) } } } } else {},
     WithVolume(volume, enabled=true):: self + if enabled then { spec+: { template+: { spec+: { volumes_+: volume } } } } else {},
     WithVolumeClaimTemplates(vct, enabled=true):: self + if enabled then { spec+: { volumeClaimTemplates_+: vct } } else {},
   },
@@ -181,7 +188,16 @@ kapitan + kube + {
   },
 
   K8sServiceAccount(name): $.K8sCommon(name) + kube.ServiceAccount(name) + {
-    WithImagePullSecrets(secrets):: self + { imagePullSecrets+: secrets },
+    WithImagePullSecrets(secrets, enabled=true):: self + if enabled then { imagePullSecrets+: [secrets] } else {},
+  },
+
+  K8sClusterRole(name): $.K8sCommon(name) + kube.ClusterRole(name) + {
+    WithRules(rules):: self + { rules+: rules },
+  },
+
+  K8sClusterRoleBinding(name): $.K8sCommon(name) + kube.ClusterRoleBinding(name) + {
+    WithSubjects(subjects):: self + { subjects+: subjects },
+    WithRoleRef(roleRef):: self + { roleRef+: roleRef },
   },
 
   K8sContainer(name, service_component, secrets_configs): kube.Container(name) {
@@ -191,7 +207,7 @@ kapitan + kube + {
     WithArgs(args):: self + { args: args },
     WithImage(image):: self + { image_:: image },
     WithEnvs(envs):: self + { env_: envs },
-    WithSecurityContext(security_context):: self + { securityContext +: security_context },
+    WithSecurityContext(security_context):: self + { securityContext+: security_context },
     WithMount(mount, enabled=true):: self + if enabled then { volumeMounts_+: mount } else {},
     WithAllowPrivilegeEscalation(bool, enabled=true):: self + if enabled then { securityContext+: { allowPrivilegeEscalation: bool } } else {},
     WithRunAsUser(user, enabled=true):: self + if enabled then { securityContext+: { runAsUser: user } } else {},
@@ -244,7 +260,7 @@ kapitan + kube + {
 
     data_digest:: std.md5(std.toString(data_resolved)),
     metadata+: {
-      name: if version_secrets then '%s-%s' % [name, std.substr(secret.data_digest, 0, 8)] else name
+      name: if version_secrets then '%s-%s' % [name, std.substr(secret.data_digest, 0, 8)] else name,
     },
     short_name:: name,
     data: {
@@ -267,13 +283,13 @@ kapitan + kube + {
     },
   },
   K8sIngress(name): $.K8sCommon(name) + kube.Ingress(name) {
-    spec+: { rules+: []},
-    WithDefaultBackend(backend):: self + { spec+: { backend: backend }},
-    WithRules(rules):: self + if std.length(rules)>0 then { spec+: { rules+: rules }} else {},
-    WithPaths(paths):: self + if std.length(paths)>0 then { spec+: { rules+: [ { http+: { paths+: paths } }] }} else {},
+    spec+: { rules+: [] },
+    WithDefaultBackend(backend):: self + { spec+: { backend: backend } },
+    WithRules(rules):: self + if std.length(rules) > 0 then { spec+: { rules+: rules } } else {},
+    WithPaths(paths):: self + if std.length(paths) > 0 then { spec+: { rules+: [{ http+: { paths+: paths } }] } } else {},
   },
   K8sGKEManagedCertificate(name): $.K8sCommon(name) + kube.gke.ManagedCertificate(name) {
-    spec+: { rules+: []},
-    WithDomains(domains):: self + { spec+: { domains+: domains }},
+    spec+: { rules+: [] },
+    WithDomains(domains):: self + { spec+: { domains+: domains } },
   },
 }

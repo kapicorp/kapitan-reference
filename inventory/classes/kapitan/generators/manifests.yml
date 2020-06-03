@@ -3,6 +3,8 @@ parameters:
     manifest:
       default_config:
         type: deployment
+        service_account:
+          create: false
         annotations:
           "manifests.kapicorp.com/generated": "true"
 
