@@ -39,6 +39,7 @@ spec:
               path: /_health
               port: http
               scheme: HTTP
+            initialDelaySeconds: 0
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3

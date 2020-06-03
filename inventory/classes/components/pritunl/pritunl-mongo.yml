@@ -5,7 +5,9 @@ parameters:
       image: docker.io/bitnami/mongodb:4.2.6-debian-10-r23
       service:
         type: ClusterIP
-      service_account: true
+      service_account:
+        enabled: true
+        create: true
       security_context:
         runAsNonRoot: true
         runAsUser: 1001

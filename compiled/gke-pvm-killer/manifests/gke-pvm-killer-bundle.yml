@@ -38,6 +38,7 @@ spec:
               path: /liveness
               port: liveness
               scheme: HTTP
+            initialDelaySeconds: 0
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
@@ -55,6 +56,7 @@ spec:
               path: /liveness
               port: liveness
               scheme: HTTP
+            initialDelaySeconds: 0
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3

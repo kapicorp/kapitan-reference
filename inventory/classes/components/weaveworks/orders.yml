@@ -14,7 +14,7 @@ parameters:
         probes: ['readiness', 'liveness']
         path: /health
         timeout_seconds: 3
-        initialDelaySeconds: 120
+        initial_delay_seconds: 120
       security_context:
         runAsNonRoot: true
         runAsUser: 10001

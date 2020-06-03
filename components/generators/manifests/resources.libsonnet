@@ -85,7 +85,7 @@ local p = kap.parameters;
     .WithReplicas(utils.objectGet(service_component, 'replicas', 1))
     .WithRestartPolicy(utils.objectGet(service_component, 'restart_policy', 'Always'))
     .WithUpdateStrategy(utils.objectGet(service_component, 'update_strategy', {}))
-    .WithServiceAccountName(service_component.name, utils.objectHas(service_component, 'service_account'))
+    .WithServiceAccountName(utils.objectGet(service_component, 'service_account', {}))
     .WithVolume(utils.objectGet(service_component, 'volumes', {}))
     .WithVolume({ [config_map_name]: $.ConfigVolume(config_map_configs[config_map_name].manifest, config_map_configs[config_map_name].config.items) for config_map_name in std.objectFields(config_map_configs) }, config_map_configs != null)
     .WithVolume({ [secret_name]: $.SecretVolume(secrets_configs[secret_name].manifest, utils.objectGet(secrets_configs[secret_name].config, 'items', [])) for secret_name in std.objectFields(secrets_configs) }, secrets_configs != null)
@@ -109,7 +109,7 @@ local p = kap.parameters;
     .WithReplicas(utils.objectGet(service_component, 'replicas', 1))
     .WithRestartPolicy(utils.objectGet(service_component, 'restart_policy', 'Always'))
     .WithUpdateStrategy(utils.objectGet(service_component, 'update_strategy', {}))
-    .WithServiceAccountName(service_component.name, utils.objectHas(service_component, 'service_account'))
+    .WithServiceAccountName(utils.objectGet(service_component, 'service_account', {}))
     .WithVolume(utils.objectGet(service_component, 'volumes', {}))
     .WithVolume({ [config_map_name]: $.ConfigVolume(config_map_configs[config_map_name].manifest, config_map_configs[config_map_name].config.items) for config_map_name in std.objectFields(config_map_configs) }, config_map_configs != null)
     .WithVolume({ [secret_name]: $.SecretVolume(secrets_configs[secret_name].manifest, secrets_configs[secret_name].config.items) for secret_name in std.objectFields(secrets_configs) }, secrets_configs != null)
@@ -126,6 +126,7 @@ local p = kap.parameters;
     local has_service = utils.objectHas(service_component, 'service');
     local has_secrets = utils.objectHas(service_component, 'secrets');
     local has_service_account = utils.objectHas(service_component, 'service_account', false);
+    local has_cluster_role = utils.objectHas(service_component, 'cluster_role', false);
 
     local secrets_config = utils.objectGet(service_component, 'secrets', {});
     local secrets_config_job = utils.objectGet(service_component.migration, 'secrets', {});
@@ -159,12 +160,27 @@ local p = kap.parameters;
     local service = if has_service then $.Service(service_component.name, service_component).WithNamespace() + { workload:: workload };
 
 
-    local serviceAccount = kap.ServiceAccount(service_component.name) {
-      metadata+: {
-        namespace: p.namespace,
-      },
-    };
+    // service override for jobs
+    local secrets_objects_job = CreateConfigDefinition(utils.deepMerge(secrets_config, secrets_config_job), kap.K8sSecret);
 
+    local sa = utils.objectGet(service_component, 'service_account');
+    local sa_name = utils.objectGet(sa, 'name', service_component.name);
+    local serviceAccount = if utils.objectGet(sa, 'create', false) then kap.K8sServiceAccount(sa_name)
+                                                                        .WithNamespace()
+                                                                        .WithAnnotations(utils.objectGet(sa, 'annotations', {})) else {}
+    ;
+    local cr = if has_cluster_role then utils.objectGet(service_component, 'cluster_role');
+    local cr_name = if has_cluster_role then utils.objectGet(cr, 'name', service_component.name);
+    local clusterRole = if has_cluster_role then kap.K8sClusterRole(cr_name)
+                                                 .WithRules(utils.objectGet(cr, 'rules'))
+                                                 .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    ;
+    local cr_binding = if has_cluster_role then utils.objectGet(cr, 'binding');
+    local clusterRoleBinding = if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
+                                                        .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
+                                                        .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
+                                                        .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    ;
     local vpa_mode = utils.objectGet(service_component, 'vpa', 'Auto');
     local vpa = kap.createVPAFor(workload, mode=vpa_mode) {
       spec+: {
@@ -189,8 +205,10 @@ local p = kap.parameters;
     .WithItem('config', config_map_manifests, has_configmaps)
     .WithItem('secret', secrets_manifests, has_secrets)
     .WithBundled('workload', workload)
-    .WithBundled('sa', serviceAccount, has_service_account)
     .WithBundled('vpa', vpa, utils.objectHas(service_component, 'vpa', false))
     .WithBundled('pdb', pdb, utils.objectHas(service_component, 'pdb_min_available'))
-    .WithBundled('service', service),
+    .WithBundled('sa', serviceAccount)
+    .WithBundled('service', service)
+    .WithBundled('cr', clusterRole)
+    .WithBundled('crm', clusterRoleBinding),
 }
