@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   name: catalogue-db
   namespace: prod-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: catalogue-db
       app.kubernetes.io/part-of: sock-shop
+      name: catalogue-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: catalogue-db
         app.kubernetes.io/part-of: sock-shop
+        name: catalogue-db
     spec:
       containers:
         - env:
@@ -47,8 +47,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   name: catalogue-db
   namespace: prod-sockshop
 spec:
@@ -58,7 +58,7 @@ spec:
       protocol: TCP
       targetPort: mysql
   selector:
-    app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   sessionAffinity: None
   type: ClusterIP

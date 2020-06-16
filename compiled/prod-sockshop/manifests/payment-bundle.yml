@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   name: payment
   namespace: prod-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: payment
       app.kubernetes.io/part-of: sock-shop
+      name: payment
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: payment
         app.kubernetes.io/part-of: sock-shop
+        name: payment
     spec:
       containers:
         - image: weaveworksdemos/payment:0.4.3
@@ -69,8 +69,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   name: payment
   namespace: prod-sockshop
 spec:
@@ -80,7 +80,7 @@ spec:
       protocol: TCP
       targetPort: http
   selector:
-    app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   sessionAffinity: None
   type: ClusterIP

@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: tesoro
+  name: tesoro
+  namespace: tesoro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: tesoro
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: tesoro
+    spec:
+      containers:
+        - args:
+            - --ca-file=/certs/cacert.pem
+            - --cert-file=/certs/cert.pem
+            - --key-file=/certs/cert.key
+            - --port=443
+          image: kapicorp/tesoro
+          imagePullPolicy: IfNotPresent
+          name: tesoro
+          ports:
+            - containerPort: 443
+              name: tesoro-api
+              protocol: TCP
+            - containerPort: 9095
+              name: tesoro-metrics
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - all
+          volumeMounts:
+            - mountPath: /certs
+              name: secrets
+              readOnly: true
+      restartPolicy: Always
+      serviceAccountName: tesoro
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            secretName: tesoro
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+  namespace: tesoro
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+  namespace: tesoro
+spec:
+  ports:
+    - name: tesoro-api
+      port: 443
+      protocol: TCP
+      targetPort: tesoro-api
+    - name: tesoro-metrics
+      port: 9095
+      protocol: TCP
+      targetPort: tesoro-metrics
+  selector:
+    name: tesoro
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+webhooks:
+  - clientConfig:
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUV1akNDQXFJQ0NRRElWVFdBTWVVMm16QU5CZ2txaGtpRzl3MEJBUXNGQURBZk1SMHdHd1lEVlFRRERCUkQKUVMxMFpYTnZjbTh1ZEdWemIzSnZMbk4yWXpBZUZ3MHlNREEyTVRZeE1UTTRORGRhRncweU16QTBNRFl4TVRNNApORGRhTUI4eEhUQWJCZ05WQkFNTUZFTkJMWFJsYzI5eWJ5NTBaWE52Y204dWMzWmpNSUlDSWpBTkJna3Foa2lHCjl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF6WTZVWElKZm9yeGZOV0kzUzJEQWMzV3JUK3U5c0NHUVA5czMKU3o0RWpScE1tTFM0dGNaUHJoQzdGZjRIL0hxNHl5SlRBVmd4L1JFWFBiVEprMkRyWXBZM3hDandsOCtCUEZGYgpFc3VCMWFIWStLZWwxMStONDFHVldhYkJwMDdTY3FmeWFveFZNMzJ6WEJ6S3ZuZGJvZVBXV0Rld09Ecm5hbVBKCk52RVFNNkQwaGRobWlSdlRGOStGb0o4T0RrT0FPeWFwK1RRQ3V5WUpSblhoa3U2bVl4Tk1xTDNQSHRpK09uWVAKanYwQklZODFZRG5uM3pzdUEvQnhRN0NBTnVqYmtoMmxSSlBUOFE2OTdIaXZhRjhGV2lBN0JvK2JnNHI5WkUxZgppeE9jYkxUYWkvcC9mcElmeEwzcHp6VFZvSEhDUGZmWW52VkE0NERGT2xVZytFK2tCMHpWL3JnRGMzNGtLKytICk9KWVVVMUY4RVV6V20zUGJXK3E1bWRMM3lkVkJmTldtNUx5dnpmQ0FnTnVrUnBpOUpIdFYrc1BoVTFPbDY3ck4Kd1kzLzNwRGRFVWdtSG5yUGd4RnpSZndNNHlBNVdVcldFd3B5ZVp2QkRSWW5uN09Pa25wM0RUM29QaFFCVWN5Twp0UzIwcnZFVE91ZmtuK3NwVzJ6bmNYdHlWNnNYYk1HeDdrU291dC9uakxQOE5GUzVYYW9OOVZqK09jNStHODJaCkpwRHBkTkdtU0g5UmVtdWN6emVDYnR0T3ExaGdzN2hRUitDY3pEeUR2Vjh3dkRaR3FON0ZWNGpDVUI4b0NMblkKcStJMGlxSlM0N0ZXK0xQNGhYSFJlS1hvTkZhc1F1elZxZzhqT1dBYXJmaThNaXFodDFsQ0ZZcHk4UzlBZ25wNwpyRG5uc0djQ0F3RUFBVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBZ0VBTSthenlPVm8wSHdXT1Y5K05QTThkMTRBCko2MlZteTU2b28zMEZjY2UvRnpWVzlXYWp0d2dFbCtkTS9hb0xIdjFNUlJ1VlZleG5makRaTDFYeW94TGVDMnMKaWJJanNlbkNiOHJ4bEI0b0F5dHpUcHBLY1Q3WnFrV3dKUldCd0FsaFlkdFRQcUtmcm9zeWNXNmg3TmxEd05jQwpMeXI2c3FyTDJYcFdaVTArMVpwZGhWaUdxTXlzVHA1ZWxmT21uQmhjQXB2djRXcmxWWVB2Q20zbTMxd3hCVDQ1CjJwSWJHbFRLb3pTWUx1ejVnbjJFaXIzYTRHTGRmR0ZteksrVnQ2SE9XaXBHTXhWYjBSdXE0UHJIQXl4V0Y2eHIKcjVDYVAyeDRwdnhnWWZiYTgxK1VyNmZUVUdiVEliMXRVOWZOY0o2VXppTVlYQkNSQUMrbzJIUnZhL21BM2ZzbgppdXQvTXB1bjlSVkJBUitocnBmS2Q2NXZoNXhZblYraEFPOWRYK0p0eGlWQ3VGekZPUTlRK01LVDAyQzc1WUNlCnhQbTA0aUlLNXBkUExnK1FWV2N4ek5QK0NXTEp2dFljU2tVVVJMZ1hxVk5CbEpVNUVmdGFqZXRPdHIrd2lRVXkKM0EyNWdLVlE2TGI2K2hiYjljdThwUStjZ3E2dEZhY3pMNVdKbEFsK3hCT1kzM1ptblAxUWp4Z1Z1dXBEYlFPUwpOZlhIVTk4NWpCWER5T25NTVNxK08wQ24rS2o2aTZOMVBIUjFBdFVIaXJNb3k0Y1ZobnlZZUE4cHp0Wkh5eE9pClFCY0FGNXEwREtFaVZ5bEw3MWhzRVpHQkszMkxOTVB6QVNYc3IxeDNGaWVIcGVVTWNOZDN4ZmtOOE1FQ3VnUi8KZkh3STYyc3dtQmN0eE9EcVdoQT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+      service:
+        name: tesoro
+        namespace: tesoro
+        path: /mutate
+    failurePolicy: Fail
+    name: tesoro.kapicorp.com
+    objectSelector:
+      matchLabels:
+        tesoro.kapicorp.com: enabled
+    rules:
+      - apiGroups:
+          - ''
+        apiVersions:
+          - '*'
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - '*'
+      - apiGroups:
+          - apps
+        apiVersions:
+          - '*'
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - deployments
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+      - events
+      - secrets
+      - configmaps
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tesoro
+subjects:
+  - kind: ServiceAccount
+    name: tesoro
+    namespace: tesoro

@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: rabbit-mq
     app.kubernetes.io/part-of: sock-shop
+    name: rabbit-mq
   name: rabbit-mq
   namespace: sock-shop
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: rabbit-mq
       app.kubernetes.io/part-of: sock-shop
+      name: rabbit-mq
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: rabbit-mq
         app.kubernetes.io/part-of: sock-shop
+        name: rabbit-mq
     spec:
       containers:
         - image: rabbitmq:3.6.8-management
@@ -53,8 +53,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: rabbit-mq
     app.kubernetes.io/part-of: sock-shop
+    name: rabbit-mq
   name: rabbit-mq
   namespace: sock-shop
 spec:
@@ -68,7 +68,7 @@ spec:
       protocol: TCP
       targetPort: rabbitmq
   selector:
-    app: rabbit-mq
     app.kubernetes.io/part-of: sock-shop
+    name: rabbit-mq
   sessionAffinity: None
   type: ClusterIP

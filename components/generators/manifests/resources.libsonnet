@@ -59,7 +59,7 @@ local p = kap.parameters;
 
   Service(name, service_component):: kap.K8sService(name)
                                      .WithAnnotations(utils.objectGet(service_component.service, 'annotations', {}))
-                                     .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+                                     .WithLabels(utils.objectGet(service_component, 'labels', {}))
                                      .WithSessionAffinity('None')
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
@@ -77,7 +77,7 @@ local p = kap.parameters;
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
     .WithContainer({ [service_component.name]: container })
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
     .WithNamespace(kap.parameters.namespace)
     .WithProgressDeadlineSeconds(utils.objectGet(service_component, 'deployment_progress_deadline_seconds'))
@@ -98,11 +98,12 @@ local p = kap.parameters;
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
     .WithNodeAffinity('synthace.com/node-type', utils.objectGet(service_component, 'prefer_pods_in_node_type', 'standard'), 'In', utils.objectHas(service_component, 'prefer_pods_in_node_type', false))
+    .WithNodeSelector(utils.objectGet(service_component, 'node_selector_labels', {}))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
     .WithContainer({ [service_component.name]: container })
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
     .WithProgressDeadlineSeconds(utils.objectGet(service_component, 'deployment_progress_deadline_seconds'))
     .WithPrometheusScrapeAnnotation(utils.objectGet(service_component, 'enable_prometheus', false), utils.objectGet(service_component, 'prometheus_port', 6060))
@@ -127,61 +128,87 @@ local p = kap.parameters;
     local has_secrets = utils.objectHas(service_component, 'secrets');
     local has_service_account = utils.objectHas(service_component, 'service_account', false);
     local has_cluster_role = utils.objectHas(service_component, 'cluster_role', false);
-
-    local secrets_config = utils.objectGet(service_component, 'secrets', {});
-    local secrets_config_job = utils.objectGet(service_component.migration, 'secrets', {});
-
-    local config_map_config = utils.objectGet(service_component, 'config_maps', {});
+    local has_webhooks = utils.objectHas(service_component, 'webhooks', false);
 
 
-    local MergeConfig(name, object, generating_class) = {
-      name:: if std.length(object) == 1 then service_component.name else '%s-%s' % [service_component.name, name],
-      manifest: generating_class(self.name, object[name].data)
-                .WithNamespace(),
-      config: { items: [] } + object[name],
+    local config_helpers = {
+      local global_annotations = utils.objectGet(service_component, 'globals', {}),
+      secrets: {
+        config: utils.objectGet(service_component, 'secrets', {}),
+        global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
+        generating_class: kap.K8sSecret
+      }, 
+      migration_secrets: {
+        config: utils.deepMerge(config_helpers.secrets.config, utils.objectGet(service_component.migration, 'secrets', {})),
+        global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
+        generating_class: kap.K8sSecret
+      }, 
+      config_maps: {
+        config: utils.objectGet(service_component, 'config_maps', {}),
+        global_annotations: utils.objectGet(global_annotations, 'config_maps', {}),
+        generating_class: kap.K8sConfigMap
+      }
     };
 
-    local CreateConfigDefinition(object_config, generating_class) = {
-      [name]: MergeConfig(name, object_config, generating_class)
-      for name in std.objectFields(object_config)
+    local MergeConfig(name, helper) = {
+      name:: if std.length(helper.config) == 1 then service_component.name else '%s-%s' % [service_component.name, name],
+      manifest: helper.generating_class(self.name, utils.objectGet(helper.config[name], 'data', {}))
+                  .WithAnnotations(utils.objectGet(helper.global_annotations, 'annotations', {}))
+                  .WithAnnotations(utils.objectGet(helper.config[name], 'annotations', {}))
+                  .WithLabels(utils.objectGet(helper.global_annotations, 'labels', {}))
+                  .WithLabels(utils.objectGet(helper.config[name], 'labels', {}))
+                  .WithNamespace(),
+      config: {items: []} + helper.config[name],
     };
 
-    local secrets_objects = CreateConfigDefinition(secrets_config, kap.K8sSecret);
-    local secrets_manifests = [secret.manifest for secret in utils.objectValues(secrets_objects)];
+    local CreateConfigDefinition(helper) = {
+      [name]: MergeConfig(name, helper)
+      for name in std.objectFields(helper.config)
+    };
+ 
+    local objects = { 
+      [name]: CreateConfigDefinition(config_helpers[name]) 
+        for name in std.objectFields(config_helpers)
+    };
 
-    local config_map_objects = CreateConfigDefinition(config_map_config, kap.K8sConfigMap);
-    local config_map_manifests = [config_map.manifest for config_map in utils.objectValues(config_map_objects)];
+    local secrets_manifests = [secret.manifest for secret in utils.objectValues(objects.secrets)];
+    local config_map_manifests = [config_map.manifest for config_map in utils.objectValues(objects.config_maps)];
+
+
+
 
     local workload_type = utils.objectGet(service_component, 'type', 'deployment');
     local workload = if workload_type == 'deployment' then
-      $.Deployment(service_component.name, service_component, config_map_objects, secrets_objects)
+      $.Deployment(service_component.name, service_component, objects.config_maps, objects.secrets)
     else if workload_type == 'statefulset' then
-      $.StatefulSet(service_component.name, service_component, config_map_objects, secrets_objects);
+      $.StatefulSet(service_component.name, service_component, objects.config_maps, objects.secrets);
     local service = if has_service then $.Service(service_component.name, service_component).WithNamespace() + { workload:: workload };
 
-
-    // service override for jobs
-    local secrets_objects_job = CreateConfigDefinition(utils.deepMerge(secrets_config, secrets_config_job), kap.K8sSecret);
 
     local sa = utils.objectGet(service_component, 'service_account');
     local sa_name = utils.objectGet(sa, 'name', service_component.name);
     local serviceAccount = if utils.objectGet(sa, 'create', false) then kap.K8sServiceAccount(sa_name)
-                                                                        .WithNamespace()
-                                                                        .WithAnnotations(utils.objectGet(sa, 'annotations', {})) else {}
+      .WithNamespace()
+      .WithAnnotations(utils.objectGet(sa, 'annotations', {})) else {}
     ;
     local cr = if has_cluster_role then utils.objectGet(service_component, 'cluster_role');
-    local cr_name = if has_cluster_role then utils.objectGet(cr, 'name', service_component.name);
-    local clusterRole = if has_cluster_role then kap.K8sClusterRole(cr_name)
-                                                 .WithRules(utils.objectGet(cr, 'rules'))
-                                                 .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    local cr_name = sa_name;
+    local clusterRole =  if has_cluster_role then kap.K8sClusterRole(cr_name)
+        .WithRules(utils.objectGet(cr, 'rules'))
+        .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
     local cr_binding = if has_cluster_role then utils.objectGet(cr, 'binding');
-    local clusterRoleBinding = if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
-                                                        .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
-                                                        .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
-                                                        .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    local clusterRoleBinding =  if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
+    .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
+    .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
-    local vpa_mode = utils.objectGet(service_component, 'vpa', 'Auto');
+
+
+    local webhooks = if has_webhooks then kap.K8sMutatingWebhookConfiguration(service_component.name)
+      .withWebHooks(utils.objectGet(service_component, 'webhooks', []));
+
+    local vpa_mode=utils.objectGet(service_component, 'vpa', 'Auto');
     local vpa = kap.createVPAFor(workload, mode=vpa_mode) {
       spec+: {
         resourcePolicy+: {
@@ -196,8 +223,11 @@ local p = kap.parameters;
     local pdb = kap.PodDisruptionBudget(service_component.name) {
       target_pod:: workload.spec.template,
       spec+: {
-        minAvailable: utils.objectGet(service_component, 'pdb_min_available'),
-      },
+        minAvailable: utils.objectGet(service_component, 'pdb_min_available')
+      } ,
+      metadata+: {
+        namespace: p.namespace
+      }
     };
 
 
@@ -207,8 +237,8 @@ local p = kap.parameters;
     .WithBundled('workload', workload)
     .WithBundled('vpa', vpa, utils.objectHas(service_component, 'vpa', false))
     .WithBundled('pdb', pdb, utils.objectHas(service_component, 'pdb_min_available'))
-    .WithBundled('sa', serviceAccount)
     .WithBundled('service', service)
+    .WithBundled('webhooks', webhooks)
     .WithBundled('cr', clusterRole)
-    .WithBundled('crm', clusterRoleBinding),
+    .WithBundled('crb', clusterRoleBinding),
 }

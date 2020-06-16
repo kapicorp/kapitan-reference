@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: frontend
     app.kubernetes.io/part-of: sock-shop
+    name: frontend
   name: frontend
   namespace: prod-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
       app.kubernetes.io/part-of: sock-shop
+      name: frontend
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: frontend
         app.kubernetes.io/part-of: sock-shop
+        name: frontend
     spec:
       containers:
         - env:
@@ -70,8 +70,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: frontend
     app.kubernetes.io/part-of: sock-shop
+    name: frontend
   name: frontend
   namespace: prod-sockshop
 spec:
@@ -81,7 +81,7 @@ spec:
       protocol: TCP
       targetPort: http
   selector:
-    app: frontend
     app.kubernetes.io/part-of: sock-shop
+    name: frontend
   sessionAffinity: None
   type: NodePort

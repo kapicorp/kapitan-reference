@@ -36,6 +36,7 @@
       dns_policy: { type: 'string', enum: ['ClusterFirst'] },
       vpa: { type: 'string', enum: ['Off', 'Auto'] },
       enable_prometheus: { type: 'boolean' },
+      enabled: { type: 'boolean' },
       pdb_min_available: { type: 'integer' },
       env: { anyOf: [{ type: 'null' }, { type: 'object' }] },
       cluster_role: { anyOf: [{ type: 'null' }, { type: 'object' }] },
@@ -72,13 +73,14 @@
       image: { type: 'string' },
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
+      node_selector_labels: { type: 'object' },
       service_account: { anyOf: [{ type: 'null' }, { 
         type: 'object', 
         properties: {
           name: {type: 'string'},
           create: {type: 'boolean'},
           enabled: {type: 'boolean'},
-          annotations: { type: 'object', additionalValues: { type: 'string' } },
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
         },
         additionalProperties: false,
         }]
@@ -89,6 +91,15 @@
       ports: {
         type: 'object',
         additionalProperties: { '$ref': '#/definitions/port_set' },
+      },
+      globals: { anyOf: [{ type: 'null' }, { 
+        type: 'object', 
+        properties: {
+          secrets: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
+          configmaps: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
+        },
+        additionalProperties: false,
+        }]
       },
       secrets: { anyOf: [{ type: 'null' }, {
         type: 'object',
@@ -112,6 +123,7 @@
         },
         additionalProperties: false,
       },
+      webhooks: { type: 'array', items: { type: 'object' } },
       replicas: { type: 'integer' },
       prefer_pods_in_different_nodes: { type: 'boolean' },
       prefer_pods_in_different_zones: { type: 'boolean' },
@@ -150,6 +162,13 @@
         },
         required: ['data'],
       },
+      globals: {
+        type: 'object',
+        properties: {
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
+          labels: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
+        },
+      },
       secret: {
         type: 'object',
         properties: {
@@ -168,6 +187,7 @@
           },
           items: { type: 'array', items: { type: 'string' } },
           mount: { type: 'string' },
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
         },
         required: ['data'],
       },

@@ -4,14 +4,14 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: user-db
+    name: user-db
   name: user-db
   namespace: dev-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-db
+      name: user-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        app: user-db
+        name: user-db
     spec:
       containers:
         - image: weaveworksdemos/user-db:0.3.0
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: user-db
+    name: user-db
   name: user-db
   namespace: dev-sockshop
 spec:
@@ -62,6 +62,6 @@ spec:
       protocol: TCP
       targetPort: mongo
   selector:
-    app: user-db
+    name: user-db
   sessionAffinity: None
   type: ClusterIP

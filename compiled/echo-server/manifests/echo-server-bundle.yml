@@ -4,14 +4,14 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: echo-server
+    name: echo-server
   name: echo-server
   namespace: echo-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: echo-server
+      name: echo-server
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        app: echo-server
+        name: echo-server
     spec:
       containers:
         - image: jmalloc/echo-server
@@ -63,7 +63,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: echo-server
+    name: echo-server
   name: echo-server
   namespace: echo-server
 spec:
@@ -73,6 +73,6 @@ spec:
       protocol: TCP
       targetPort: http
   selector:
-    app: echo-server
+    name: echo-server
   sessionAffinity: None
   type: LoadBalancer

@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   name: orders-db
   namespace: prod-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: orders-db
       app.kubernetes.io/part-of: sock-shop
+      name: orders-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: orders-db
         app.kubernetes.io/part-of: sock-shop
+        name: orders-db
     spec:
       containers:
         - image: mongo
@@ -56,8 +56,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   name: orders-db
   namespace: prod-sockshop
 spec:
@@ -67,7 +67,7 @@ spec:
       protocol: TCP
       targetPort: mongo
   selector:
-    app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   sessionAffinity: None
   type: ClusterIP

@@ -10,4 +10,5 @@
 |[pritunl](../pritunl/docs/README.md)|
 |[prod-sockshop](../prod-sockshop/docs/README.md)|
 |[sock-shop](../sock-shop/docs/README.md)|
+|[tesoro](../tesoro/docs/README.md)|
 |[tutorial](../tutorial/docs/README.md)|

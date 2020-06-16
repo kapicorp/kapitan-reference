@@ -4,16 +4,16 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   name: queue-master
   namespace: prod-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: queue-master
       app.kubernetes.io/part-of: sock-shop
+      name: queue-master
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: queue-master
         app.kubernetes.io/part-of: sock-shop
+        name: queue-master
     spec:
       containers:
         - env:
@@ -75,8 +75,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   name: queue-master
   namespace: prod-sockshop
 spec:
@@ -86,7 +86,7 @@ spec:
       protocol: TCP
       targetPort: http
   selector:
-    app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   sessionAffinity: None
   type: ClusterIP
