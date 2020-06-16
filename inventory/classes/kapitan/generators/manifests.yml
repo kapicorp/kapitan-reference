@@ -12,7 +12,7 @@ parameters:
     compile:
       - output_path: manifests
         input_type: jsonnet
-        output_type: yaml
+        output_type: yml
         input_paths:
           - components/generators/manifests/main.jsonnet
       - output_path: docs
