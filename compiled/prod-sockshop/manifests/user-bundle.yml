@@ -4,7 +4,6 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: user
     name: user
   name: user
   namespace: prod-sockshop
@@ -12,7 +11,6 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user
       name: user
   strategy:
     rollingUpdate:
@@ -22,7 +20,6 @@ spec:
   template:
     metadata:
       labels:
-        app: user
         name: user
     spec:
       containers:
@@ -78,7 +75,6 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: user
     name: user
   name: user
   namespace: prod-sockshop
@@ -89,7 +85,6 @@ spec:
       protocol: TCP
       targetPort: http
   selector:
-    app: user
     name: user
   sessionAffinity: None
   type: ClusterIP

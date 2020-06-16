@@ -59,7 +59,7 @@ local p = kap.parameters;
 
   Service(name, service_component):: kap.K8sService(name)
                                      .WithAnnotations(utils.objectGet(service_component.service, 'annotations', {}))
-                                     .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+                                     .WithLabels(utils.objectGet(service_component, 'labels', {}))
                                      .WithSessionAffinity('None')
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
@@ -77,7 +77,7 @@ local p = kap.parameters;
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
     .WithContainer({ [service_component.name]: container })
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
     .WithNamespace(kap.parameters.namespace)
     .WithProgressDeadlineSeconds(utils.objectGet(service_component, 'deployment_progress_deadline_seconds'))
@@ -103,7 +103,7 @@ local p = kap.parameters;
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
     .WithContainer({ [service_component.name]: container })
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
     .WithProgressDeadlineSeconds(utils.objectGet(service_component, 'deployment_progress_deadline_seconds'))
     .WithPrometheusScrapeAnnotation(utils.objectGet(service_component, 'enable_prometheus', false), utils.objectGet(service_component, 'prometheus_port', 6060))
@@ -195,13 +195,13 @@ local p = kap.parameters;
     local cr_name = sa_name;
     local clusterRole =  if has_cluster_role then kap.K8sClusterRole(cr_name)
         .WithRules(utils.objectGet(cr, 'rules'))
-        .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+        .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
     local cr_binding = if has_cluster_role then utils.objectGet(cr, 'binding');
     local clusterRoleBinding =  if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
     .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
     .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}) + { app: service_component.name })
+    .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
 
 

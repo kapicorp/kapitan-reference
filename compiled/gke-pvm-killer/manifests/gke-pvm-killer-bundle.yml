@@ -4,7 +4,6 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: gke-pvm-killer
     name: gke-pvm-killer
   name: gke-pvm-killer
   namespace: gke-pvm-killer
@@ -12,7 +11,6 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gke-pvm-killer
       name: gke-pvm-killer
   strategy:
     rollingUpdate:
@@ -22,7 +20,6 @@ spec:
   template:
     metadata:
       labels:
-        app: gke-pvm-killer
         name: gke-pvm-killer
     spec:
       containers:

@@ -4,7 +4,6 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
-    app: logstash
     name: logstash
   name: logstash
   namespace: examples
@@ -12,7 +11,6 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: logstash
       name: logstash
   strategy:
     rollingUpdate:
@@ -22,7 +20,6 @@ spec:
   template:
     metadata:
       labels:
-        app: logstash
         name: logstash
     spec:
       affinity:
