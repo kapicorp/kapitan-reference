@@ -1,0 +1,111 @@
+parameters:
+  scripts:
+    - templates/scripts/generate_tesoro_certs.sh
+  kapicorp:
+    tesoro:
+      refs:
+        certificate: plain:targets/${target_name}/kapicorp-tesoro-cert-pem
+        private_key: plain:targets/${target_name}/kapicorp-tesoro-cert-key
+        cacert: plain:targets/${target_name}/kapicorp-tesoro-cacert-pem
+      ssl:
+        certificate: ?{${kapicorp:tesoro:refs:certificate}||randomstr}
+        private_key: ?{${kapicorp:tesoro:refs:private_key}||randomstr}
+        cacert: ?{${kapicorp:tesoro:refs:cacert}||randomstr}
+
+  components:
+    tesoro:
+      image: kapicorp/tesoro
+      service_account:
+        enabled: true
+        create: true
+      security_context:
+        capabilities:
+          drop:
+            - all
+          add:
+            - NET_BIND_SERVICE
+      service:
+        type: ClusterIP
+      args:
+        - --ca-file=/certs/cacert.pem
+        - --cert-file=/certs/cert.pem
+        - --key-file=/certs/cert.key
+        - --port=443
+      ports:
+        tesoro-api:
+          container_port: 443
+          service_port: 443
+        tesoro-metrics:
+          service_port: 9095
+          container_port: 9095
+      secrets:
+        secrets:
+          mount: /certs
+          data:
+            cert.pem: 
+              value: ${kapicorp:tesoro:ssl:certificate}
+            cert.key:
+              value: ${kapicorp:tesoro:ssl:private_key}
+            cacert.pem:
+              value: ${kapicorp:tesoro:ssl:cacert}
+      webhooks:
+      - name: tesoro.kapicorp.com
+        failurePolicy: Fail
+        clientConfig:
+          service:
+            name: tesoro
+            namespace: ${namespace}
+            path: "/mutate"
+          caBundle: ${kapicorp:tesoro:ssl:cacert}
+        objectSelector:
+          matchLabels:
+            tesoro.kapicorp.com: enabled
+        rules:
+          - operations:
+              - CREATE
+              - UPDATE
+            apiGroups:
+              - ""
+            resources:
+              - "*"
+            apiVersions:
+              - "*"
+          - operations:
+              - CREATE
+              - UPDATE
+            apiGroups:
+              - "apps"
+            resources:
+              - "deployments"
+            apiVersions:
+              - "*"
+
+      cluster_role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              name: tesoro
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: tesoro
+        rules:
+          - apiGroups:
+            - ""
+            resources:
+            - pods
+            - events
+            - secrets
+            - configmaps
+            verbs:
+            - "*"
+          - apiGroups:
+            - apps
+            resources:
+            - deployments
+            - daemonsets
+            - replicasets
+            - statefulsets
+            verbs:
+            - "*"
