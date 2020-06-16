@@ -58,14 +58,6 @@ spec:
             secretName: tesoro
 ---
 apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: tesoro
-  name: tesoro
-  namespace: tesoro
----
-apiVersion: v1
 kind: Service
 metadata:
   labels:

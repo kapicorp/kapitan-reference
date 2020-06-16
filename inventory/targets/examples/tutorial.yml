@@ -3,6 +3,7 @@ classes:
   - projects.localhost.kubernetes.kind
   - applications.microservices
   - components.echo-server
+  - features.tesoro
 
 
 parameters:
