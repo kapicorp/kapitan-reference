@@ -93,6 +93,8 @@ To help you get started, please look at the following examples:
 |[gke-pvm-killer](inventory/classes/components/gke-pvm-killer.yml)| Example using [estafette-gke-preemptible-killer](https://github.com/estafette/estafette-gke-preemptible-killer)| [manifests](compiled/gke-pvm-killer/manifests)|
 |[postgres-proxy](inventory/classes/components/postgres-proxy.yml)| Example using [cloud-sql-proxy](https://github.com/GoogleCloudPlatform/cloudsql-proxy) to connect to a Cloud SQL Postgres instance| [manifests](compiled/postgres-proxy/manifests)|
 |[logstash](inventory/classes/components/logstash.yml)| Example of [Logstash](https://www.elastic.co/logstash) configuration | [manifests](compiled/examples/manifests)
+|[tesoro](inventory/classes/components/kapicorp/tesoro.yml)| Example of [tesoro](https://github.com/kapicorp/tesoro) configuration | [manifests](compiled/tesoro/manifests)
+
 
 Please find the generated manifests in the [compiled](compiled) folder
 
