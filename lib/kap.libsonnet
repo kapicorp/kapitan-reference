@@ -270,7 +270,7 @@ kapitan + kube + {
     },
     short_name:: name,
     [secret_data_type]: {
-      [key]: if utils.objectGet(data[key], 'b64_encode', false) then
+      [key]: if utils.objectGet(data[key], 'b64_encode', false) && secret_data_type == "data" then
         std.base64(data[key].value)
       else if utils.objectGet(data[key], 'template', false) != false then
         std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {})))
