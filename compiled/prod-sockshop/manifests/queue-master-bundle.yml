@@ -6,6 +6,7 @@ metadata:
   labels:
     app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   name: queue-master
   namespace: prod-sockshop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: queue-master
       app.kubernetes.io/part-of: sock-shop
+      name: queue-master
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: queue-master
         app.kubernetes.io/part-of: sock-shop
+        name: queue-master
     spec:
       containers:
         - env:
@@ -77,6 +80,7 @@ metadata:
   labels:
     app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   name: queue-master
   namespace: prod-sockshop
 spec:
@@ -88,5 +92,6 @@ spec:
   selector:
     app: queue-master
     app.kubernetes.io/part-of: sock-shop
+    name: queue-master
   sessionAffinity: None
   type: ClusterIP

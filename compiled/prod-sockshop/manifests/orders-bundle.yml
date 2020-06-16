@@ -6,6 +6,7 @@ metadata:
   labels:
     app: orders
     app.kubernetes.io/part-of: sock-shop
+    name: orders
   name: orders
   namespace: prod-sockshop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: orders
       app.kubernetes.io/part-of: sock-shop
+      name: orders
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: orders
         app.kubernetes.io/part-of: sock-shop
+        name: orders
     spec:
       containers:
         - env:
@@ -84,6 +87,7 @@ metadata:
   labels:
     app: orders
     app.kubernetes.io/part-of: sock-shop
+    name: orders
   name: orders
   namespace: prod-sockshop
 spec:
@@ -95,5 +99,6 @@ spec:
   selector:
     app: orders
     app.kubernetes.io/part-of: sock-shop
+    name: orders
   sessionAffinity: None
   type: ClusterIP

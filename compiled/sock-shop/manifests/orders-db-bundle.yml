@@ -6,6 +6,7 @@ metadata:
   labels:
     app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   name: orders-db
   namespace: sock-shop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: orders-db
       app.kubernetes.io/part-of: sock-shop
+      name: orders-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: orders-db
         app.kubernetes.io/part-of: sock-shop
+        name: orders-db
     spec:
       containers:
         - image: mongo
@@ -58,6 +61,7 @@ metadata:
   labels:
     app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   name: orders-db
   namespace: sock-shop
 spec:
@@ -69,5 +73,6 @@ spec:
   selector:
     app: orders-db
     app.kubernetes.io/part-of: sock-shop
+    name: orders-db
   sessionAffinity: None
   type: ClusterIP

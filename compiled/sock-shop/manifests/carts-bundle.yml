@@ -6,6 +6,7 @@ metadata:
   labels:
     app: carts
     app.kubernetes.io/part-of: sock-shop
+    name: carts
   name: carts
   namespace: sock-shop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: carts
       app.kubernetes.io/part-of: sock-shop
+      name: carts
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: carts
         app.kubernetes.io/part-of: sock-shop
+        name: carts
     spec:
       containers:
         - env:
@@ -84,6 +87,7 @@ metadata:
   labels:
     app: carts
     app.kubernetes.io/part-of: sock-shop
+    name: carts
   name: carts
   namespace: sock-shop
 spec:
@@ -95,5 +99,6 @@ spec:
   selector:
     app: carts
     app.kubernetes.io/part-of: sock-shop
+    name: carts
   sessionAffinity: None
   type: ClusterIP

@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: postgres-proxy
+    name: postgres-proxy
     tier: db
   name: postgres-proxy
   namespace: postgres-proxy
@@ -15,6 +16,7 @@ spec:
   selector:
     matchLabels:
       app: postgres-proxy
+      name: postgres-proxy
       tier: db
   strategy:
     rollingUpdate:
@@ -25,6 +27,7 @@ spec:
     metadata:
       labels:
         app: postgres-proxy
+        name: postgres-proxy
         tier: db
     spec:
       containers:
@@ -75,6 +78,7 @@ kind: Service
 metadata:
   labels:
     app: postgres-proxy
+    name: postgres-proxy
     tier: db
   name: postgres-proxy
   namespace: postgres-proxy
@@ -86,6 +90,7 @@ spec:
       targetPort: postgresql
   selector:
     app: postgres-proxy
+    name: postgres-proxy
     tier: db
   sessionAffinity: None
   type: ClusterIP

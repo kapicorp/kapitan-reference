@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: session-db
+    name: session-db
   name: session-db
   namespace: prod-sockshop
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: session-db
+      name: session-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: session-db
+        name: session-db
     spec:
       containers:
         - image: redis:alpine
@@ -46,6 +49,7 @@ kind: Service
 metadata:
   labels:
     app: session-db
+    name: session-db
   name: session-db
   namespace: prod-sockshop
 spec:
@@ -56,5 +60,6 @@ spec:
       targetPort: redis
   selector:
     app: session-db
+    name: session-db
   sessionAffinity: None
   type: ClusterIP

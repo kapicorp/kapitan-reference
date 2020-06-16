@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: user
+    name: user
   name: user
   namespace: dev-sockshop
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: user
+      name: user
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: user
+        name: user
     spec:
       containers:
         - env:
@@ -76,6 +79,7 @@ kind: Service
 metadata:
   labels:
     app: user
+    name: user
   name: user
   namespace: dev-sockshop
 spec:
@@ -86,5 +90,6 @@ spec:
       targetPort: http
   selector:
     app: user
+    name: user
   sessionAffinity: None
   type: ClusterIP

@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: gke-pvm-killer
+    name: gke-pvm-killer
   name: gke-pvm-killer
   namespace: gke-pvm-killer
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: gke-pvm-killer
+      name: gke-pvm-killer
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: gke-pvm-killer
+        name: gke-pvm-killer
     spec:
       containers:
         - env:

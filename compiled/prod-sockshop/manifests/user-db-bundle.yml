@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: user-db
+    name: user-db
   name: user-db
   namespace: prod-sockshop
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: user-db
+      name: user-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: user-db
+        name: user-db
     spec:
       containers:
         - image: weaveworksdemos/user-db:0.3.0
@@ -53,6 +56,7 @@ kind: Service
 metadata:
   labels:
     app: user-db
+    name: user-db
   name: user-db
   namespace: prod-sockshop
 spec:
@@ -63,5 +67,6 @@ spec:
       targetPort: mongo
   selector:
     app: user-db
+    name: user-db
   sessionAffinity: None
   type: ClusterIP

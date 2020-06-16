@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: echo-server
+    name: echo-server
   name: echo-server
   namespace: tutorial
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: echo-server
+      name: echo-server
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: echo-server
+        name: echo-server
     spec:
       containers:
         - env:
@@ -67,6 +70,7 @@ kind: Service
 metadata:
   labels:
     app: echo-server
+    name: echo-server
   name: echo-server
   namespace: tutorial
 spec:
@@ -77,5 +81,6 @@ spec:
       targetPort: http
   selector:
     app: echo-server
+    name: echo-server
   sessionAffinity: None
   type: LoadBalancer

@@ -6,6 +6,7 @@ metadata:
   labels:
     app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   name: payment
   namespace: prod-sockshop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: payment
       app.kubernetes.io/part-of: sock-shop
+      name: payment
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: payment
         app.kubernetes.io/part-of: sock-shop
+        name: payment
     spec:
       containers:
         - image: weaveworksdemos/payment:0.4.3
@@ -71,6 +74,7 @@ metadata:
   labels:
     app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   name: payment
   namespace: prod-sockshop
 spec:
@@ -82,5 +86,6 @@ spec:
   selector:
     app: payment
     app.kubernetes.io/part-of: sock-shop
+    name: payment
   sessionAffinity: None
   type: ClusterIP

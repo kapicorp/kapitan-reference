@@ -6,6 +6,7 @@ metadata:
   labels:
     app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   name: catalogue-db
   namespace: dev-sockshop
 spec:
@@ -14,6 +15,7 @@ spec:
     matchLabels:
       app: catalogue-db
       app.kubernetes.io/part-of: sock-shop
+      name: catalogue-db
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -24,6 +26,7 @@ spec:
       labels:
         app: catalogue-db
         app.kubernetes.io/part-of: sock-shop
+        name: catalogue-db
     spec:
       containers:
         - env:
@@ -49,6 +52,7 @@ metadata:
   labels:
     app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   name: catalogue-db
   namespace: dev-sockshop
 spec:
@@ -60,5 +64,6 @@ spec:
   selector:
     app: catalogue-db
     app.kubernetes.io/part-of: sock-shop
+    name: catalogue-db
   sessionAffinity: None
   type: ClusterIP

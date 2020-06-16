@@ -111,9 +111,9 @@ kapitan + kube + {
   },
 
   K8sCommon(name): {
-    WithAnnotations(annotations):: self + { metadata+: { annotations+: annotations } },
-    WithLabels(labels):: self + { metadata+: { labels: labels } },
-    WithLabel(label):: self + { metadata+: { labels+: label } },
+    WithAnnotations(annotations):: self + if annotations != null then { metadata+: { annotations+: annotations } } else {},
+    WithLabels(labels):: self + { metadata+: { labels+: labels }},
+    WithLabel(label):: self + { metadata+: { labels+: label }},
     WithTemplateLabel(label):: self + { spec+: { template+: { metadata+: { labels+: label } } } },
     WithMetadata(metadata):: self + { metadata+: metadata },
     WithNamespace(namespace=p.namespace):: self + { metadata+: { namespace: namespace } },
@@ -142,6 +142,7 @@ kapitan + kube + {
     WithNodeAffinity(label, value, operator='In', enabled=true):: self + if enabled then $.NodeAffinityPreferred(label, value, operator) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
     WithReplicas(replicas):: self + { spec+: { replicas: replicas } },
     WithUpdateStrategy(strategy):: self + { spec+: { strategy+: strategy } },
@@ -161,6 +162,7 @@ kapitan + kube + {
     },
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithUpdateStrategy(strategy):: self + { spec+: { updateStrategy+: strategy } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
@@ -181,23 +183,24 @@ kapitan + kube + {
     WithBackoffLimit(limit):: self + { spec+: { backoffLimit: limit } },
     WithDNSPolicy(policy):: self + { spec+: { template+: { spec+: { dnsPolicy: policy } } } },
     WithImagePullSecrets(secret):: self + { spec+: { template+: { spec+: { imagePullSecrets+: [{ name: secret }] } } } },
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
     WithSelector(selector):: self + { spec+: { selector: selector } },
     WithRestartPolicy(policy):: self + { spec+: { template+: { spec+: { restartPolicy: policy } } } },
-    WithServiceAccountName(serviceAccountName, enabled):: self + if enabled then { spec+: { template+: { spec+: { serviceAccountName: serviceAccountName } } } } else {},
+    WithServiceAccountName(sa, service_name):: self + if utils.objectGet(sa, 'enabled', false) then { spec+: { template+: { spec+: { serviceAccountName: utils.objectGet(sa, 'name', service_name) } } } } else {},
     WithVolume(volume, enabled=true):: self + if enabled then { spec+: { template+: { spec+: { volumes_+: volume } } } } else {},
   },
-
+  
   K8sServiceAccount(name): $.K8sCommon(name) + kube.ServiceAccount(name) + {
     WithImagePullSecrets(secrets, enabled=true):: self + if enabled then { imagePullSecrets+: [secrets] } else {},
   },
 
   K8sClusterRole(name): $.K8sCommon(name) + kube.ClusterRole(name) + {
-    WithRules(rules):: self + { rules+: rules },
+    WithRules(rules):: self + { rules+: rules }
   },
 
   K8sClusterRoleBinding(name): $.K8sCommon(name) + kube.ClusterRoleBinding(name) + {
     WithSubjects(subjects):: self + { subjects+: subjects },
-    WithRoleRef(roleRef):: self + { roleRef+: roleRef },
+    WithRoleRef(roleRef):: self + { roleRef+: roleRef }
   },
 
   K8sContainer(name, service_component, secrets_configs): kube.Container(name) {
@@ -206,8 +209,8 @@ kapitan + kube + {
     WithCommand(command):: self + { command: command },
     WithArgs(args):: self + { args: args },
     WithImage(image):: self + { image_:: image },
-    WithEnvs(envs):: self + { env_: envs },
-    WithSecurityContext(security_context):: self + { securityContext+: security_context },
+    WithEnvs(envs):: self + { env_: std.prune(envs) },
+    WithSecurityContext(security_context):: self + { securityContext +: security_context },
     WithMount(mount, enabled=true):: self + if enabled then { volumeMounts_+: mount } else {},
     WithAllowPrivilegeEscalation(bool, enabled=true):: self + if enabled then { securityContext+: { allowPrivilegeEscalation: bool } } else {},
     WithRunAsUser(user, enabled=true):: self + if enabled then { securityContext+: { runAsUser: user } } else {},
@@ -251,6 +254,9 @@ kapitan + kube + {
       std.sort(self.envList(self.env_), keyF=function(x) x.name),
   },
 
+
+  #Flag to makes use of "stringData" instead of "data"
+  local secret_data_type = if utils.objectGet(p, 'secrets_use_string_data', false) then "stringData" else "data",
   K8sSecret(name, data): $.K8sCommon(name) + kube.Secret(name) {
     local secret = self,
     local data_resolved = {
@@ -263,7 +269,7 @@ kapitan + kube + {
       name: if version_secrets then '%s-%s' % [name, std.substr(secret.data_digest, 0, 8)] else name,
     },
     short_name:: name,
-    data: {
+    [secret_data_type]: {
       [key]: if utils.objectGet(data[key], 'b64_encode', false) then
         std.base64(data[key].value)
       else if utils.objectGet(data[key], 'template', false) != false then
@@ -282,6 +288,12 @@ kapitan + kube + {
       for key in std.objectFields(data)
     },
   },
+
+  #TODO(ademaria): Add to upstream kube.libjsonnet and make more generic
+  K8sMutatingWebhookConfiguration(name): $.K8sCommon(name) + kube._Object("admissionregistration.k8s.io/v1beta1", "MutatingWebhookConfiguration", name) {
+    withWebHooks(webhooks):: self + { webhooks+: webhooks }
+  },
+
   K8sIngress(name): $.K8sCommon(name) + kube.Ingress(name) {
     spec+: { rules+: [] },
     WithDefaultBackend(backend):: self + { spec+: { backend: backend } },

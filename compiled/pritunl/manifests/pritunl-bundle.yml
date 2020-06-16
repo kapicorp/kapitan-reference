@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: pritunl
+    name: pritunl
   name: pritunl
   namespace: pritunl
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: pritunl
+      name: pritunl
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: pritunl
+        name: pritunl
     spec:
       containers:
         - image: alledm/pritunl
@@ -76,6 +79,7 @@ kind: Service
 metadata:
   labels:
     app: pritunl
+    name: pritunl
   name: pritunl
   namespace: pritunl
 spec:
@@ -94,5 +98,6 @@ spec:
       targetPort: webui
   selector:
     app: pritunl
+    name: pritunl
   sessionAffinity: None
   type: LoadBalancer

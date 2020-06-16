@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: shipping
+    name: shipping
   name: shipping
   namespace: prod-sockshop
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: shipping
+      name: shipping
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: shipping
+        name: shipping
     spec:
       containers:
         - env:
@@ -79,6 +82,7 @@ kind: Service
 metadata:
   labels:
     app: shipping
+    name: shipping
   name: shipping
   namespace: prod-sockshop
 spec:
@@ -89,5 +93,6 @@ spec:
       targetPort: http
   selector:
     app: shipping
+    name: shipping
   sessionAffinity: None
   type: ClusterIP

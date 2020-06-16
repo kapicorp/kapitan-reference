@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: mysql
+    name: mysql
   name: mysql
   namespace: examples
 spec:
@@ -12,11 +13,13 @@ spec:
   selector:
     matchLabels:
       app: mysql
+      name: mysql
   serviceName: mysql
   template:
     metadata:
       labels:
         app: mysql
+        name: mysql
     spec:
       containers:
         - env:

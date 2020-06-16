@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: logstash
+    name: logstash
   name: logstash
   namespace: examples
 spec:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       app: logstash
+      name: logstash
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -21,6 +23,7 @@ spec:
     metadata:
       labels:
         app: logstash
+        name: logstash
     spec:
       affinity:
         podAntiAffinity:

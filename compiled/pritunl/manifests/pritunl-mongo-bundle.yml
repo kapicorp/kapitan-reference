@@ -5,6 +5,7 @@ metadata:
     manifests.kapicorp.com/generated: 'true'
   labels:
     app: pritunl-mongo
+    name: pritunl-mongo
   name: pritunl-mongo
   namespace: pritunl
 spec:
@@ -12,11 +13,13 @@ spec:
   selector:
     matchLabels:
       app: pritunl-mongo
+      name: pritunl-mongo
   serviceName: pritunl-mongo
   template:
     metadata:
       labels:
         app: pritunl-mongo
+        name: pritunl-mongo
     spec:
       containers:
         - env:
@@ -100,18 +103,11 @@ spec:
         storageClassName: standard
 ---
 apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    name: pritunl-mongo
-  name: pritunl-mongo
-  namespace: pritunl
----
-apiVersion: v1
 kind: Service
 metadata:
   labels:
     app: pritunl-mongo
+    name: pritunl-mongo
   name: pritunl-mongo
   namespace: pritunl
 spec:
@@ -122,5 +118,6 @@ spec:
       targetPort: mongo
   selector:
     app: pritunl-mongo
+    name: pritunl-mongo
   sessionAffinity: None
   type: ClusterIP
