@@ -10,7 +10,7 @@ if hash kapitan 2> /dev/null
 then
   KAPITAN_BINARY=kapitan
 else
-  KAPITAN_BINARY="docker run --rm -i --network host -w /src \
+  KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w /src \
    -v $PWD:/src:delegated \
    $KAPITAN_IMAGE kapitan"
 fi
