@@ -1,0 +1,10 @@
+parameters:
+  version_secrets: false
+  secrets_use_string_data: true
+  generators:
+    manifest:
+      default_config:
+        globals:
+          secrets:
+            labels: 
+              tesoro.kapicorp.com: enabled
