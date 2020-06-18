@@ -234,6 +234,7 @@ local p = kap.parameters;
     $.Bundle()
     .WithItem('config', config_map_manifests, has_configmaps)
     .WithItem('secret', secrets_manifests, has_secrets)
+    .WithItem('sa', serviceAccount)
     .WithBundled('workload', workload)
     .WithBundled('vpa', vpa, utils.objectHas(service_component, 'vpa', false))
     .WithBundled('pdb', pdb, utils.objectHas(service_component, 'pdb_min_available'))
