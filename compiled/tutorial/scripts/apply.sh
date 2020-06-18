@@ -1,5 +1,4 @@
 #!/bin/bash
-
 DIR=$(dirname ${BASH_SOURCE[0]})
 ROOT=$(cd "${DIR}"; git rev-parse --show-toplevel)/
 KAPITAN="${ROOT}/kapitan"
@@ -13,6 +12,15 @@ if ! echo | $XARGS 2>/dev/null; then
   XARGS="xargs"
 fi
 
+## if tesoro is enabled, no need to reveal
+apply () {
+  FILEPATH=${1?}
+  ${DIR}/kubectl.sh apply --recursive -f "${FILEPATH}"
+}
+
+
+
+
 if [[ ! -z $FILE ]]
 then
   # Apply files passed at the command line
@@ -20,13 +28,13 @@ then
   do
     [[ -e ${FILEPATH} ]] || ( echo Invalid file ${FILEPATH} && exit 1 )
     echo "## run kubectl apply for ${FILEPATH}"
-    ${KAPITAN} refs --reveal -f ${FILEPATH} | ${DIR}/kubectl.sh apply -f -
+    apply "${FILEPATH}"
   done
 else
 
   if [[ -f ${DIR}/../pre-deploy/01_namespace.yml ]]
   then
-    ${DIR}/kubectl.sh apply -f ${DIR}/../pre-deploy/01_namespace.yml
+    apply "${DIR}/../pre-deploy/01_namespace.yml"
   fi
 
   # Apply files in specific order
@@ -36,7 +44,7 @@ else
     DEPLOY_PATH=${DIR}/../${SECTION}
     if [[ -d ${DEPLOY_PATH} ]]
     then
-        ${KAPITAN} refs --reveal -f ${DIR}/../${SECTION} | ${DIR}/kubectl.sh apply -f -
+      apply "${DEPLOY_PATH}"
     fi
   done
 fi

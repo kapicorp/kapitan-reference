@@ -1,4 +1,5 @@
 parameters:
+  use_tesoro: true
   version_secrets: false
   secrets_use_string_data: true
   generators:
