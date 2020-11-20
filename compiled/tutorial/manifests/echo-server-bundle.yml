@@ -28,6 +28,16 @@ spec:
               value: microservices
           image: jmalloc/echo-server
           imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /_health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
           name: echo-server
           ports:
             - containerPort: 8080
@@ -39,13 +49,13 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
-              path: /_health
+              path: /_ready
               port: http
               scheme: HTTP
             initialDelaySeconds: 0
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 3
+            timeoutSeconds: 5
           volumeMounts:
             - mountPath: /opt/echo-service
               name: config

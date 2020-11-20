@@ -26,13 +26,20 @@ parameters:
         MONGODB_PASSWORD: ${pritunl:auth:password}
         MONGODB_DATABASE: ${pritunl:database:name}
       healthcheck:
-        type: command
-        command:
-          - mongo
-          - --eval
-          - "db.adminCommand('ping')"
-        probes: ['readiness', 'liveness']
-        timeout_seconds: 5
+        readiness:
+          type: command
+          command:
+            - mongo
+            - --eval
+            - "db.adminCommand('ping')"
+          timeout_seconds: 5
+        liveness:
+          type: command
+          command:
+            - mongo
+            - --eval
+            - "db.adminCommand('ping')"
+          timeout_seconds: 5
       volume_mounts:
         datadir:
           mountPath: /bitnami/mongodb
@@ -42,10 +49,10 @@ parameters:
             accessModes: ["ReadWriteOnce"]
             storageClassName: "standard"
             resources:
-              requests: 
+              requests:
                 storage: 10Gi
       secrets:
         secrets:
           data:
-            mongodb-root-password: 
+            mongodb-root-password:
               value: ?{plain:targets/${target_name}/mongodb_password||randomstr|base64}

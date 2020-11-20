@@ -19,8 +19,13 @@ parameters:
           add:
             - NET_BIND_SERVICE
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness', 'liveness']
-        path: /health
-        timeout_seconds: 3
+        readiness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 5

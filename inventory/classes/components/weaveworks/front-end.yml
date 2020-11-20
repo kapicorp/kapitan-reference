@@ -16,10 +16,15 @@ parameters:
           drop:
             - all
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness', 'liveness']
-        path: /
-        timeout_seconds: 3
+        readiness:
+          type: http
+          port: http
+          path: /
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /
+          timeout_seconds: 5
       env:
         SESSION_REDIS: 'true'
