@@ -131,7 +131,7 @@ kapitan + kube + {
         nodePort: utils.objectGet(self.port_info, 'node_port'),
         targetPort: port_name,
       }
-      for port_name in std.objectFields(ports)
+      for port_name in std.objectFields(ports) if 'service_port' in ports[port_name]
     ] } },
   },
   K8sDeployment(name): $.K8sCommon(name) + kube.Deployment(name) {
