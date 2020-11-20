@@ -43,32 +43,56 @@
       healthcheck: {
         type: 'object',
         properties: {
-          enabled: { type: 'boolean' },
-          path: { type: 'string' },
-          scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
-          port: {
-            oneOf: [
-              { type: 'string' },
-              { type: 'integer' },
-            ],
+          readiness: { anyOf: [{ type: 'null' }, { 
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['command', 'http', 'tcp'] },
+              timeout_seconds: { type: 'integer' },
+              initial_delay_seconds: { type: 'integer' },
+              failure_threshold: { type: 'integer' },
+              success_threshold: { type: 'integer' },
+              period_seconds: { type: 'integer' },
+              enabled: { type: 'boolean' },
+              path: { type: 'string' },
+              scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
+              port: {
+                oneOf: [
+                  { type: 'string' },
+                  { type: 'integer' },
+                ],
+              },
+              command: {
+                type: 'array',
+                items: {type: 'string'},
+              },              
+            }}] 
           },
-          command: {
-            type: 'array',
-            items: {type: 'string'},
-          },
-          probes: {
-            type: 'array',
-            items: { type: 'string', enum: ['readiness', 'liveness'] },
-          },
-          type: { type: 'string', enum: ['command', 'http', 'tcp'] },
-          timeout_seconds: { type: 'integer' },
-          initial_delay_seconds: { type: 'integer' },
-          failure_threshold: { type: 'integer' },
-          success_threshold: { type: 'integer' },
-          period_seconds: { type: 'integer' },
+          liveness: { anyOf: [{ type: 'null' }, { 
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['command', 'http', 'tcp'] },
+              timeout_seconds: { type: 'integer' },
+              initial_delay_seconds: { type: 'integer' },
+              failure_threshold: { type: 'integer' },
+              success_threshold: { type: 'integer' },
+              period_seconds: { type: 'integer' },
+              enabled: { type: 'boolean' },
+              path: { type: 'string' },
+              scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
+              port: {
+                oneOf: [
+                  { type: 'string' },
+                  { type: 'integer' },
+                ],
+              },
+              command: {
+                type: 'array',
+                items: {type: 'string'},
+              },              
+            }}]
+          }
         },
         additionalProperties: false,
-        required: ['type', 'probes'],
       },
       image: { type: 'string' },
       labels: { type: 'object', additionalProperties: { type: 'string' } },

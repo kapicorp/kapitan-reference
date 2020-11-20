@@ -189,7 +189,7 @@ kapitan + kube + {
     WithServiceAccountName(sa, service_name):: self + if utils.objectGet(sa, 'enabled', false) then { spec+: { template+: { spec+: { serviceAccountName: utils.objectGet(sa, 'name', service_name) } } } } else {},
     WithVolume(volume, enabled=true):: self + if enabled then { spec+: { template+: { spec+: { volumes_+: volume } } } } else {},
   },
-  
+
   K8sServiceAccount(name): $.K8sCommon(name) + kube.ServiceAccount(name) + {
     WithImagePullSecrets(secrets, enabled=true):: self + if enabled then { imagePullSecrets+: [secrets] } else {},
   },
@@ -204,8 +204,8 @@ kapitan + kube + {
   },
 
   K8sContainer(name, service_component, secrets_configs): kube.Container(name) {
-    WithLivenessProbe(healthchecks, spec):: self + if utils.arrayHas(healthchecks.probes, 'liveness') then { livenessProbe: HealthCheck(spec) } else {},
-    WithReadinessProbe(healthchecks, spec):: self + if utils.arrayHas(healthchecks.probes, 'readiness') then { readinessProbe: HealthCheck(spec) } else {},
+    WithLivenessProbe(healthchecks, spec):: self + if utils.objectHas(healthchecks, 'liveness') then { livenessProbe: HealthCheck(spec.liveness) } else {},
+    WithReadinessProbe(healthchecks, spec):: self + if utils.objectHas(healthchecks, 'readiness') then { readinessProbe: HealthCheck(spec.readiness) } else {},
     WithCommand(command):: self + { command: command },
     WithArgs(args):: self + { args: args },
     WithImage(image):: self + { image_:: image },

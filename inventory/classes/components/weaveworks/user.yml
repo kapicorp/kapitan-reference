@@ -18,11 +18,16 @@ parameters:
         runAsNonRoot: true
         runAsUser: 10001
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness', 'liveness']
-        path: /health
-        timeout_seconds: 3
+        readiness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 5
       volume_mounts:
         tmp-volume:
           mountPath: /tmp

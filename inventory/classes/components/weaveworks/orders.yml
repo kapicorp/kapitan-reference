@@ -9,12 +9,17 @@ parameters:
         http:
           service_port: 80
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness', 'liveness']
-        path: /health
-        timeout_seconds: 3
-        initial_delay_seconds: 120
+        readiness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 3
+          initial_delay_seconds: 120
+        liveness:
+          type: http
+          port: http
+          path: /health
+          timeout_seconds: 5
       security_context:
         runAsNonRoot: true
         runAsUser: 10001

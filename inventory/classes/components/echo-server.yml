@@ -6,11 +6,16 @@ parameters:
       service:
         type: LoadBalancer
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness']
-        path: /_health
-        timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /_health
+          timeout_seconds: 3
+        readiness:
+          type: http
+          port: http
+          path: /_ready
+          timeout_seconds: 5
       ports:
         http:
           service_port: 80
@@ -33,7 +38,7 @@ parameters:
             - echo-service.conf
           data:
             echo-service.conf:
-              template: 'components/echo-server/echo-server.conf.j2'
+              template: "components/echo-server/echo-server.conf.j2"
               values:
                 example: true
             simple_config:

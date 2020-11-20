@@ -6,7 +6,7 @@ parameters:
     postgres-proxy:
       ref: plain:targets/${target_name}/postgres-proxy-service-account
       secret: ?{plain:targets/${target_name}/postgres-proxy-service-account||randomstr}
-      name: postgres-proxy@${google_project}.iam.gserviceaccount.com 
+      name: postgres-proxy@${google_project}.iam.gserviceaccount.com
 
   scripts:
     - templates/scripts/generate_sa_secrets.sh
@@ -23,10 +23,10 @@ parameters:
         GOOGLE_APPLICATION_CREDENTIALS: /opt/secrets/service_account_file
       replicas: 3
       healthcheck:
-        type: tcp
-        port: postgresql
-        probes: ['liveness']
-        timeout_seconds: 1
+        liveness:
+          type: tcp
+          port: postgresql
+          timeout_seconds: 1
       service:
         type: ClusterIP
       ports:

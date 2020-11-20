@@ -3,7 +3,7 @@ parameters:
     gke-pvm-killer:
       ref: plain:targets/${target_name}/gke-pvm-killer-service-account
       secret: ?{plain:targets/${target_name}/gke-pvm-killer-service-account||randomstr}
-      name: gke-pvm-killer@${google_project}.iam.gserviceaccount.com 
+      name: gke-pvm-killer@${google_project}.iam.gserviceaccount.com
 
   scripts:
     - templates/scripts/generate_sa_secrets.sh
@@ -17,11 +17,16 @@ parameters:
         prom-metrics:
           service_port: 9001
       healthcheck:
-        type: http
-        probes: ["liveness", "readiness"]
-        path: /liveness
-        port: liveness
-        timeout_seconds: 3
+        readiness:
+          type: http
+          port: liveness
+          path: /liveness
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: liveness
+          path: /liveness
+          timeout_seconds: 3
       env:
         DRAIN_TIMEOUT: "300"
         INTERVAL: "600"

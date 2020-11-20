@@ -1,423 +1,651 @@
 {
-  additionalProperties: false,
-  definitions: {
-    config: {
-      properties: {
-        data: {
-          additionalProperties: {
-            additionalProperties: false,
-            properties: {
-              b64_encode: {
-                type: 'boolean',
+  "additionalProperties": false,
+  "definitions": {
+    "config": {
+      "properties": {
+        "data": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "b64_encode": {
+                "type": "boolean"
               },
-              template: {
-                type: 'string',
+              "template": {
+                "type": "string"
               },
-              value: {
-                type: 'string',
+              "value": {
+                "type": "string"
               },
-              values: {
-                type: 'object',
-              },
+              "values": {
+                "type": "object"
+              }
             },
-            type: 'object',
+            "type": "object"
           },
-          type: 'object',
+          "type": "object"
         },
-        items: {
-          items: {
-            type: 'string',
+        "items": {
+          "items": {
+            "type": "string"
           },
-          type: 'array',
+          "type": "array"
         },
-        mount: {
-          type: 'string',
-        },
+        "mount": {
+          "type": "string"
+        }
       },
-      required: [
-        'data',
+      "required": [
+        "data"
       ],
-      type: 'object',
+      "type": "object"
     },
-    kube_env: {
-      items: {
-        additionalProperties: false,
-        properties: {
-          name: {
-            type: 'string',
-          },
-          value: {
-            type: 'string',
-          },
-          valueFrom: {
-            anyOf: [
-              {
-                additionalProperties: false,
-                properties: {
-                  secretKeyRef: {
-                    additionalProperties: false,
-                    properties: {
-                      key: {
-                        type: 'string',
-                      },
-                      optional: {
-                        type: 'boolean',
-                      },
-                    },
-                    required: [
-                      'key',
-                    ],
-                    type: 'object',
-                  },
-                },
-                required: [
-                  'secretKeyRef',
-                ],
-                type: 'object',
+    "globals": {
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalValues": {
+                "type": "string"
               },
-              {
-                additionalProperties: false,
-                properties: {
-                  fieldRef: {
-                    additionalProperties: false,
-                    properties: {
-                      fieldPath: {
-                        type: 'string',
-                      },
-                    },
-                    required: [
-                      'fieldPath',
-                    ],
-                    type: 'object',
-                  },
-                },
-                required: [
-                  'fieldRef',
-                ],
-                type: 'object',
-              },
-            ],
-          },
+              "type": "object"
+            }
+          ]
         },
-        required: [
-          'name',
+        "labels": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalValues": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "kube_env": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "valueFrom": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "secretKeyRef": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "optional": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretKeyRef"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "fieldRef": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "fieldPath": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "fieldPath"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "fieldRef"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
         ],
-        type: 'object',
+        "type": "object"
       },
-      type: 'array',
+      "type": "array"
     },
-    port_set: {
-      additionalProperties: false,
-      properties: {
-        container_port: {
-          type: 'integer',
+    "port_set": {
+      "additionalProperties": false,
+      "properties": {
+        "container_port": {
+          "type": "integer"
         },
-        node_port: {
-          type: 'integer',
+        "node_port": {
+          "type": "integer"
         },
-        service_port: {
-          type: 'integer',
+        "protocol": {
+          "enum": [
+            "UDP",
+            "TCP"
+          ],
+          "type": "string"
         },
+        "service_port": {
+          "type": "integer"
+        }
       },
-      type: 'object',
+      "type": "object"
     },
-    secret: {
-      properties: {
-        data: {
-          additionalProperties: {
-            additionalProperties: false,
-            properties: {
-              b64_encode: {
-                type: 'boolean',
-              },
-              template: {
-                type: 'string',
-              },
-              value: {
-                type: 'string',
-              },
-              values: {
-                type: 'object',
-              },
-            },
-            type: 'object',
-          },
-          type: 'object',
-        },
-        items: {
-          items: {
-            type: 'string',
-          },
-          type: 'array',
-        },
-        mount: {
-          type: 'string',
-        },
-      },
-      required: [
-        'data',
-      ],
-      type: 'object',
-    },
-    volume_claim: {
-      properties: {
-        spec: {
-          type: 'object',
-        },
-      },
-      type: 'object',
-    },
-  },
-  description: 'Schema for Kapitan manifest generator',
-  properties: {
-    annotations: {
-      additionalProperties: {
-        type: 'string',
-      },
-      description: 'Annotations to pass to the workload',
-      type: 'object',
-    },
-    application: {
-      description: 'Associates this component to an application.',
-      type: 'string',
-    },
-    args: {
-      description: 'Args to pass to the workload',
-      items: {
-        type: 'string',
-      },
-      type: 'array',
-    },
-    command: {
-      description: 'command to pass to the workload',
-      items: {
-        type: 'string',
-      },
-      type: 'array',
-    },
-    config_maps: {
-      anyOf: [
-        {
-          type: 'null',
-        },
-        {
-          additionalProperties: {
-            '$ref': '#/definitions/config',
-          },
-          type: 'object',
-        },
-      ],
-      description: 'Config maps for the workload',
-    },
-    deployment_progress_deadline_seconds: {
-      anyOf: [
-        {
-          type: 'null',
-        },
-        {
-          type: 'integer',
-        },
-      ],
-    },
-    dns_policy: {
-      enum: [
-        'ClusterFirst',
-      ],
-      type: 'string',
-    },
-    enable_prometheus: {
-      type: 'boolean',
-    },
-    env: {
-      anyOf: [
-        {
-          type: 'null',
-        },
-        {
-          type: 'object',
-        },
-      ],
-    },
-    healthcheck: {
-      additionalProperties: false,
-      properties: {
-        enabled: {
-          type: 'boolean',
-        },
-        path: {
-          type: 'string',
-        },
-        port: {
-          oneOf: [
+    "secret": {
+      "properties": {
+        "annotations": {
+          "anyOf": [
             {
-              type: 'string',
+              "type": "null"
             },
             {
-              type: 'integer',
+              "additionalValues": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "data": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "b64_encode": {
+                "type": "boolean"
+              },
+              "template": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              }
             },
-          ],
-        },
-        probes: {
-          items: {
-            enum: [
-              'readiness',
-              'liveness',
-            ],
-            type: 'string',
+            "type": "object"
           },
-          type: 'array',
+          "type": "object"
         },
-        timeout_seconds: {
-          type: 'integer',
-        },
-        type: {
-          type: 'string',
-        },
-      },
-      required: [
-        'type',
-        'probes',
-      ],
-      type: 'object',
-    },
-    image: {
-      type: 'string',
-    },
-    labels: {
-      additionalProperties: {
-        type: 'string',
-      },
-      type: 'object',
-    },
-    min_ready_seconds: {
-      type: 'integer',
-    },
-    name: {
-      type: 'string',
-    },
-    pdb_min_available: {
-      type: 'integer',
-    },
-    ports: {
-      additionalProperties: {
-        '$ref': '#/definitions/port_set',
-      },
-      type: 'object',
-    },
-    prefer_pods_in_different_nodes: {
-      type: 'boolean',
-    },
-    prefer_pods_in_different_zones: {
-      type: 'boolean',
-    },
-    prefer_pods_in_node_type: {
-      type: 'string',
-    },
-    replicas: {
-      type: 'integer',
-    },
-    secrets: {
-      anyOf: [
-        {
-          type: 'null',
-        },
-        {
-          additionalProperties: {
-            '$ref': '#/definitions/secret',
+        "items": {
+          "items": {
+            "type": "string"
           },
-          type: 'object',
+          "type": "array"
         },
-      ],
-    },
-    security: {
-      anyOf: [
-        {
-          type: 'null',
-        },
-        {
-          additionalProperties: false,
-          properties: {
-            allow_privilege_escalation: {
-              type: 'boolean',
-            },
-            user_id: {
-              type: 'integer',
-            },
-          },
-          type: 'object',
-        },
-      ],
-    },
-    service: {
-      additionalProperties: false,
-      properties: {
-        annotations: {
-          additionalValues: {
-            type: 'string',
-          },
-          type: 'object',
-        },
-        externalTrafficPolicy: {
-          enum: [
-            'Cluster',
-          ],
-          type: 'string',
-        },
-        grpc: {
-          type: 'object',
-        },
-        type: {
-          enum: [
-            'NodePort',
-            'ClusterIP',
-            'LoadBalancer',
-          ],
-          type: 'string',
-        },
+        "mount": {
+          "type": "string"
+        }
       },
-      type: 'object',
-    },
-    service_account: {
-      type: 'boolean',
-    },
-    type: {
-      enum: [
-        'statefulset',
-        'deployment',
+      "required": [
+        "data"
       ],
-      type: 'string',
+      "type": "object"
     },
-    volume_claims: {
-      additionalProperties: {
-        '$ref': '#/definitions/volume_claim',
+    "volume_claim": {
+      "properties": {
+        "spec": {
+          "type": "object"
+        }
       },
-      type: 'object',
-    },
-    volume_mounts: {
-      additionalProperties: {
-        type: 'object',
-      },
-      type: 'object',
-    },
-    volumes: {
-      additionalProperties: {
-        type: 'object',
-      },
-      type: 'object',
-    },
-    vpa: {
-      enum: [
-        'Off',
-        'Auto',
-      ],
-      type: 'string',
-    },
+      "type": "object"
+    }
   },
-  required: [
-    'name',
-    'image',
-    'type',
+  "description": "Schema for Kapitan manifest generator",
+  "properties": {
+    "annotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations to pass to the workload",
+      "type": "object"
+    },
+    "application": {
+      "description": "Associates this component to an application.",
+      "type": "string"
+    },
+    "args": {
+      "description": "Args to pass to the workload",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "cluster_role": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "command": {
+      "description": "command to pass to the workload",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "config_maps": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/config"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Config maps for the workload"
+    },
+    "deployment_progress_deadline_seconds": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "dns_policy": {
+      "enum": [
+        "ClusterFirst"
+      ],
+      "type": "string"
+    },
+    "enable_prometheus": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "env": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "globals": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "configmaps": {
+              "additionalProperties": {
+                "$ref": "#/definitions/globals"
+              },
+              "type": "object"
+            },
+            "secrets": {
+              "additionalProperties": {
+                "$ref": "#/definitions/globals"
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "healthcheck": {
+      "additionalProperties": false,
+      "properties": {
+        "liveness": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "properties": {
+                "command": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "failure_threshold": {
+                  "type": "integer"
+                },
+                "initial_delay_seconds": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "period_seconds": {
+                  "type": "integer"
+                },
+                "port": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "scheme": {
+                  "enum": [
+                    "HTTP",
+                    "HTTPS"
+                  ],
+                  "type": "string"
+                },
+                "success_threshold": {
+                  "type": "integer"
+                },
+                "timeout_seconds": {
+                  "type": "integer"
+                },
+                "type": {
+                  "enum": [
+                    "command",
+                    "http",
+                    "tcp"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "readiness": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "properties": {
+                "command": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "failure_threshold": {
+                  "type": "integer"
+                },
+                "initial_delay_seconds": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "period_seconds": {
+                  "type": "integer"
+                },
+                "port": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "scheme": {
+                  "enum": [
+                    "HTTP",
+                    "HTTPS"
+                  ],
+                  "type": "string"
+                },
+                "success_threshold": {
+                  "type": "integer"
+                },
+                "timeout_seconds": {
+                  "type": "integer"
+                },
+                "type": {
+                  "enum": [
+                    "command",
+                    "http",
+                    "tcp"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "image": {
+      "type": "string"
+    },
+    "labels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "min_ready_seconds": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "node_selector_labels": {
+      "type": "object"
+    },
+    "pdb_min_available": {
+      "type": "integer"
+    },
+    "ports": {
+      "additionalProperties": {
+        "$ref": "#/definitions/port_set"
+      },
+      "type": "object"
+    },
+    "prefer_pods_in_different_nodes": {
+      "type": "boolean"
+    },
+    "prefer_pods_in_different_zones": {
+      "type": "boolean"
+    },
+    "prefer_pods_in_node_type": {
+      "type": "string"
+    },
+    "replicas": {
+      "type": "integer"
+    },
+    "secrets": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/secret"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "security": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "allow_privilege_escalation": {
+              "type": "boolean"
+            },
+            "user_id": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "security_context": {
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalValues": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "externalTrafficPolicy": {
+          "enum": [
+            "Cluster"
+          ],
+          "type": "string"
+        },
+        "grpc": {
+          "type": "object"
+        },
+        "type": {
+          "enum": [
+            "NodePort",
+            "ClusterIP",
+            "LoadBalancer"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "service_account": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "annotations": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "additionalValues": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              ]
+            },
+            "create": {
+              "type": "boolean"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "type": {
+      "enum": [
+        "statefulset",
+        "deployment"
+      ],
+      "type": "string"
+    },
+    "update_strategy": {
+      "type": "object"
+    },
+    "volume_claims": {
+      "additionalProperties": {
+        "$ref": "#/definitions/volume_claim"
+      },
+      "type": "object"
+    },
+    "volume_mounts": {
+      "additionalProperties": {
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "volumes": {
+      "additionalProperties": {
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "vpa": {
+      "enum": [
+        "Off",
+        "Auto"
+      ],
+      "type": "string"
+    },
+    "webhooks": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "image",
+    "type"
   ],
-  title: 'manifest generator',
-  type: 'object',
+  "title": "manifest generator",
+  "type": "object"
 }

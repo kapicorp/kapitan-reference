@@ -33,9 +33,9 @@ local p = kap.parameters;
     .WithCommand(utils.objectGet(service_component, 'command'))
     .WithEnvs(utils.objectGet(service_component, 'env', {}))
     .WithImage(utils.objectGet(service_component, 'image'))
-    .WithLivenessProbe(utils.objectGet(service_component, 'healthcheck', { probes: [] }), service_component.healthcheck)
+    .WithLivenessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
     .WithPorts(utils.objectGet(service_component, 'ports', {}))
-    .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', { probes: [] }), service_component.healthcheck)
+    .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
     .WithSecurityContext(utils.objectGet(service_component, 'security_context', {}))
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
@@ -137,12 +137,12 @@ local p = kap.parameters;
         config: utils.objectGet(service_component, 'secrets', {}),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
         generating_class: kap.K8sSecret
-      }, 
+      },
       migration_secrets: {
         config: utils.deepMerge(config_helpers.secrets.config, utils.objectGet(service_component.migration, 'secrets', {})),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
         generating_class: kap.K8sSecret
-      }, 
+      },
       config_maps: {
         config: utils.objectGet(service_component, 'config_maps', {}),
         global_annotations: utils.objectGet(global_annotations, 'config_maps', {}),
@@ -165,9 +165,9 @@ local p = kap.parameters;
       [name]: MergeConfig(name, helper)
       for name in std.objectFields(helper.config)
     };
- 
-    local objects = { 
-      [name]: CreateConfigDefinition(config_helpers[name]) 
+
+    local objects = {
+      [name]: CreateConfigDefinition(config_helpers[name])
         for name in std.objectFields(config_helpers)
     };
 

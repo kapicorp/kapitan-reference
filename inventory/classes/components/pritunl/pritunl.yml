@@ -1,7 +1,7 @@
 parameters:
 
   pritunl:
-    database: 
+    database:
       name: pritunl
       connection_string: mongodb://${pritunl:auth:username}:${pritunl:auth:password}@pritunl-mongo:27017/${pritunl:database:name}
     auth:
@@ -20,12 +20,18 @@ parameters:
         webui:
           service_port: 443
       healthcheck:
-        type: http
-        scheme: HTTPS
-        path: /
-        port: webui
-        probes: ['readiness', 'liveness']
-        timeout_seconds: 3
+        readiness:
+          type: http
+          scheme: HTTPS
+          port: webui
+          path: /
+          timeout_seconds: 3
+        liveness:
+          type: http
+          scheme: HTTPS
+          port: webui
+          path: /
+          timeout_seconds: 3
       service:
         type: LoadBalancer
       security_context:
@@ -35,7 +41,7 @@ parameters:
           mount: /etc/pritunl.conf
           subPath: pritunl.conf
           data:
-            pritunl.conf: 
+            pritunl.conf:
               value: |-
                 {
                   "debug": false,
