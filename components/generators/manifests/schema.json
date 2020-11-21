@@ -500,6 +500,50 @@
     "replicas": {
       "type": "integer"
     },
+    "resources": {
+      "additionalProperties": false,
+      "properties": {
+        "limits": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "properties": {
+                "additionalProperties": true,
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "requests": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "properties": {
+                "additionalProperties": true,
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
     "secrets": {
       "anyOf": [
         {

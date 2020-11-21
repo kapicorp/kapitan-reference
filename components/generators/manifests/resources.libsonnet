@@ -50,10 +50,10 @@ local p = kap.parameters;
       readOnly: true,
     } for config_map_name in std.objectFields(config_map_configs) }, config_map_configs != null)
     .WithMount(utils.objectGet(service_component, 'volume_mounts', {}))
+    .WithResources(utils.objectGet(service_component, 'resources', {}))
     {
       stdin:: super.stdin,
       tty:: super.tty,
-      resources: {},
     },
 
 

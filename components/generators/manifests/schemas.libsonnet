@@ -39,6 +39,28 @@
       enabled: { type: 'boolean' },
       pdb_min_available: { type: 'integer' },
       env: { anyOf: [{ type: 'null' }, { type: 'object' }] },
+      resources: {
+        type: 'object',
+        properties: {
+          limits: { anyOf: [{ type: 'null' }, { 
+            type: 'object',
+            properties: {
+              cpu: { type: 'string' },
+              memory: { type: 'string' },
+              additionalProperties: true,
+            }}] 
+          },
+          requests: { anyOf: [{ type: 'null' }, { 
+            type: 'object',
+            properties: {
+              cpu: { type: 'string' },
+              memory: { type: 'string' },
+              additionalProperties: true,
+            }}] 
+          },
+        },
+        additionalProperties: false,
+      },
       cluster_role: { anyOf: [{ type: 'null' }, { type: 'object' }] },
       healthcheck: {
         type: 'object',
@@ -98,8 +120,8 @@
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
       node_selector_labels: { type: 'object' },
-      service_account: { anyOf: [{ type: 'null' }, { 
-        type: 'object', 
+      service_account: { anyOf: [{ type: 'null' }, {
+        type: 'object',
         properties: {
           name: {type: 'string'},
           create: {type: 'boolean'},
@@ -116,8 +138,8 @@
         type: 'object',
         additionalProperties: { '$ref': '#/definitions/port_set' },
       },
-      globals: { anyOf: [{ type: 'null' }, { 
-        type: 'object', 
+      globals: { anyOf: [{ type: 'null' }, {
+        type: 'object',
         properties: {
           secrets: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
           configmaps: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
