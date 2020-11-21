@@ -21,7 +21,7 @@ openssl req -x509 -new -nodes -key ${CACERT_KEY} -subj "/CN=CA-${CN}" -sha256 -d
 
 openssl genrsa -out ${CERT_KEY} 2048 > /dev/null
 openssl req -new -sha256 -key ${CERT_KEY} -subj "/CN=${CN}" -out csr.csr >/dev/null
-openssl x509 -req -in csr.csr -CA ${CACERT_PEM} -CAkey ${CACERT_KEY} -CAcreateserial -out ${CERT_PEM} -days 500 -sha256 > /dev/null
+openssl x509 -req -in csr.csr -CA ${CACERT_PEM} -extfile <(printf "subjectAltName=DNS:${CN}")  -CAkey ${CACERT_KEY} -CAcreateserial -out ${CERT_PEM} -days 500 -sha256 > /dev/null
 openssl x509 -in ${CERT_PEM} -noout 
 popd
 kapitan refs -t tesoro --write plain:targets/tesoro/kapicorp-tesoro-cert-pem --base64 -f ${SCRIPT_TMP_DIR}/${CERT_PEM}
