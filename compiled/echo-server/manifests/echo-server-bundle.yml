@@ -53,6 +53,12 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 1G
+            requests:
+              hugepages-2Mi: 80Mi
+              memory: 1G
           volumeMounts:
             - mountPath: /opt/echo-service
               name: config

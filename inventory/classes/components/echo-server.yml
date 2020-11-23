@@ -43,6 +43,12 @@ parameters:
                 example: true
             simple_config:
               value: "not mounted"
+      resources:
+        requests:
+          memory: 1G
+          hugepages-2Mi: 80Mi
+        limits:
+          memory: 1G
 
   ingresses:
     global:

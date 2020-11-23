@@ -222,6 +222,7 @@ kapitan + kube + {
       }
       for port_name in std.objectFields(ports)
     ] },
+    WithResources(resources):: self + {resources: resources},
     local container = self,
     image: container.image_,
     env_:: {},
