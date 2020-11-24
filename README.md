@@ -11,13 +11,18 @@ $ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
 $ cd kapitan-templates
 
 $ ./kapitan compile
-Compiled examples/gke-pvm-killer (0.36s)
-Compiled examples/postgres-proxy (0.37s)
-Compiled examples/echo-server (0.39s)
-Compiled examples/mysql (0.40s)
-Compiled examples/tutorial (0.31s)
-Compiled examples/examples (0.43s)
-
+Compiled postgres-proxy (1.51s)
+Compiled tesoro (1.70s)
+Compiled echo-server (1.64s)
+Compiled mysql (1.67s)
+Compiled gke-pvm-killer (1.17s)
+Compiled prod-sockshop (4.74s)
+Compiled dev-sockshop (4.74s)
+Compiled tutorial (1.68s)
+Compiled global (0.76s)
+Compiled examples (2.60s)
+Compiled pritunl (2.03s)
+Compiled sock-shop (4.36s)
 ``` 
 
 ## Slow walk-through
@@ -59,12 +64,18 @@ To update them, run:
 Dependency lib/kube.libjsonnet : already exists. Ignoring
 Dependency lib/spinnaker-pipeline.libjsonnet : already exists. Ignoring
 Dependency lib/spinnaker-application.libjsonnet : already exists. Ignoring
-Compiled examples/gke-pvm-killer (0.36s)
-Compiled examples/postgres-proxy (0.37s)
-Compiled examples/echo-server (0.39s)
-Compiled examples/mysql (0.40s)
-Compiled examples/tutorial (0.31s)
-Compiled examples/examples (0.43s)
+./kapitan compiledd
+Compiled tesoro (1.70s)
+Compiled echo-server (1.64s)
+Compiled mysql (1.67s)
+Compiled gke-pvm-killer (1.17s)
+Compiled prod-sockshop (4.74s)
+Compiled dev-sockshop (4.74s)
+Compiled tutorial (1.68s)
+Compiled global (0.76s)
+Compiled examples (2.60s)
+Compiled pritunl (2.03s)
+Compiled sock-shop (4.36s)
 ``` 
 
 ## Generators
@@ -94,6 +105,8 @@ To help you get started, please look at the following examples:
 |[postgres-proxy](inventory/classes/components/postgres-proxy.yml)| Example using [cloud-sql-proxy](https://github.com/GoogleCloudPlatform/cloudsql-proxy) to connect to a Cloud SQL Postgres instance| [manifests](compiled/postgres-proxy/manifests)|
 |[logstash](inventory/classes/components/logstash.yml)| Example of [Logstash](https://www.elastic.co/logstash) configuration | [manifests](compiled/examples/manifests)
 |[tesoro](inventory/classes/components/kapicorp/tesoro.yml)| Example of [tesoro](https://github.com/kapicorp/tesoro) configuration | [manifests](compiled/tesoro/manifests)
+|[pritunl](inventory/classes/components/pritunl/pritunl.yml)| Example of [pritunl](https://pritunl.com/) configuration | [manifests](compiled/pritunl/manifests)
+
 
 
 Please find the generated manifests in the [compiled](compiled) folder
