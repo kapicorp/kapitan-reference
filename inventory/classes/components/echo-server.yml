@@ -9,6 +9,9 @@ parameters:
         liveness:
           type: http
           port: http
+          httpHeaders:
+          - name: Host
+            value: www.google.com
           path: /_health
           timeout_seconds: 3
         readiness:

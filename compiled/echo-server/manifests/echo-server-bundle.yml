@@ -28,6 +28,9 @@ spec:
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
+                - name: Host
+                  value: www.google.com
               path: /_health
               port: http
               scheme: HTTP
