@@ -1,4 +1,4 @@
-local kap = import 'lib/kap.libjsonnet';
+local kap = import 'lib/kap.libsonnet';
 
 
 {
