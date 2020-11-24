@@ -8,6 +8,8 @@ parameters:
       service_account:
         enabled: true
         create: true
+      workload_security_context:
+        fsGroup: 1001
       security_context:
         runAsNonRoot: true
         runAsUser: 1001

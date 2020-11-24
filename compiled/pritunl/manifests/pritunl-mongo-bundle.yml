@@ -75,6 +75,8 @@ spec:
             - mountPath: /bitnami/mongodb
               name: datadir
       restartPolicy: Always
+      securityContext:
+        fsGroup: 1001
       serviceAccountName: pritunl-mongo
       terminationGracePeriodSeconds: 30
       volumes:

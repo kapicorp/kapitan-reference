@@ -34,6 +34,7 @@
       },
       deployment_progress_deadline_seconds: { anyOf: [{ type: 'null' }, { type: 'integer' }] },
       dns_policy: { type: 'string', enum: ['ClusterFirst'] },
+      pull_policy: { type: 'string', enum: ['Always', 'IfNotPresent'] },
       vpa: { type: 'string', enum: ['Off', 'Auto'] },
       enable_prometheus: { type: 'boolean' },
       enabled: { type: 'boolean' },
@@ -75,6 +76,10 @@
               success_threshold: { type: 'integer' },
               period_seconds: { type: 'integer' },
               enabled: { type: 'boolean' },
+              httpHeaders: {
+                type: 'array',
+                items: {type: 'object'},
+              },
               path: { type: 'string' },
               scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
               port: {
@@ -99,6 +104,10 @@
               success_threshold: { type: 'integer' },
               period_seconds: { type: 'integer' },
               enabled: { type: 'boolean' },
+              httpHeaders: {
+                type: 'array',
+                items: {type: 'object'},
+              },
               path: { type: 'string' },
               scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
               port: {
@@ -133,6 +142,7 @@
       },
       update_strategy: { type: 'object' },
       security_context: { type: 'object' },
+      workload_security_context: { type: 'object' },
       min_ready_seconds: { type: 'integer' },
       ports: {
         type: 'object',
@@ -170,6 +180,8 @@
         additionalProperties: false,
       },
       webhooks: { type: 'array', items: { type: 'object' } },
+      service_monitors: { type: 'object', items: { type: 'object' } },
+      prometheus_rules: { type: 'object', items: { type: 'object' } },
       replicas: { type: 'integer' },
       prefer_pods_in_different_nodes: { type: 'boolean' },
       prefer_pods_in_different_zones: { type: 'boolean' },
@@ -205,6 +217,7 @@
           },
           items: { type: 'array', items: { type: 'string' } },
           mount: { type: 'string' },
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
         },
         required: ['data'],
       },
