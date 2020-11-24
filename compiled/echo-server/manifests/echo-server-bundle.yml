@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - image: jmalloc/echo-server
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
             httpGet:

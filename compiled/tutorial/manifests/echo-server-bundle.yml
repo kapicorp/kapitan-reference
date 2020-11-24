@@ -27,7 +27,7 @@ spec:
             - name: KAPITAN_APPLICATION
               value: microservices
           image: jmalloc/echo-server
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
             httpGet:

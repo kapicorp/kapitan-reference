@@ -3,6 +3,7 @@ parameters:
     echo-server:
       application: microservices
       image: jmalloc/echo-server
+      pull_policy: Always
       service:
         type: LoadBalancer
       healthcheck:
