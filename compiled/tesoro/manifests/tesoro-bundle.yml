@@ -117,6 +117,54 @@ webhooks:
         resources:
           - deployments
 ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    name: tesoro-metrics
+  name: tesoro-metrics
+  namespace: tesoro
+spec:
+  endpoints:
+    - interval: 15s
+      path: /
+      targetPort: 9095
+  jobLabel: tesoro-metrics
+  namespaceSelector:
+    matchNames:
+      - tesoro
+  selector:
+    matchLabels:
+      name: tesoro
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    name: tesoro.rules
+  name: tesoro.rules
+  namespace: tesoro
+spec:
+  groups:
+    - name: tesoro.rules
+      rules:
+        - alert: TesoroFailedRequests
+          annotations:
+            message: tesoro_requests_failed_total has increased above 0
+          expr: sum by (job, namespace, service, env) (increase(tesoro_requests_failed_total[5m]))
+            > 0
+          for: 1m
+          labels:
+            severity: warning
+        - alert: KapitanRevealRequestFailures
+          annotations:
+            message: kapitan_reveal_requests_failed_total has increased above 0
+          expr: sum by (job, namespace, service, env) (increase(kapitan_reveal_requests_failed_total[5m]))
+            > 0
+          for: 1m
+          labels:
+            severity: warning
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:

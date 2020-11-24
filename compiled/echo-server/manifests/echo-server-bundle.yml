@@ -24,10 +24,13 @@ spec:
     spec:
       containers:
         - image: jmalloc/echo-server
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
+                - name: Host
+                  value: www.google.com
               path: /_health
               port: http
               scheme: HTTP

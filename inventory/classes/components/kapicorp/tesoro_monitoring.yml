@@ -1,0 +1,24 @@
+parameters:
+  components:
+    tesoro:
+      service_monitors:
+        endpoints:
+          - interval: 15s
+            path: /
+            targetPort: 9095
+      prometheus_rules:
+        rules:
+          - alert: TesoroFailedRequests
+            annotations:
+              message: 'tesoro_requests_failed_total has increased above 0'
+            expr: sum by (job, namespace, service, env) (increase(tesoro_requests_failed_total[5m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+          - alert: KapitanRevealRequestFailures
+            annotations:
+              message: 'kapitan_reveal_requests_failed_total has increased above 0'
+            expr: sum by (job, namespace, service, env) (increase(kapitan_reveal_requests_failed_total[5m])) > 0
+            for: 1m
+            labels:
+              severity: warning

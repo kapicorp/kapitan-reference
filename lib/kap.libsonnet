@@ -42,6 +42,7 @@ local HealthCheck = function(healthcheck_config) if utils.objectGet(healthcheck_
     path: healthcheck_config.path,
     port: utils.objectGet(healthcheck_config, 'port', 80),
     scheme: utils.objectGet(healthcheck_config, 'scheme', 'HTTP'),
+    httpHeaders: utils.objectGet(healthcheck_config, 'httpHeaders', []),
   },
   [if healthcheck_config.type == 'tcp' then 'tcpSocket']: {
     port: utils.objectGet(healthcheck_config, 'port', 80),
@@ -143,6 +144,7 @@ kapitan + kube + {
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
     WithReplicas(replicas):: self + { spec+: { replicas: replicas } },
     WithUpdateStrategy(strategy):: self + { spec+: { strategy+: strategy } },
@@ -163,6 +165,7 @@ kapitan + kube + {
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithUpdateStrategy(strategy):: self + { spec+: { updateStrategy+: strategy } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
@@ -180,6 +183,7 @@ kapitan + kube + {
 
   K8sJob(name): $.K8sCommon(name) + kube.Job(name) {
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
     WithBackoffLimit(limit):: self + { spec+: { backoffLimit: limit } },
     WithDNSPolicy(policy):: self + { spec+: { template+: { spec+: { dnsPolicy: policy } } } },
     WithImagePullSecrets(secret):: self + { spec+: { template+: { spec+: { imagePullSecrets+: [{ name: secret }] } } } },
@@ -208,6 +212,8 @@ kapitan + kube + {
     WithReadinessProbe(healthchecks, spec):: self + if utils.objectHas(healthchecks, 'readiness') then { readinessProbe: HealthCheck(spec.readiness) } else {},
     WithCommand(command):: self + { command: command },
     WithArgs(args):: self + { args: args },
+    WithResources(resources):: self + { resources: resources },
+    WithPullPolicy(policy):: self + { imagePullPolicy: policy },
     WithImage(image):: self + { image_:: image },
     WithEnvs(envs):: self + { env_: std.prune(envs) },
     WithSecurityContext(security_context):: self + { securityContext +: security_context },
@@ -222,7 +228,6 @@ kapitan + kube + {
       }
       for port_name in std.objectFields(ports)
     ] },
-    WithResources(resources):: self + {resources: resources},
     local container = self,
     image: container.image_,
     env_:: {},
@@ -274,7 +279,10 @@ kapitan + kube + {
       [key]: if utils.objectGet(data[key], 'b64_encode', false) && secret_data_type == "data" then
         std.base64(data[key].value)
       else if utils.objectGet(data[key], 'template', false) != false then
-        std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {})))
+        if secret_data_type == 'data' then
+            std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {})))
+        else
+            kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {}))
       else
         data[key].value
       for key in std.objectFields(data)

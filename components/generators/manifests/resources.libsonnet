@@ -1,4 +1,5 @@
 local kap = import 'lib/kap.libsonnet';
+local prom = import 'lib/prometheus-operator.libjsonnet';
 
 local utils = kap.utils;
 local p = kap.parameters;
@@ -27,13 +28,14 @@ local p = kap.parameters;
     },
   },
 
-  Container(service_component, config_map_configs, secrets_configs)::
-    kap.K8sContainer(service_component.name, service_component, secrets_configs)
+  Container(name, service_component, config_map_configs, secrets_configs)::
+    kap.K8sContainer(name, service_component, secrets_configs)
     .WithArgs(utils.objectGet(service_component, 'args'))
     .WithCommand(utils.objectGet(service_component, 'command'))
     .WithEnvs(utils.objectGet(service_component, 'env', {}))
     .WithImage(utils.objectGet(service_component, 'image'))
     .WithLivenessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
+    .WithPullPolicy(utils.objectGet(service_component, 'pull_policy', "IfNotPresent"))
     .WithPorts(utils.objectGet(service_component, 'ports', {}))
     .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
@@ -70,7 +72,7 @@ local p = kap.parameters;
   },
 
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component, config_map_configs, secrets_configs);
+    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
     kap.K8sStatefulSet(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithNamespace()
@@ -78,6 +80,7 @@ local p = kap.parameters;
     .WithContainer({ [service_component.name]: container })
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
+    .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
     .WithNamespace(kap.parameters.namespace)
     .WithProgressDeadlineSeconds(utils.objectGet(service_component, 'deployment_progress_deadline_seconds'))
@@ -93,7 +96,7 @@ local p = kap.parameters;
 
   ,
   Deployment(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component, config_map_configs, secrets_configs);
+    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
     kap.K8sDeployment(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
@@ -102,6 +105,7 @@ local p = kap.parameters;
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
     .WithContainer({ [service_component.name]: container })
+    .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithMinReadySeconds(utils.objectGet(service_component, 'min_ready_seconds'))
@@ -129,6 +133,10 @@ local p = kap.parameters;
     local has_service_account = utils.objectHas(service_component, 'service_account', false);
     local has_cluster_role = utils.objectHas(service_component, 'cluster_role', false);
     local has_webhooks = utils.objectHas(service_component, 'webhooks', false);
+    local has_service_monitor = utils.objectHas(service_component, 'service_monitors', false);
+    local has_prometheus_rule = utils.objectHas(service_component, 'prometheus_rules', false);
+
+
 
 
     local config_helpers = {
@@ -208,6 +216,20 @@ local p = kap.parameters;
     local webhooks = if has_webhooks then kap.K8sMutatingWebhookConfiguration(service_component.name)
       .withWebHooks(utils.objectGet(service_component, 'webhooks', []));
 
+    local service_monitor = if has_service_monitor then utils.objectGet(service_component, 'service_monitors');
+    local service_monitors = if has_service_monitor then prom.ServiceMonitor(service_component.name + '-metrics')
+      .WithNamespace()
+      .WithEndPoints(utils.objectGet(service_monitor, 'endpoints', []))
+      .WithSelector(utils.objectGet(service_monitor, 'selector', { matchLabels: { name: service_component.name }}))
+      .WithNameSpaceSelector(utils.objectGet(service_monitor, 'namespace_selector',  { matchNames: [ p.namespace ] }))
+      ;
+
+    local prometheus_rule = if has_prometheus_rule then utils.objectGet(service_component, 'prometheus_rules');
+    local prometheus_rules = if has_prometheus_rule then prom.PrometheusRule(service_component.name + '.rules')
+      .WithNamespace()
+      .WithRules(utils.objectGet(prometheus_rule, 'rules', []))
+      ;
+
     local vpa_mode=utils.objectGet(service_component, 'vpa', 'Auto');
     local vpa = kap.createVPAFor(workload, mode=vpa_mode) {
       spec+: {
@@ -240,6 +262,8 @@ local p = kap.parameters;
     .WithBundled('pdb', pdb, utils.objectHas(service_component, 'pdb_min_available'))
     .WithBundled('service', service)
     .WithBundled('webhooks', webhooks)
+    .WithBundled('service_monitors', service_monitors)
+    .WithBundled('prometheus_rules', prometheus_rules)
     .WithBundled('cr', clusterRole)
     .WithBundled('crb', clusterRoleBinding),
 }
