@@ -65,7 +65,11 @@ local p = kap.parameters;
                                      .WithSessionAffinity('None')
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
-                                     .WithPorts(service_component.ports)
+                                     .WithPorts(service_component.ports + { 
+                                        [port_name]: service_component.sidecars[sidecar_name].ports[port_name]
+                                        for sidecar_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {})) 
+                                        for port_name in std.objectFields(utils.objectGet(service_component.sidecars[sidecar_name], 'ports', {}))
+                                      })
                                      {
     workload:: error 'Workload must be set',
     target_pod:: self.workload.spec.template,

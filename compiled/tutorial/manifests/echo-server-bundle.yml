@@ -69,9 +69,13 @@ spec:
             - mountPath: /opt/echo-service
               name: config
               readOnly: true
-        - image: jmalloc/echo-server
+        - image: nginx
           imagePullPolicy: IfNotPresent
-          name: test
+          name: nginx
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
           volumeMounts:
             - mountPath: /opt/echo-service
               name: config
@@ -99,11 +103,6 @@ metadata:
   name: echo-server
   namespace: tutorial
 spec:
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
   selector:
     name: echo-server
   sessionAffinity: None

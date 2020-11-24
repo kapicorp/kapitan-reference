@@ -7,8 +7,11 @@ parameters:
       service:
         type: LoadBalancer
       sidecars:
-        test:
-          image: jmalloc/echo-server
+        nginx:
+          image: nginx
+          ports:
+            nginx: 
+              service_port: 80
       healthcheck:
         liveness:
           type: http
@@ -25,7 +28,6 @@ parameters:
           timeout_seconds: 5
       ports:
         http:
-          service_port: 80
           container_port: 8080
         internal:
           container_port: 8081
