@@ -69,6 +69,13 @@ spec:
             - mountPath: /opt/echo-service
               name: config
               readOnly: true
+        - image: jmalloc/echo-server
+          imagePullPolicy: IfNotPresent
+          name: test
+          volumeMounts:
+            - mountPath: /opt/echo-service
+              name: config
+              readOnly: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

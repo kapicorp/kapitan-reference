@@ -6,6 +6,9 @@ parameters:
       pull_policy: Always
       service:
         type: LoadBalancer
+      sidecars:
+        test:
+          image: jmalloc/echo-server
       healthcheck:
         liveness:
           type: http
