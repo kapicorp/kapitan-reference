@@ -72,12 +72,17 @@ local p = kap.parameters;
   },
 
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local additional_containers = {
+      local container = service_component.sidecars[container_name],
+      [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
+      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+    };
     kap.K8sStatefulSet(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
-    .WithContainer({ [service_component.name]: container })
+    .WithContainer({ default: main_container } + additional_containers )
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
@@ -96,7 +101,13 @@ local p = kap.parameters;
 
   ,
   Deployment(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local additional_containers = {
+      local container = service_component.sidecars[container_name],
+      [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
+      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+    };
+
     kap.K8sDeployment(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
@@ -104,7 +115,7 @@ local p = kap.parameters;
     .WithNodeSelector(utils.objectGet(service_component, 'node_selector_labels', {}))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
-    .WithContainer({ [service_component.name]: container })
+    .WithContainer({ default: main_container } + additional_containers)
     .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))

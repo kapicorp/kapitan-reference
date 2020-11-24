@@ -63,6 +63,7 @@
         additionalProperties: false,
       },
       cluster_role: { anyOf: [{ type: 'null' }, { type: 'object' }] },
+      sidecars: { anyOf: [{ type: 'null' }, { type: 'object' }] },
       healthcheck: {
         type: 'object',
         properties: {
