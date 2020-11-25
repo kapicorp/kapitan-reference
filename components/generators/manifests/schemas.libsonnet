@@ -63,7 +63,7 @@
         additionalProperties: false,
       },
       cluster_role: { anyOf: [{ type: 'null' }, { type: 'object' }] },
-      sidecars: { anyOf: [{ type: 'null' }, { type: 'object' }] },
+      additional_containers: { anyOf: [{ type: 'null' }, { type: 'object' }] },
       healthcheck: {
         type: 'object',
         properties: {
@@ -149,11 +149,11 @@
         type: 'object',
         additionalProperties: { '$ref': '#/definitions/port_set' },
       },
-      globals: { anyOf: [{ type: 'null' }, {
-        type: 'object',
+      globals: { anyOf: [{ type: 'null' }, { 
+        type: 'object', 
         properties: {
           secrets: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
-          configmaps: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
+          config_maps: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
         },
         additionalProperties: false,
         }]
