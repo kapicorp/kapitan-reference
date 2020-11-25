@@ -6,7 +6,7 @@ parameters:
       pull_policy: Always
       service:
         type: LoadBalancer
-      sidecars:
+      additional_containers:
         nginx:
           image: nginx
           ports:

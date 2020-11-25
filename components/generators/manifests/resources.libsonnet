@@ -66,9 +66,9 @@ local p = kap.parameters;
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
                                      .WithPorts(service_component.ports + { 
-                                        [port_name]: service_component.sidecars[sidecar_name].ports[port_name]
-                                        for sidecar_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {})) 
-                                        for port_name in std.objectFields(utils.objectGet(service_component.sidecars[sidecar_name], 'ports', {}))
+                                        [port_name]: service_component.additional_containers[container_name].ports[port_name]
+                                        for container_name in std.objectFields(utils.objectGet(service_component, 'additional_containers', {})) 
+                                        for port_name in std.objectFields(utils.objectGet(service_component.additional_containers[container_name], 'ports', {}))
                                       })
                                      {
     workload:: error 'Workload must be set',
@@ -78,9 +78,9 @@ local p = kap.parameters;
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
     local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
     local additional_containers = {
-      local container = service_component.sidecars[container_name],
+      local container = service_component.additional_containers[container_name],
       [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
-      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+      for container_name in std.objectFields(utils.objectGet(service_component, 'additional_containers', {}))
     };
     kap.K8sStatefulSet(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
@@ -107,9 +107,9 @@ local p = kap.parameters;
   Deployment(name, service_component, config_map_configs, secrets_configs)::
     local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
     local additional_containers = {
-      local container = service_component.sidecars[container_name],
+      local container = service_component.additional_containers[container_name],
       [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
-      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+      for container_name in std.objectFields(utils.objectGet(service_component, 'additional_containers', {}))
     };
 
     kap.K8sDeployment(name)
