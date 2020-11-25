@@ -29,6 +29,14 @@ local p = kap.parameters;
   },
 
   Container(name, service_component, config_map_configs, secrets_configs)::
+    local ConfigureMount(type, config_object) = {
+      local config = utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config), 
+      [if 'mount' in utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config) then name]: {
+        subPath: utils.objectGet(config, 'subPath'),
+        mountPath: utils.objectGet(config, 'mount'),
+        readOnly: true,
+    } for name in std.objectFields(config_object)};
+
     kap.K8sContainer(name, service_component, secrets_configs)
     .WithArgs(utils.objectGet(service_component, 'args'))
     .WithCommand(utils.objectGet(service_component, 'command'))
@@ -41,16 +49,8 @@ local p = kap.parameters;
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
     .WithSecurityContext(utils.objectGet(service_component, 'security_context', {}))
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
-    .WithMount({ [secret_name]: {
-      [if 'subPath' in secrets_configs[secret_name].config then 'subPath']: secrets_configs[secret_name].config.subPath,
-      mountPath: secrets_configs[secret_name].config.mount,
-      readOnly: true,
-    } for secret_name in std.objectFields(secrets_configs) if 'mount' in secrets_configs[secret_name].config }, secrets_configs != null)
-    .WithMount({ [config_map_name]: {
-      [if 'subPath' in config_map_configs[config_map_name].config then 'subPath']: config_map_configs[config_map_name].config.subPath,
-      mountPath: config_map_configs[config_map_name].config.mount,
-      readOnly: true,
-    } for config_map_name in std.objectFields(config_map_configs) }, config_map_configs != null)
+    .WithMount(ConfigureMount('secrets', secrets_configs), secrets_configs != null)
+    .WithMount(ConfigureMount('config_maps', config_map_configs), config_map_configs != null)
     .WithMount(utils.objectGet(service_component, 'volume_mounts', {}))
     .WithResources(utils.objectGet(service_component, 'resources', {}))
     {
@@ -65,19 +65,28 @@ local p = kap.parameters;
                                      .WithSessionAffinity('None')
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
-                                     .WithPorts(service_component.ports)
+                                     .WithPorts(service_component.ports + { 
+                                        [port_name]: service_component.sidecars[sidecar_name].ports[port_name]
+                                        for sidecar_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {})) 
+                                        for port_name in std.objectFields(utils.objectGet(service_component.sidecars[sidecar_name], 'ports', {}))
+                                      })
                                      {
     workload:: error 'Workload must be set',
     target_pod:: self.workload.spec.template,
   },
 
   StatefulSet(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local additional_containers = {
+      local container = service_component.sidecars[container_name],
+      [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
+      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+    };
     kap.K8sStatefulSet(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
-    .WithContainer({ [service_component.name]: container })
+    .WithContainer({ default: main_container } + additional_containers )
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
@@ -96,7 +105,13 @@ local p = kap.parameters;
 
   ,
   Deployment(name, service_component, config_map_configs, secrets_configs)::
-    local container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local main_container = $.Container(service_component.name, service_component, config_map_configs, secrets_configs);
+    local additional_containers = {
+      local container = service_component.sidecars[container_name],
+      [container_name]: $.Container(container_name, container, config_map_configs, secrets_configs)
+      for container_name in std.objectFields(utils.objectGet(service_component, 'sidecars', {}))
+    };
+
     kap.K8sDeployment(name)
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithPodAntiAffinity(name, 'failure-domain.beta.kubernetes.io/zone', utils.objectGet(service_component, 'prefer_pods_in_different_zones', false))
@@ -104,7 +119,7 @@ local p = kap.parameters;
     .WithNodeSelector(utils.objectGet(service_component, 'node_selector_labels', {}))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
-    .WithContainer({ [service_component.name]: container })
+    .WithContainer({ default: main_container } + additional_containers)
     .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
