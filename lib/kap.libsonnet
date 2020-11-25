@@ -113,8 +113,8 @@ kapitan + kube + {
 
   K8sCommon(name): {
     WithAnnotations(annotations):: self + if annotations != null then { metadata+: { annotations+: annotations } } else {},
-    WithLabels(labels):: self + { metadata+: { labels+: labels }},
-    WithLabel(label):: self + { metadata+: { labels+: label }},
+    WithLabels(labels):: self + { metadata+: { labels+: labels } },
+    WithLabel(label):: self + { metadata+: { labels+: label } },
     WithTemplateLabel(label):: self + { spec+: { template+: { metadata+: { labels+: label } } } },
     WithMetadata(metadata):: self + { metadata+: metadata },
     WithNamespace(namespace=p.namespace):: self + { metadata+: { namespace: namespace } },
@@ -132,7 +132,8 @@ kapitan + kube + {
         nodePort: utils.objectGet(self.port_info, 'node_port'),
         targetPort: port_name,
       }
-      for port_name in std.objectFields(ports) if 'service_port' in ports[port_name]
+      for port_name in std.objectFields(ports)
+      if 'service_port' in ports[port_name]
     ] } },
   },
   K8sDeployment(name): $.K8sCommon(name) + kube.Deployment(name) {
@@ -143,8 +144,8 @@ kapitan + kube + {
     WithNodeAffinity(label, value, operator='In', enabled=true):: self + if enabled then $.NodeAffinityPreferred(label, value, operator) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
-    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
-    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } } } },
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext+: security_context } } } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
     WithReplicas(replicas):: self + { spec+: { replicas: replicas } },
     WithUpdateStrategy(strategy):: self + { spec+: { strategy+: strategy } },
@@ -164,8 +165,8 @@ kapitan + kube + {
     },
     WithPodAntiAffinity(name=name, topology, enabled=true):: self + if enabled then $.AntiAffinityPreferred(name, topology) else {},
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
-    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
-    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } } } },
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext+: security_context } } } },
     WithMinReadySeconds(seconds):: self + { spec+: { minReadySeconds: seconds } },
     WithUpdateStrategy(strategy):: self + { spec+: { updateStrategy+: strategy } },
     WithProgressDeadlineSeconds(seconds):: self + { spec+: { progressDeadlineSeconds: seconds } },
@@ -183,11 +184,11 @@ kapitan + kube + {
 
   K8sJob(name): $.K8sCommon(name) + kube.Job(name) {
     WithContainer(container):: self + { spec+: { template+: { spec+: { containers_+: container } } } },
-    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext +: security_context }}}},
+    WithSecurityContext(security_context):: self + { spec+: { template+: { spec+: { securityContext+: security_context } } } },
     WithBackoffLimit(limit):: self + { spec+: { backoffLimit: limit } },
     WithDNSPolicy(policy):: self + { spec+: { template+: { spec+: { dnsPolicy: policy } } } },
     WithImagePullSecrets(secret):: self + { spec+: { template+: { spec+: { imagePullSecrets+: [{ name: secret }] } } } },
-    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } }}},
+    WithNodeSelector(labels):: self + { spec+: { template+: { spec+: { nodeSelector+: labels } } } },
     WithSelector(selector):: self + { spec+: { selector: selector } },
     WithRestartPolicy(policy):: self + { spec+: { template+: { spec+: { restartPolicy: policy } } } },
     WithServiceAccountName(sa, service_name):: self + if utils.objectGet(sa, 'enabled', false) then { spec+: { template+: { spec+: { serviceAccountName: utils.objectGet(sa, 'name', service_name) } } } } else {},
@@ -199,12 +200,12 @@ kapitan + kube + {
   },
 
   K8sClusterRole(name): $.K8sCommon(name) + kube.ClusterRole(name) + {
-    WithRules(rules):: self + { rules+: rules }
+    WithRules(rules):: self + { rules+: rules },
   },
 
   K8sClusterRoleBinding(name): $.K8sCommon(name) + kube.ClusterRoleBinding(name) + {
     WithSubjects(subjects):: self + { subjects+: subjects },
-    WithRoleRef(roleRef):: self + { roleRef+: roleRef }
+    WithRoleRef(roleRef):: self + { roleRef+: roleRef },
   },
 
   K8sContainer(name, service_component, secrets_configs): kube.Container(name) {
@@ -216,7 +217,7 @@ kapitan + kube + {
     WithPullPolicy(policy):: self + { imagePullPolicy: policy },
     WithImage(image):: self + { image_:: image },
     WithEnvs(envs):: self + { env_: std.prune(envs) },
-    WithSecurityContext(security_context):: self + { securityContext +: security_context },
+    WithSecurityContext(security_context):: self + { securityContext+: security_context },
     WithMount(mount, enabled=true):: self + if enabled then { volumeMounts_+: mount } else {},
     WithAllowPrivilegeEscalation(bool, enabled=true):: self + if enabled then { securityContext+: { allowPrivilegeEscalation: bool } } else {},
     WithRunAsUser(user, enabled=true):: self + if enabled then { securityContext+: { runAsUser: user } } else {},
@@ -261,8 +262,8 @@ kapitan + kube + {
   },
 
 
-  #Flag to makes use of "stringData" instead of "data"
-  local secret_data_type = if utils.objectGet(p, 'secrets_use_string_data', false) then "stringData" else "data",
+  //Flag to makes use of "stringData" instead of "data"
+  local secret_data_type = if utils.objectGet(p, 'secrets_use_string_data', false) then 'stringData' else 'data',
   K8sSecret(name, data): $.K8sCommon(name) + kube.Secret(name) {
     local secret = self,
     local data_resolved = {
@@ -276,13 +277,13 @@ kapitan + kube + {
     },
     short_name:: name,
     [secret_data_type]: {
-      [key]: if utils.objectGet(data[key], 'b64_encode', false) && secret_data_type == "data" then
+      [key]: if utils.objectGet(data[key], 'b64_encode', false) && secret_data_type == 'data' then
         std.base64(data[key].value)
       else if utils.objectGet(data[key], 'template', false) != false then
         if secret_data_type == 'data' then
-            std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {})))
+          std.base64(kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {})))
         else
-            kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values',  {}))
+          kapitan.jinja2_template(data[key].template, utils.objectGet(data[key], 'values', {}))
       else
         data[key].value
       for key in std.objectFields(data)
@@ -298,9 +299,9 @@ kapitan + kube + {
     },
   },
 
-  #TODO(ademaria): Add to upstream kube.libjsonnet and make more generic
-  K8sMutatingWebhookConfiguration(name): $.K8sCommon(name) + kube._Object("admissionregistration.k8s.io/v1beta1", "MutatingWebhookConfiguration", name) {
-    withWebHooks(webhooks):: self + { webhooks+: webhooks }
+  //TODO(ademaria): Add to upstream kube.libjsonnet and make more generic
+  K8sMutatingWebhookConfiguration(name): $.K8sCommon(name) + kube._Object('admissionregistration.k8s.io/v1beta1', 'MutatingWebhookConfiguration', name) {
+    withWebHooks(webhooks):: self + { webhooks+: webhooks },
   },
 
   K8sIngress(name): $.K8sCommon(name) + kube.Ingress(name) {

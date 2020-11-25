@@ -2,18 +2,16 @@ local kap = import 'lib/kap.libsonnet';
 
 
 {
-  ServiceMonitor(name): kap.K8sCommon(name) + kap._Object("monitoring.coreos.com/v1", "ServiceMonitor", name) {
-    WithEndPoints(endpoints):: self + { spec+: { endpoints: endpoints }},
-    WithSelector(selector):: self + { spec+: { selector: selector }},
-    WithNameSpaceSelector(namespace_selector):: self + { spec+: { namespaceSelector: namespace_selector }},
+  ServiceMonitor(name): kap.K8sCommon(name) + kap._Object('monitoring.coreos.com/v1', 'ServiceMonitor', name) {
+    WithEndPoints(endpoints):: self + { spec+: { endpoints: endpoints } },
+    WithSelector(selector):: self + { spec+: { selector: selector } },
+    WithNameSpaceSelector(namespace_selector):: self + { spec+: { namespaceSelector: namespace_selector } },
     spec+: {
       jobLabel: name,
-      }
+    },
   },
 
-  PrometheusRule(name): kap.K8sCommon(name) + kap._Object("monitoring.coreos.com/v1", "PrometheusRule", name) {
-    WithRules(rules):: self + { spec+: { groups: [{ name: name, rules: rules }] }}
-   }
+  PrometheusRule(name): kap.K8sCommon(name) + kap._Object('monitoring.coreos.com/v1', 'PrometheusRule', name) {
+    WithRules(rules):: self + { spec+: { groups: [{ name: name, rules: rules }] } },
+  },
 }
-
-
