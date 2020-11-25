@@ -28,35 +28,35 @@ local p = kap.parameters;
     },
   },
 
-  Container(name, container_definition, config_map_configs, secrets_configs)::
-    kap.K8sContainer(name, container_definition, secrets_configs)
-    .WithArgs(utils.objectGet(container_definition, 'args'))
-    .WithCommand(utils.objectGet(container_definition, 'command'))
-    .WithEnvs(utils.objectGet(container_definition, 'env', {}))
-    .WithImage(utils.objectGet(container_definition, 'image'))
-    .WithLivenessProbe(utils.objectGet(container_definition, 'healthcheck', {}), container_definition.healthcheck)
-    .WithPullPolicy(utils.objectGet(container_definition, 'pull_policy', "IfNotPresent"))
-    .WithPorts(utils.objectGet(container_definition, 'ports', {}))
-    .WithReadinessProbe(utils.objectGet(container_definition, 'healthcheck', {}), container_definition.healthcheck)
-    .WithRunAsUser(utils.objectGet(container_definition.security, 'user_id'), 'security' in container_definition)
-    .WithSecurityContext(utils.objectGet(container_definition, 'security_context', {}))
-    .WithAllowPrivilegeEscalation(utils.objectGet(container_definition.security, 'allow_privilege_escalation'), 'security' in container_definition)
+  Container(name, service_component, config_map_configs, secrets_configs)::
+    kap.K8sContainer(name, service_component, secrets_configs)
+    .WithArgs(utils.objectGet(service_component, 'args'))
+    .WithCommand(utils.objectGet(service_component, 'command'))
+    .WithEnvs(utils.objectGet(service_component, 'env', {}))
+    .WithImage(utils.objectGet(service_component, 'image'))
+    .WithLivenessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
+    .WithPullPolicy(utils.objectGet(service_component, 'pull_policy', "IfNotPresent"))
+    .WithPorts(utils.objectGet(service_component, 'ports', {}))
+    .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
+    .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
+    .WithSecurityContext(utils.objectGet(service_component, 'security_context', {}))
+    .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
     .WithMount({
-      local config = utils.objectGet(utils.objectGet(container_definition, 'secrets', {}), name, secrets_configs[name].config), 
+      local config = utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config), 
       [name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
         readOnly: true,
-    } for name in std.objectFields(secrets_configs) if 'mount' in utils.objectGet(utils.objectGet(container_definition, 'secrets', {}), name, secrets_configs[name].config)} , secrets_configs != null)
+    } for name in std.objectFields(secrets_configs) if 'mount' in utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config)} , secrets_configs != null)
     .WithMount({ 
-      local config = utils.objectGet(utils.objectGet(container_definition, 'config_maps', {}), name, config_map_configs[name].config), 
+      local config = utils.objectGet(utils.objectGet(service_component, 'config_maps', {}), name, config_map_configs[name].config), 
       [name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
         readOnly: true,
     } for name in std.objectFields(config_map_configs) }, config_map_configs != null)
-    .WithMount(utils.objectGet(container_definition, 'volume_mounts', {}))
-    .WithResources(utils.objectGet(container_definition, 'resources', {}))
+    .WithMount(utils.objectGet(service_component, 'volume_mounts', {}))
+    .WithResources(utils.objectGet(service_component, 'resources', {}))
     {
       stdin:: super.stdin,
       tty:: super.tty,
