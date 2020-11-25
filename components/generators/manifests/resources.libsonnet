@@ -43,14 +43,14 @@ local p = kap.parameters;
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
     .WithMount({
       local config = utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config), 
-      [name]: {
+      [if 'mount' in utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config) then name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
         readOnly: true,
-    } for name in std.objectFields(secrets_configs) if 'mount' in utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config)} , secrets_configs != null)
+    } for name in std.objectFields(secrets_configs)}, secrets_configs != null)
     .WithMount({ 
       local config = utils.objectGet(utils.objectGet(service_component, 'config_maps', {}), name, config_map_configs[name].config), 
-      [name]: {
+      [if 'mount' in utils.objectGet(utils.objectGet(service_component, 'config_maps', {}), name, config_map_configs[name].config) then name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
         readOnly: true,
