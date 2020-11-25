@@ -152,17 +152,13 @@ local p = kap.parameters;
     local has_webhooks = utils.objectHas(service_component, 'webhooks', false);
     local has_service_monitor = utils.objectHas(service_component, 'service_monitors', false);
     local has_prometheus_rule = utils.objectHas(service_component, 'prometheus_rules', false);
+    local has_network_policies = utils.objectHas(service_component, 'network_policies', false);
 
 
     local config_helpers = {
       local global_annotations = utils.objectGet(service_component, 'globals', {}),
       secrets: {
         config: utils.objectGet(service_component, 'secrets', {}),
-        global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
-        generating_class: kap.K8sSecret,
-      },
-      migration_secrets: {
-        config: utils.deepMerge(config_helpers.secrets.config, utils.objectGet(service_component.migration, 'secrets', {})),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
         generating_class: kap.K8sSecret,
       },
@@ -265,6 +261,12 @@ local p = kap.parameters;
       },
     };
 
+    local network_policies = if has_network_policies then kap.K8sNetworkPolicy(service_component.name)
+      .WithPodSelector(utils.objectGet(service_component.network_policies, 'pod_selector', {}))
+      .WithIngress(utils.objectGet(service_component.network_policies, 'ingress', {}))
+      .WithEgress(utils.objectGet(service_component.network_policies, 'egress', {}))
+    ;
+
 
     $.Bundle()
     .WithItem('config', config_map_manifests, has_configmaps)
@@ -278,5 +280,6 @@ local p = kap.parameters;
     .WithBundled('service_monitors', service_monitors)
     .WithBundled('prometheus_rules', prometheus_rules)
     .WithBundled('cr', clusterRole)
-    .WithBundled('crb', clusterRoleBinding),
+    .WithBundled('crb', clusterRoleBinding)
+    .WithBundled('network_policies', network_policies),
 }

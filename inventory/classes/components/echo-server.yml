@@ -6,6 +6,17 @@ parameters:
       pull_policy: Always
       service:
         type: LoadBalancer
+      network_policies:
+        pod_selector: 
+          label: test
+        ingress:
+          - from:
+            - podSelector:
+                matchLabels:
+                  role: frontend
+            ports:
+            - protocol: TCP
+              port: 6379
       additional_containers:
         nginx:
           image: nginx

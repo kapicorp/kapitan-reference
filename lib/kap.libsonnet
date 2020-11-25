@@ -314,4 +314,10 @@ kapitan + kube + {
     spec+: { rules+: [] },
     WithDomains(domains):: self + { spec+: { domains+: domains } },
   },
+
+  K8sNetworkPolicy(name): $.K8sCommon(name) + kube.NetworkPolicy(name) {
+    WithPodSelector(pod_selector):: self + { spec+: { podSelector: pod_selector}},
+    WithIngress(ingress):: self + { spec+: { ingress: ingress}},
+    WithEgress(egress):: self + { spec+: { egress: egress}},
+  }
 }

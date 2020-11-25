@@ -138,6 +138,7 @@
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
       node_selector_labels: { type: 'object' },
+      network_policies: { type: 'object' },
       service_account: {
         anyOf: [{ type: 'null' }, {
           type: 'object',
