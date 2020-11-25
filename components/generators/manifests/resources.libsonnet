@@ -30,12 +30,14 @@ local p = kap.parameters;
 
   Container(name, service_component, config_map_configs, secrets_configs)::
     local ConfigureMount(type, config_object) = {
-      local config = utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config), 
+      local config = utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config),
       [if 'mount' in utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config) then name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
         readOnly: true,
-    } for name in std.objectFields(config_object)};
+      }
+      for name in std.objectFields(config_object)
+    };
 
     kap.K8sContainer(name, service_component, secrets_configs)
     .WithArgs(utils.objectGet(service_component, 'args'))
@@ -43,7 +45,7 @@ local p = kap.parameters;
     .WithEnvs(utils.objectGet(service_component, 'env', {}))
     .WithImage(utils.objectGet(service_component, 'image'))
     .WithLivenessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
-    .WithPullPolicy(utils.objectGet(service_component, 'pull_policy', "IfNotPresent"))
+    .WithPullPolicy(utils.objectGet(service_component, 'pull_policy', 'IfNotPresent'))
     .WithPorts(utils.objectGet(service_component, 'ports', {}))
     .WithReadinessProbe(utils.objectGet(service_component, 'healthcheck', {}), service_component.healthcheck)
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
@@ -65,11 +67,11 @@ local p = kap.parameters;
                                      .WithSessionAffinity('None')
                                      .WithExternalTrafficPolicy(utils.objectGet(service_component.service, 'externalTrafficPolicy'))
                                      .WithType(utils.objectGet(service_component.service, 'type'))
-                                     .WithPorts(service_component.ports + { 
-                                        [port_name]: service_component.additional_containers[container_name].ports[port_name]
-                                        for container_name in std.objectFields(utils.objectGet(service_component, 'additional_containers', {})) 
-                                        for port_name in std.objectFields(utils.objectGet(service_component.additional_containers[container_name], 'ports', {}))
-                                      })
+                                     .WithPorts(service_component.ports + {
+    [port_name]: service_component.additional_containers[container_name].ports[port_name]
+    for container_name in std.objectFields(utils.objectGet(service_component, 'additional_containers', {}))
+    for port_name in std.objectFields(utils.objectGet(service_component.additional_containers[container_name], 'ports', {}))
+  })
                                      {
     workload:: error 'Workload must be set',
     target_pod:: self.workload.spec.template,
@@ -86,7 +88,7 @@ local p = kap.parameters;
     .WithPodAntiAffinity(name, 'kubernetes.io/hostname', utils.objectGet(service_component, 'prefer_pods_in_different_nodes', false))
     .WithNamespace()
     .WithAnnotations(utils.objectGet(service_component, 'annotations', {}))
-    .WithContainer({ default: main_container } + additional_containers )
+    .WithContainer({ default: main_container } + additional_containers)
     .WithDNSPolicy(utils.objectGet(service_component, 'dns_policy'))
     .WithLabels(utils.objectGet(service_component, 'labels', {}))
     .WithSecurityContext(utils.objectGet(service_component, 'workload_security_context', {}))
@@ -152,36 +154,34 @@ local p = kap.parameters;
     local has_prometheus_rule = utils.objectHas(service_component, 'prometheus_rules', false);
 
 
-
-
     local config_helpers = {
       local global_annotations = utils.objectGet(service_component, 'globals', {}),
       secrets: {
         config: utils.objectGet(service_component, 'secrets', {}),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
-        generating_class: kap.K8sSecret
+        generating_class: kap.K8sSecret,
       },
       migration_secrets: {
         config: utils.deepMerge(config_helpers.secrets.config, utils.objectGet(service_component.migration, 'secrets', {})),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
-        generating_class: kap.K8sSecret
+        generating_class: kap.K8sSecret,
       },
       config_maps: {
         config: utils.objectGet(service_component, 'config_maps', {}),
         global_annotations: utils.objectGet(global_annotations, 'config_maps', {}),
-        generating_class: kap.K8sConfigMap
-      }
+        generating_class: kap.K8sConfigMap,
+      },
     };
 
     local MergeConfig(name, helper) = {
       name:: if std.length(helper.config) == 1 then service_component.name else '%s-%s' % [service_component.name, name],
       manifest: helper.generating_class(self.name, utils.objectGet(helper.config[name], 'data', {}))
-                  .WithAnnotations(utils.objectGet(helper.global_annotations, 'annotations', {}))
-                  .WithAnnotations(utils.objectGet(helper.config[name], 'annotations', {}))
-                  .WithLabels(utils.objectGet(helper.global_annotations, 'labels', {}))
-                  .WithLabels(utils.objectGet(helper.config[name], 'labels', {}))
-                  .WithNamespace(),
-      config: {items: []} + helper.config[name],
+                .WithAnnotations(utils.objectGet(helper.global_annotations, 'annotations', {}))
+                .WithAnnotations(utils.objectGet(helper.config[name], 'annotations', {}))
+                .WithLabels(utils.objectGet(helper.global_annotations, 'labels', {}))
+                .WithLabels(utils.objectGet(helper.config[name], 'labels', {}))
+                .WithNamespace(),
+      config: { items: [] } + helper.config[name],
     };
 
     local CreateConfigDefinition(helper) = {
@@ -191,13 +191,11 @@ local p = kap.parameters;
 
     local objects = {
       [name]: CreateConfigDefinition(config_helpers[name])
-        for name in std.objectFields(config_helpers)
+      for name in std.objectFields(config_helpers)
     };
 
     local secrets_manifests = [secret.manifest for secret in utils.objectValues(objects.secrets)];
     local config_map_manifests = [config_map.manifest for config_map in utils.objectValues(objects.config_maps)];
-
-
 
 
     local workload_type = utils.objectGet(service_component, 'type', 'deployment');
@@ -211,41 +209,41 @@ local p = kap.parameters;
     local sa = utils.objectGet(service_component, 'service_account');
     local sa_name = utils.objectGet(sa, 'name', service_component.name);
     local serviceAccount = if utils.objectGet(sa, 'create', false) then kap.K8sServiceAccount(sa_name)
-      .WithNamespace()
-      .WithAnnotations(utils.objectGet(sa, 'annotations', {})) else {}
+                                                                        .WithNamespace()
+                                                                        .WithAnnotations(utils.objectGet(sa, 'annotations', {})) else {}
     ;
     local cr = if has_cluster_role then utils.objectGet(service_component, 'cluster_role');
     local cr_name = sa_name;
-    local clusterRole =  if has_cluster_role then kap.K8sClusterRole(cr_name)
-        .WithRules(utils.objectGet(cr, 'rules'))
-        .WithLabels(utils.objectGet(service_component, 'labels', {}))
+    local clusterRole = if has_cluster_role then kap.K8sClusterRole(cr_name)
+                                                 .WithRules(utils.objectGet(cr, 'rules'))
+                                                 .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
     local cr_binding = if has_cluster_role then utils.objectGet(cr, 'binding');
-    local clusterRoleBinding =  if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
-    .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
-    .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
-    .WithLabels(utils.objectGet(service_component, 'labels', {}))
+    local clusterRoleBinding = if has_cluster_role then kap.K8sClusterRoleBinding(cr_name)
+                                                        .WithSubjects(utils.objectGet(cr_binding, 'subjects'))
+                                                        .WithRoleRef(utils.objectGet(cr_binding, 'roleRef'))
+                                                        .WithLabels(utils.objectGet(service_component, 'labels', {}))
     ;
 
 
     local webhooks = if has_webhooks then kap.K8sMutatingWebhookConfiguration(service_component.name)
-      .withWebHooks(utils.objectGet(service_component, 'webhooks', []));
+                                          .withWebHooks(utils.objectGet(service_component, 'webhooks', []));
 
     local service_monitor = if has_service_monitor then utils.objectGet(service_component, 'service_monitors');
     local service_monitors = if has_service_monitor then prom.ServiceMonitor(service_component.name + '-metrics')
-      .WithNamespace()
-      .WithEndPoints(utils.objectGet(service_monitor, 'endpoints', []))
-      .WithSelector(utils.objectGet(service_monitor, 'selector', { matchLabels: { name: service_component.name }}))
-      .WithNameSpaceSelector(utils.objectGet(service_monitor, 'namespace_selector',  { matchNames: [ p.namespace ] }))
-      ;
+                                                         .WithNamespace()
+                                                         .WithEndPoints(utils.objectGet(service_monitor, 'endpoints', []))
+                                                         .WithSelector(utils.objectGet(service_monitor, 'selector', { matchLabels: { name: service_component.name } }))
+                                                         .WithNameSpaceSelector(utils.objectGet(service_monitor, 'namespace_selector', { matchNames: [p.namespace] }))
+    ;
 
     local prometheus_rule = if has_prometheus_rule then utils.objectGet(service_component, 'prometheus_rules');
     local prometheus_rules = if has_prometheus_rule then prom.PrometheusRule(service_component.name + '.rules')
-      .WithNamespace()
-      .WithRules(utils.objectGet(prometheus_rule, 'rules', []))
-      ;
+                                                         .WithNamespace()
+                                                         .WithRules(utils.objectGet(prometheus_rule, 'rules', []))
+    ;
 
-    local vpa_mode=utils.objectGet(service_component, 'vpa', 'Auto');
+    local vpa_mode = utils.objectGet(service_component, 'vpa', 'Auto');
     local vpa = kap.createVPAFor(workload, mode=vpa_mode) {
       spec+: {
         resourcePolicy+: {
@@ -260,11 +258,11 @@ local p = kap.parameters;
     local pdb = kap.PodDisruptionBudget(service_component.name) {
       target_pod:: workload.spec.template,
       spec+: {
-        minAvailable: utils.objectGet(service_component, 'pdb_min_available')
-      } ,
+        minAvailable: utils.objectGet(service_component, 'pdb_min_available'),
+      },
       metadata+: {
-        namespace: p.namespace
-      }
+        namespace: p.namespace,
+      },
     };
 
 

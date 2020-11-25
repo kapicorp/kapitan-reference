@@ -43,21 +43,25 @@
       resources: {
         type: 'object',
         properties: {
-          limits: { anyOf: [{ type: 'null' }, { 
-            type: 'object',
-            properties: {
-              cpu: { type: 'string' },
-              memory: { type: 'string' },
-              additionalProperties: true,
-            }}] 
+          limits: {
+            anyOf: [{ type: 'null' }, {
+              type: 'object',
+              properties: {
+                cpu: { type: 'string' },
+                memory: { type: 'string' },
+                additionalProperties: true,
+              },
+            }],
           },
-          requests: { anyOf: [{ type: 'null' }, { 
-            type: 'object',
-            properties: {
-              cpu: { type: 'string' },
-              memory: { type: 'string' },
-              additionalProperties: true,
-            }}] 
+          requests: {
+            anyOf: [{ type: 'null' }, {
+              type: 'object',
+              properties: {
+                cpu: { type: 'string' },
+                memory: { type: 'string' },
+                additionalProperties: true,
+              },
+            }],
           },
         },
         additionalProperties: false,
@@ -67,62 +71,66 @@
       healthcheck: {
         type: 'object',
         properties: {
-          readiness: { anyOf: [{ type: 'null' }, { 
-            type: 'object',
-            properties: {
-              type: { type: 'string', enum: ['command', 'http', 'tcp'] },
-              timeout_seconds: { type: 'integer' },
-              initial_delay_seconds: { type: 'integer' },
-              failure_threshold: { type: 'integer' },
-              success_threshold: { type: 'integer' },
-              period_seconds: { type: 'integer' },
-              enabled: { type: 'boolean' },
-              httpHeaders: {
-                type: 'array',
-                items: {type: 'object'},
+          readiness: {
+            anyOf: [{ type: 'null' }, {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['command', 'http', 'tcp'] },
+                timeout_seconds: { type: 'integer' },
+                initial_delay_seconds: { type: 'integer' },
+                failure_threshold: { type: 'integer' },
+                success_threshold: { type: 'integer' },
+                period_seconds: { type: 'integer' },
+                enabled: { type: 'boolean' },
+                httpHeaders: {
+                  type: 'array',
+                  items: { type: 'object' },
+                },
+                path: { type: 'string' },
+                scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
+                port: {
+                  oneOf: [
+                    { type: 'string' },
+                    { type: 'integer' },
+                  ],
+                },
+                command: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
               },
-              path: { type: 'string' },
-              scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
-              port: {
-                oneOf: [
-                  { type: 'string' },
-                  { type: 'integer' },
-                ],
-              },
-              command: {
-                type: 'array',
-                items: {type: 'string'},
-              },              
-            }}] 
+            }],
           },
-          liveness: { anyOf: [{ type: 'null' }, { 
-            type: 'object',
-            properties: {
-              type: { type: 'string', enum: ['command', 'http', 'tcp'] },
-              timeout_seconds: { type: 'integer' },
-              initial_delay_seconds: { type: 'integer' },
-              failure_threshold: { type: 'integer' },
-              success_threshold: { type: 'integer' },
-              period_seconds: { type: 'integer' },
-              enabled: { type: 'boolean' },
-              httpHeaders: {
-                type: 'array',
-                items: {type: 'object'},
+          liveness: {
+            anyOf: [{ type: 'null' }, {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['command', 'http', 'tcp'] },
+                timeout_seconds: { type: 'integer' },
+                initial_delay_seconds: { type: 'integer' },
+                failure_threshold: { type: 'integer' },
+                success_threshold: { type: 'integer' },
+                period_seconds: { type: 'integer' },
+                enabled: { type: 'boolean' },
+                httpHeaders: {
+                  type: 'array',
+                  items: { type: 'object' },
+                },
+                path: { type: 'string' },
+                scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
+                port: {
+                  oneOf: [
+                    { type: 'string' },
+                    { type: 'integer' },
+                  ],
+                },
+                command: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
               },
-              path: { type: 'string' },
-              scheme: { type: 'string', enum: ['HTTP', 'HTTPS'] },
-              port: {
-                oneOf: [
-                  { type: 'string' },
-                  { type: 'integer' },
-                ],
-              },
-              command: {
-                type: 'array',
-                items: {type: 'string'},
-              },              
-            }}]
-          }
+            }],
+          },
         },
         additionalProperties: false,
       },
@@ -130,16 +138,17 @@
       labels: { type: 'object', additionalProperties: { type: 'string' } },
       name: { type: 'string' },
       node_selector_labels: { type: 'object' },
-      service_account: { anyOf: [{ type: 'null' }, {
-        type: 'object',
-        properties: {
-          name: {type: 'string'},
-          create: {type: 'boolean'},
-          enabled: {type: 'boolean'},
-          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
-        },
-        additionalProperties: false,
-        }]
+      service_account: {
+        anyOf: [{ type: 'null' }, {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            create: { type: 'boolean' },
+            enabled: { type: 'boolean' },
+            annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }] },
+          },
+          additionalProperties: false,
+        }],
       },
       update_strategy: { type: 'object' },
       security_context: { type: 'object' },
@@ -149,14 +158,15 @@
         type: 'object',
         additionalProperties: { '$ref': '#/definitions/port_set' },
       },
-      globals: { anyOf: [{ type: 'null' }, { 
-        type: 'object', 
-        properties: {
-          secrets: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
-          config_maps: {type: 'object', additionalProperties: { '$ref': '#/definitions/globals' }},
-        },
-        additionalProperties: false,
-        }]
+      globals: {
+        anyOf: [{ type: 'null' }, {
+          type: 'object',
+          properties: {
+            secrets: { type: 'object', additionalProperties: { '$ref': '#/definitions/globals' } },
+            config_maps: { type: 'object', additionalProperties: { '$ref': '#/definitions/globals' } },
+          },
+          additionalProperties: false,
+        }],
       },
       secrets: { anyOf: [{ type: 'null' }, {
         type: 'object',
@@ -218,15 +228,15 @@
           },
           items: { type: 'array', items: { type: 'string' } },
           mount: { type: 'string' },
-          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }] },
         },
         required: ['data'],
       },
       globals: {
         type: 'object',
         properties: {
-          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
-          labels: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }] },
+          labels: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }] },
         },
       },
       secret: {
@@ -247,7 +257,7 @@
           },
           items: { type: 'array', items: { type: 'string' } },
           mount: { type: 'string' },
-          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }]},
+          annotations: { anyOf: [{ type: 'null' }, { type: 'object', additionalValues: { type: 'string' } }] },
         },
         required: ['data'],
       },
@@ -304,10 +314,10 @@
           container_port: { type: 'integer' },
           node_port: { type: 'integer' },
           service_port: { type: 'integer' },
-          protocol: { type: 'string', enum: ['UDP', 'TCP']}
+          protocol: { type: 'string', enum: ['UDP', 'TCP'] },
         },
         additionalProperties: false,
       },
     },
-  }
+  },
 }
