@@ -12,6 +12,10 @@ parameters:
           ports:
             nginx: 
               service_port: 80
+          config_maps:
+            config:
+              mount: /etc/nginx/conf.d/nginx.conf
+              subPath: nginx.conf
       healthcheck:
         liveness:
           type: http
@@ -42,20 +46,31 @@ parameters:
 
       config_maps:
         config:
-          mount: /opt/echo-service
-          items:
-            - echo-service.conf
+          mount: /opt/echo-service/echo-service.conf
+          subPath: echo-service.conf
           data:
             echo-service.conf:
               template: "components/echo-server/echo-server.conf.j2"
               values:
                 example: true
+            nginx.conf:
+              value: |
+                server {
+                   listen       80;
+                   server_name  localhost;
+                   location / {
+                       proxy_pass  http://localhost:8080/;
+                   }
+                   error_page   500 502 503 504  /50x.html;
+                   location = /50x.html {
+                       root   /usr/share/nginx/html;
+                   }
+                }
             simple_config:
               value: "not mounted"
       resources:
         requests:
           memory: 1G
-          hugepages-2Mi: 80Mi
         limits:
           memory: 1G
 

@@ -63,31 +63,29 @@ spec:
             limits:
               memory: 1G
             requests:
-              hugepages-2Mi: 80Mi
               memory: 1G
           volumeMounts:
-            - mountPath: /opt/echo-service
+            - mountPath: /opt/echo-service/echo-service.conf
               name: config
               readOnly: true
+              subPath: echo-service.conf
         - image: nginx
           imagePullPolicy: IfNotPresent
           name: nginx
           ports:
             - containerPort: 80
-              name: http
+              name: nginx
               protocol: TCP
           volumeMounts:
-            - mountPath: /opt/echo-service
+            - mountPath: /etc/nginx/conf.d/nginx.conf
               name: config
               readOnly: true
+              subPath: nginx.conf
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
         - configMap:
             defaultMode: 420
-            items:
-              - key: echo-service.conf
-                path: echo-service.conf
             name: echo-server
           name: config
         - name: secret
@@ -103,6 +101,11 @@ metadata:
   name: echo-server
   namespace: tutorial
 spec:
+  ports:
+    - name: nginx
+      port: 80
+      protocol: TCP
+      targetPort: nginx
   selector:
     name: echo-server
   sessionAffinity: None
