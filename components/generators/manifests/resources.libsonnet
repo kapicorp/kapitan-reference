@@ -29,6 +29,14 @@ local p = kap.parameters;
   },
 
   Container(name, service_component, config_map_configs, secrets_configs)::
+    local ConfigureMount(type, config_object) = {
+      local config = utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config), 
+      [if 'mount' in utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config) then name]: {
+        subPath: utils.objectGet(config, 'subPath'),
+        mountPath: utils.objectGet(config, 'mount'),
+        readOnly: true,
+    } for name in std.objectFields(config_object)};
+
     kap.K8sContainer(name, service_component, secrets_configs)
     .WithArgs(utils.objectGet(service_component, 'args'))
     .WithCommand(utils.objectGet(service_component, 'command'))
@@ -41,20 +49,8 @@ local p = kap.parameters;
     .WithRunAsUser(utils.objectGet(service_component.security, 'user_id'), 'security' in service_component)
     .WithSecurityContext(utils.objectGet(service_component, 'security_context', {}))
     .WithAllowPrivilegeEscalation(utils.objectGet(service_component.security, 'allow_privilege_escalation'), 'security' in service_component)
-    .WithMount({
-      local config = utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config), 
-      [if 'mount' in utils.objectGet(utils.objectGet(service_component, 'secrets', {}), name, secrets_configs[name].config) then name]: {
-        subPath: utils.objectGet(config, 'subPath'),
-        mountPath: utils.objectGet(config, 'mount'),
-        readOnly: true,
-    } for name in std.objectFields(secrets_configs)}, secrets_configs != null)
-    .WithMount({ 
-      local config = utils.objectGet(utils.objectGet(service_component, 'config_maps', {}), name, config_map_configs[name].config), 
-      [if 'mount' in utils.objectGet(utils.objectGet(service_component, 'config_maps', {}), name, config_map_configs[name].config) then name]: {
-        subPath: utils.objectGet(config, 'subPath'),
-        mountPath: utils.objectGet(config, 'mount'),
-        readOnly: true,
-    } for name in std.objectFields(config_map_configs) }, config_map_configs != null)
+    .WithMount(ConfigureMount('secrets', secrets_configs), secrets_configs != null)
+    .WithMount(ConfigureMount('config_maps', config_map_configs), config_map_configs != null)
     .WithMount(utils.objectGet(service_component, 'volume_mounts', {}))
     .WithResources(utils.objectGet(service_component, 'resources', {}))
     {
