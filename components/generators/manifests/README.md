@@ -512,3 +512,104 @@ spec:
     - Ingress
     - Egress
 ```
+
+## Prometheus rules and Service Monitor resources
+
+Define PrometheusRules and ServiceMonitor alongside your application definitions.
+
+For a working example, have a look at [`tesoro_monitoring.yaml`](../../../inventory/classes/components/kapicorp/tesoro_monitoring.yml)
+
+### PrometheusRules
+Simply add your definitions:
+
+```yaml
+parameters:
+  components:
+    tesoro:
+      prometheus_rules:
+        rules:
+          - alert: TesoroFailedRequests
+            annotations:
+              message: 'tesoro_requests_failed_total has increased above 0'
+            expr: sum by (job, namespace, service, env) (increase(tesoro_requests_failed_total[5m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+          - alert: KapitanRevealRequestFailures
+            annotations:
+              message: 'kapitan_reveal_requests_failed_total has increased above 0'
+            expr: sum by (job, namespace, service, env) (increase(kapitan_reveal_requests_failed_total[5m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+
+```
+
+to produce 
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    name: tesoro.rules
+  name: tesoro.rules
+  namespace: tesoro
+spec:
+  groups:
+    - name: tesoro.rules
+      rules:
+        - alert: TesoroFailedRequests
+          annotations:
+            message: tesoro_requests_failed_total has increased above 0
+          expr: sum by (job, namespace, service, env) (increase(tesoro_requests_failed_total[5m]))
+            > 0
+          for: 1m
+          labels:
+            severity: warning
+        - alert: KapitanRevealRequestFailures
+          annotations:
+            message: kapitan_reveal_requests_failed_total has increased above 0
+          expr: sum by (job, namespace, service, env) (increase(kapitan_reveal_requests_failed_total[5m]))
+            > 0
+          for: 1m
+          labels:
+            severity: warning
+```
+
+### ServiceMonitor
+
+```yaml
+parameters:
+  components:
+    tesoro:
+      service_monitors:
+        endpoints:
+          - interval: 15s
+            path: /
+            targetPort: 9095
+```
+
+produces the following resource
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    name: tesoro-metrics
+  name: tesoro-metrics
+  namespace: tesoro
+spec:
+  endpoints:
+    - interval: 15s
+      path: /
+      targetPort: 9095
+  jobLabel: tesoro-metrics
+  namespaceSelector:
+    matchNames:
+      - tesoro
+  selector:
+    matchLabels:
+      name: tesoro
+```
