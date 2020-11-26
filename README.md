@@ -4,6 +4,8 @@ This repository is meant to be a way to bootstrap your [Kapitan](https://kapitan
 
 It is meant to help you make use of best practices and libraries that can make Kapitan the ultimate tool for all your configuration needs.
 
+[Manifest Generator Documentation](components/generators/manifests/README.md)
+
 ## Quickstart
 
 ```shell script
@@ -111,7 +113,6 @@ To help you get started, please look at the following examples:
 
 Please find the generated manifests in the [compiled](compiled) folder
 
-[Documentation](components/generators/manifests/README.md)
 
 ### Ingresses generator
 
