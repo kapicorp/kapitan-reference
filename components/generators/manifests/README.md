@@ -38,7 +38,8 @@ As you can see, some defaults are already set:
           "manifests.kapicorp.com/generated": true
 ```
 
-You do not have to change that class, as long as you add to the same structure for another class.
+You do not have to change that class directly, as long as you add to the same inventory structure for another class.
+
 For instance, when we enable the [`features.tesoro`](../../../inventory/classes/features/tesoro.yml) class, we can see that we are adding the following yaml fragment:
 
 ```yaml
@@ -51,6 +52,7 @@ For instance, when we enable the [`features.tesoro`](../../../inventory/classes/
               tesoro.kapicorp.com: enabled
 ```
 
+Which has the effect to add the `tesoro.kapicorp.com: enabled` label to every generated configMap resource.
 
 ### Application defaults
 You can also create application defaults, where an application is a class/profile that can be associated to multiple components.
@@ -242,7 +244,7 @@ which produces:
 
 ## Config Maps
 
-Creating both `secrets` and `config maps` is very simple with Kapitan Generators, and the interface is very similar with minor differences.
+Creating both `secrets` and `config maps` is very simple with Kapitan Generators, and the interface is very similar with minor differences between them.
 
 ### Simple config map
 
@@ -468,4 +470,48 @@ parameters:
                        root   /usr/share/nginx/html;
                    }
                 }
+```
+
+## Network Policies
+
+You can also generate Network Policies by simply adding them under the `network_policies` structure.
+
+```yaml
+      # One or many network policies
+      network_policies:
+        default:
+          pod_selector: 
+            name: echo-server
+          ingress:
+            - from:
+              - podSelector:
+                  matchLabels:
+                    role: frontend
+              ports:
+              - protocol: TCP
+                port: 6379
+```
+
+Which will automatically generate the NetworkPolicy resource
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - port: 6379
+          protocol: TCP
+  podSelector:
+    name: echo-server
+  policyTypes:
+    - Ingress
+    - Egress
 ```
