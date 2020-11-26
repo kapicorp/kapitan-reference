@@ -2,9 +2,6 @@
 
 The manifest generator allows to quickly generate Kubernetes manifests.
 
-The schema of the component definition is available here:
-[schema](https://kapicorp.github.io/kapitan-reference/components/generators/manifests/target/)
-
 ## Basic usage
 
 The generator is expecting components to be defined under the `parameters.components` path of the inventory.
