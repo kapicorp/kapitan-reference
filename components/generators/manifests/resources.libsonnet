@@ -152,17 +152,13 @@ local p = kap.parameters;
     local has_webhooks = utils.objectHas(service_component, 'webhooks', false);
     local has_service_monitor = utils.objectHas(service_component, 'service_monitors', false);
     local has_prometheus_rule = utils.objectHas(service_component, 'prometheus_rules', false);
+    local has_network_policies = utils.objectHas(service_component, 'network_policies', false);
 
 
     local config_helpers = {
       local global_annotations = utils.objectGet(service_component, 'globals', {}),
       secrets: {
         config: utils.objectGet(service_component, 'secrets', {}),
-        global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
-        generating_class: kap.K8sSecret,
-      },
-      migration_secrets: {
-        config: utils.deepMerge(config_helpers.secrets.config, utils.objectGet(service_component.migration, 'secrets', {})),
         global_annotations: utils.objectGet(global_annotations, 'secrets', {}),
         generating_class: kap.K8sSecret,
       },
@@ -265,6 +261,17 @@ local p = kap.parameters;
       },
     };
 
+    local network_policies = {
+      local policy = service_component.network_policies[policy_name],
+      local name = if std.length(service_component.network_policies) == 1 then service_component.name else '%s-%s' % [service_component.name, policy_name],
+      [policy_name]: kap.K8sNetworkPolicy(name)
+      .WithPodSelector(utils.objectGet(policy, 'pod_selector', {}))
+      .WithIngress(utils.objectGet(policy, 'ingress', {}))
+      .WithEgress(utils.objectGet(policy, 'egress', {}))
+    for policy_name in std.objectFields(utils.objectGet(service_component, 'network_policies', {}))}
+    ;
+    local network_policies_manifests = utils.objectValues(network_policies);
+
 
     $.Bundle()
     .WithItem('config', config_map_manifests, has_configmaps)
@@ -278,5 +285,6 @@ local p = kap.parameters;
     .WithBundled('service_monitors', service_monitors)
     .WithBundled('prometheus_rules', prometheus_rules)
     .WithBundled('cr', clusterRole)
-    .WithBundled('crb', clusterRoleBinding),
+    .WithBundled('crb', clusterRoleBinding)
+    .WithBundled('network_policies', network_policies_manifests),
 }

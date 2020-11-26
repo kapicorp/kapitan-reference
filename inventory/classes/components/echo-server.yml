@@ -1,11 +1,46 @@
 parameters:
   components:
+
+    # configures the manifest generator
     echo-server:
+      # Application from which to source defaults
       application: microservices
+
+      # Basic settings
       image: jmalloc/echo-server
       pull_policy: Always
+
+      # Resource constraints
+      resources:
+        requests:
+          memory: 1G
+        limits:
+          memory: 1G
+
+      # Networking
       service:
         type: LoadBalancer
+      ports:
+        http:
+          container_port: 8080
+        internal:
+          container_port: 8081
+
+      # One or many network policies
+      network_policies:
+        default:
+          pod_selector: 
+            label: test
+          ingress:
+            - from:
+              - podSelector:
+                  matchLabels:
+                    role: frontend
+              ports:
+              - protocol: TCP
+                port: 6379
+
+      # Additional containers
       additional_containers:
         nginx:
           image: nginx
@@ -16,6 +51,8 @@ parameters:
             config:
               mount: /etc/nginx/conf.d/nginx.conf
               subPath: nginx.conf
+
+      # Healthchecks definitions
       healthcheck:
         liveness:
           type: http
@@ -30,11 +67,8 @@ parameters:
           port: http
           path: /_ready
           timeout_seconds: 5
-      ports:
-        http:
-          container_port: 8080
-        internal:
-          container_port: 8081
+
+      # Configs and Secrets definitions
       secrets:
         secret:
           data:
@@ -68,12 +102,8 @@ parameters:
                 }
             simple_config:
               value: "not mounted"
-      resources:
-        requests:
-          memory: 1G
-        limits:
-          memory: 1G
 
+  # configures the ingress generator
   ingresses:
     global:
       paths:
