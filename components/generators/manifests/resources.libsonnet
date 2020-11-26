@@ -261,11 +261,16 @@ local p = kap.parameters;
       },
     };
 
-    local network_policies = if has_network_policies then kap.K8sNetworkPolicy(service_component.name)
-      .WithPodSelector(utils.objectGet(service_component.network_policies, 'pod_selector', {}))
-      .WithIngress(utils.objectGet(service_component.network_policies, 'ingress', {}))
-      .WithEgress(utils.objectGet(service_component.network_policies, 'egress', {}))
+    local network_policies = {
+      local policy = service_component.network_policies[policy_name],
+      local name = if std.length(service_component.network_policies) == 1 then service_component.name else '%s-%s' % [service_component.name, policy_name],
+      [policy_name]: kap.K8sNetworkPolicy(name)
+      .WithPodSelector(utils.objectGet(policy, 'pod_selector', {}))
+      .WithIngress(utils.objectGet(policy, 'ingress', {}))
+      .WithEgress(utils.objectGet(policy, 'egress', {}))
+    for policy_name in std.objectFields(utils.objectGet(service_component, 'network_policies', {}))}
     ;
+    local network_policies_manifests = utils.objectValues(network_policies);
 
 
     $.Bundle()
@@ -281,5 +286,5 @@ local p = kap.parameters;
     .WithBundled('prometheus_rules', prometheus_rules)
     .WithBundled('cr', clusterRole)
     .WithBundled('crb', clusterRoleBinding)
-    .WithBundled('network_policies', network_policies),
+    .WithBundled('network_policies', network_policies_manifests),
 }
