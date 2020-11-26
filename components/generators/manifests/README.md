@@ -37,8 +37,21 @@ As you can see, some defaults are already set:
         annotations:
           "manifests.kapicorp.com/generated": true
 ```
-  
-  
+
+You do not have to change that class, as long as you add to the same structure for another class.
+For instance, when we enable the [`features.tesoro`](../../../inventory/classes/features/tesoro.yml) class, we can see that we are adding the following yaml fragment:
+
+```yaml
+  generators:
+    manifest:
+      default_config:
+        globals:
+          secrets:
+            labels: 
+              tesoro.kapicorp.com: enabled
+```
+
+
 ### Application defaults
 You can also create application defaults, where an application is a class/profile that can be associated to multiple components.
 
@@ -176,6 +189,8 @@ Which will create a service manifest with the same name as the component, and wi
 +  type: LoadBalancer
 ```
 
+Omitting the `service_port` directive will tell the generator not to expose that port as a service.
+
 ### Liveness and Readiness checks
 You can also quickly add a `readiness`/`liveness` check:
 
@@ -185,11 +200,16 @@ parameters:
     echo-server:
       <other config>
       healthcheck:
-        type: http
-        port: http
-        probes: ['readiness']
-        path: /_health
-        timeout_seconds: 3
+        readiness:
+          type: http
+          port: http
+          path: /health/readiness
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /health/liveness
+          timeout_seconds: 3
 ```
 
 which produces:
@@ -203,7 +223,16 @@ which produces:
 +          readinessProbe:
 +            failureThreshold: 3
 +            httpGet:
-+              path: /_health
++              path: /health/readiness
++              port: http
++              scheme: HTTP
++            periodSeconds: 10
++            successThreshold: 1
++            timeoutSeconds: 3
++          livenessProbe:
++            failureThreshold: 3
++            httpGet:
++              path: /health/liveness
 +              port: http
 +              scheme: HTTP
 +            periodSeconds: 10
@@ -213,9 +242,9 @@ which produces:
 
 ## Config Maps
 
-Creating secrets and config is very simple with Kapitan, and the interface is very similar with minor differences.
+Creating both `secrets` and `config maps` is very simple with Kapitan Generators, and the interface is very similar with minor differences.
 
-### Simple config
+### Simple config map
 
 ```yaml
       config_maps:
@@ -378,3 +407,65 @@ In summary, remember that you can summon the power of Google KMS (once setup) an
 
 which will generate an truly encrypted secret using Google KMS (other backends also available)
 
+## Additional containers
+
+You can instruct the generator to add one or more additional containers to your definition:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      # Additional containers
+      additional_containers:
+        nginx:
+          image: nginx
+          ports:
+            nginx: 
+              service_port: 80
+```
+
+You can access the same config_maps and secrets as the main container, but you can override mountpoints and subPaths
+
+For instance while this is defined in the outer "main" container scope, we can still mount the nginx config file:
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      # Additional containers
+      additional_containers:
+        nginx:
+          image: nginx
+          ports:
+            nginx: 
+              service_port: 80
+          config_maps:
+            config:
+              mount: /etc/nginx/conf.d/nginx.conf
+              subPath: nginx.conf
+
+      <other config>
+      config_maps:
+        config:
+          mount: /opt/echo-service/echo-service.conf
+          subPath: echo-service.conf
+          data:
+            echo-service.conf:
+              template: "components/echo-server/echo-server.conf.j2"
+              values:
+                example: true
+            nginx.conf:
+              value: |
+                server {
+                   listen       80;
+                   server_name  localhost;
+                   location / {
+                       proxy_pass  http://localhost:8080/;
+                   }
+                   error_page   500 502 503 504  /50x.html;
+                   location = /50x.html {
+                       root   /usr/share/nginx/html;
+                   }
+                }
+```
