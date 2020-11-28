@@ -8,7 +8,8 @@ It is meant to help you make use of best practices and libraries that can make K
 
 ## Quickstart
 
-```shell script
+```
+shell script
 $ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
 $ cd kapitan-templates
 
