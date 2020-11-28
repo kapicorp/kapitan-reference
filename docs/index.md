@@ -62,7 +62,8 @@ For instance, in the  [spinnaker.yml](../inventory/classes/kapitan/spinnaker.yml
 
 To update them, run:
 
-```shell script
+```
+shell script
 ./kapitan compile --fetch
 Dependency lib/kube.libjsonnet : already exists. Ignoring
 Dependency lib/spinnaker-pipeline.libjsonnet : already exists. Ignoring
