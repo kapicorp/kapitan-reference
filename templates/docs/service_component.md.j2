@@ -10,7 +10,7 @@
 {% if service_component.env is defined %}
 | ENV | VALUE |
 | --- | -----  |
-{% for env in service_component.env  %}
+{% for env in service_component.env | sort  %}
 {% set env_value = service_component.env[env] %}
 {% if env_value is mapping %}
 {% if env_value.secretKeyRef is defined %}

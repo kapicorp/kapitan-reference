@@ -23,11 +23,11 @@ spec:
             - name: MONGODB_DATABASE
               value: pritunl
             - name: MONGODB_DISABLE_SYSTEM_LOG
-              value: 'false'
+              value: 'no'
             - name: MONGODB_ENABLE_DIRECTORY_PER_DB
-              value: 'false'
+              value: 'no'
             - name: MONGODB_ENABLE_IPV6
-              value: 'false'
+              value: 'no'
             - name: MONGODB_PASSWORD
               value: _3sbjfMZm3GOcfIu7c_bKdmzZuc_gO0Dgn6CfKbYMgk
             - name: MONGODB_ROOT_PASSWORD
