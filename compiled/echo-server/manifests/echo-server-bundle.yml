@@ -108,23 +108,23 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 ---
-- apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    labels:
-      name: echo-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
     name: echo-server
-  spec:
-    ingress:
-      - from:
-          - podSelector:
-              matchLabels:
-                role: frontend
-        ports:
-          - port: 6379
-            protocol: TCP
-    podSelector:
-      label: test
-    policyTypes:
-      - Ingress
-      - Egress
+  name: echo-server
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - port: 6379
+          protocol: TCP
+  podSelector:
+    label: test
+  policyTypes:
+    - Ingress
+    - Egress
