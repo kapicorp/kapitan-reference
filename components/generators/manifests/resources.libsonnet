@@ -140,7 +140,7 @@ local p = kap.parameters;
   Bundle():: {
     bundle: [],
     WithItem(name, object, enabled=true):: self + if enabled then { [name]: object } else {},
-    WithBundled(name, object, enabled=true):: self + if enabled then { bundle+: [object] } else {},
+    WithBundled(name, object, enabled=true):: self + if enabled then { bundle+: if std.isArray(object) then object else [object] } else {},
   },
 
   ServiceManifestSet(service_component)::
