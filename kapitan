@@ -4,7 +4,7 @@ set -o nounset -o pipefail -o noclobber -o errexit
 DIR=$(dirname ${BASH_SOURCE[0]})
 ABS_PATH=$(cd "${DIR}"; pwd)
 
-KAPITAN_IMAGE=deepmind/kapitan:0.29-ci
+KAPITAN_IMAGE=deepmind/kapitan:0.29
 
 if hash kapitan 2> /dev/null
 then
@@ -12,7 +12,7 @@ then
 else
   KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w /src \
    -v $PWD:/src:delegated \
-   $KAPITAN_IMAGE kapitan"
+   $KAPITAN_IMAGE"
 fi
 
 exec ${KAPITAN_BINARY} "$@"
