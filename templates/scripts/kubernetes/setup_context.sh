@@ -5,8 +5,4 @@ KUBECTL="kubectl"
 {% set p = inventory.parameters %}
 
 {% set cluster = p.cluster %}
-{% if cluster.type == "gke" %}
-${KUBECTL} config set-context {{p.target_name}} --cluster {{cluster.id}} --user {{cluster.user}} --namespace {{p.namespace}}
-{% elif cluster.type == "kind" %}
-${KUBECTL} config set-context {{p.target_name}} --cluster {{cluster.id}} --user {{cluster.user}} --namespace {{p.namespace}}
-{% endif %}
+${KUBECTL} config set-context {{cluster.name}} --cluster {{cluster.id}} --user {{cluster.user}} --namespace {{p.namespace}}

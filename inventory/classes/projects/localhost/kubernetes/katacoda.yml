@@ -1,0 +1,9 @@
+classes:
+- kapitan.templates.kubernetes
+parameters:
+  cluster: ${katacoda}
+  katacoda:
+    name: ${target_name}
+    type: katacoda
+    id: kubernetes
+    user: kubernetes-admin
