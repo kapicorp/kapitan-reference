@@ -80,7 +80,7 @@ metadata:
   labels:
     name: shipping
   name: shipping
-  namespace: dev-sockshop
+  namespace: echo-server
 spec:
   ports:
     - name: http

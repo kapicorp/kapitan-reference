@@ -78,7 +78,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: queue-master
   name: queue-master
-  namespace: sock-shop
+  namespace: examples
 spec:
   ports:
     - name: http

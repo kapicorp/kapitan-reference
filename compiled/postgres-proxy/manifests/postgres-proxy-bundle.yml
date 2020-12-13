@@ -77,7 +77,7 @@ metadata:
     name: postgres-proxy
     tier: db
   name: postgres-proxy
-  namespace: postgres-proxy
+  namespace: echo-server
 spec:
   ports:
     - name: postgresql

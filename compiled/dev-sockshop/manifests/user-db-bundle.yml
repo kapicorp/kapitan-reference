@@ -54,7 +54,7 @@ metadata:
   labels:
     name: user-db
   name: user-db
-  namespace: dev-sockshop
+  namespace: echo-server
 spec:
   ports:
     - name: mongo

@@ -59,7 +59,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: orders-db
   name: orders-db
-  namespace: dev-sockshop
+  namespace: echo-server
 spec:
   ports:
     - name: mongo

@@ -78,7 +78,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: queue-master
   name: queue-master
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: http

@@ -56,7 +56,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: rabbit-mq
   name: rabbit-mq
-  namespace: sock-shop
+  namespace: examples
 spec:
   ports:
     - name: management

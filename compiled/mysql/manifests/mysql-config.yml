@@ -7,4 +7,4 @@ metadata:
   labels:
     name: mysql
   name: mysql
-  namespace: mysql
+  namespace: global

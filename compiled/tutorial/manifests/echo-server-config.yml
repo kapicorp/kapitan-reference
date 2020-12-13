@@ -13,4 +13,4 @@ metadata:
   labels:
     name: echo-server
   name: echo-server
-  namespace: tutorial
+  namespace: global

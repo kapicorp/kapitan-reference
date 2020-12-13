@@ -59,7 +59,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: carts-db
   name: carts-db
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: mongo

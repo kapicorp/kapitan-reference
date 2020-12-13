@@ -4,4 +4,4 @@ metadata:
   labels:
     name: tesoro
   name: tesoro
-  namespace: tesoro
+  namespace: global

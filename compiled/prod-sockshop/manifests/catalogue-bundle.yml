@@ -76,7 +76,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: catalogue
   name: catalogue
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: http

@@ -76,7 +76,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: catalogue
   name: catalogue
-  namespace: sock-shop
+  namespace: examples
 spec:
   ports:
     - name: http

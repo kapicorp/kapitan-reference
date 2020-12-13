@@ -85,7 +85,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: carts
   name: carts
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: http

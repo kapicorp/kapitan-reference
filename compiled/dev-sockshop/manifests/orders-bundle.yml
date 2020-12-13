@@ -85,7 +85,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: orders
   name: orders
-  namespace: dev-sockshop
+  namespace: echo-server
 spec:
   ports:
     - name: http

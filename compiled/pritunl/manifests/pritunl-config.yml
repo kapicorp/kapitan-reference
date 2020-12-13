@@ -9,4 +9,4 @@ metadata:
   labels:
     name: pritunl
   name: pritunl
-  namespace: pritunl
+  namespace: gke-pvm-killer

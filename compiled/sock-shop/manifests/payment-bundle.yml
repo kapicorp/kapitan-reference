@@ -72,7 +72,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: payment
   name: payment
-  namespace: sock-shop
+  namespace: examples
 spec:
   ports:
     - name: http

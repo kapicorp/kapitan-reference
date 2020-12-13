@@ -72,7 +72,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: payment
   name: payment
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: http

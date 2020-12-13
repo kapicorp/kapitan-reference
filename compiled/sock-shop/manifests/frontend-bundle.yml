@@ -73,7 +73,7 @@ metadata:
     app.kubernetes.io/part-of: sock-shop
     name: frontend
   name: frontend
-  namespace: sock-shop
+  namespace: examples
 spec:
   ports:
     - name: http

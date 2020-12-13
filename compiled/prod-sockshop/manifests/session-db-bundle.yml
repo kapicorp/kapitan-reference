@@ -47,7 +47,7 @@ metadata:
   labels:
     name: session-db
   name: session-db
-  namespace: prod-sockshop
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: redis

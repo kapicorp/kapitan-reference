@@ -107,7 +107,7 @@ metadata:
   labels:
     name: pritunl-mongo
   name: pritunl-mongo
-  namespace: pritunl
+  namespace: gke-pvm-killer
 spec:
   ports:
     - name: mongo
