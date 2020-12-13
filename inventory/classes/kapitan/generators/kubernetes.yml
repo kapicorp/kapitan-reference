@@ -1,5 +1,11 @@
 parameters:
   kapitan:
+    dependencies:
+    - type: git
+      source: https://github.com/kapicorp/kapitan-reference.git
+      ref: kadet
+      subdir: components/generators/kubernetes
+      output_path: components/generators/kubernetes
     compile:
     - output_path: manifests
       input_type: kadet
