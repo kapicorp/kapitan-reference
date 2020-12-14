@@ -230,7 +230,6 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
-        self.root.spec.template.spec.terminationGracePeriodSeconds = component.get("grace_period", 30)
         self.root.spec.strategy = component.get("strategy", default_strategy)
 
 
@@ -253,10 +252,28 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
-        self.root.spec.template.spec.terminationGracePeriodSeconds = component.get("grace_period", 30)
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get("update_strategy", update_strategy)
         self.root.spec.serviceName = name
+
+
+class Job(k8s.Base, WorkloadCommon):
+    def new(self):
+        self.kwargs.apiVersion = "batch/v1"
+        self.kwargs.kind = "Job"
+        super().new()
+        self.need("component")
+
+    def body(self):
+        super().body()
+        name = self.kwargs.name
+        component = self.kwargs.component
+        self.root.spec.template.metadata.labels = self.root.metadata.labels
+        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Never")
+        self.root.spec.backoffLimit = component.get("backoff_limit", 1)
+        self.root.spec.completions = component.get("completions", 1)
+        self.root.spec.parallelism = component.get("parallelism", 1)
 
 
 class Container(BaseObj):
@@ -364,6 +381,8 @@ class Workload(BaseObj):
             workload = Deployment(name=name, component=self.kwargs.component)
         elif component.type == "statefulset":
             workload = StatefulSet(name=name, component=self.kwargs.component)
+        elif component.type == "Job":
+            workload = Job(name=name, component=self.kwargs.component)
         else:
             raise ()
 
@@ -385,6 +404,9 @@ class Workload(BaseObj):
         workload.add_containers([container])
         workload.add_containers(additional_containers)
         workload.add_volumes_from_config()
+        workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
+        workload.root.spec.template.spec.dnsPolicy = component.dns_policy
+        workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get("grace_period", 30)
 
         if component.prefer_pods_in_different_nodes:
             workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
@@ -573,6 +595,8 @@ def get_components():
                     component.application, {}).get(
                     'component_defaults', {})
                 merge(generator_defaults, application_defaults)
+                if component.get("type", "undefined") in component.globals:
+                    merge(application_defaults, component.globals.get(component.type, {}))
                 merge(application_defaults, component)
 
             merge(generator_defaults, component)
@@ -584,7 +608,8 @@ def generate_docs():
     obj = BaseObj()
     for name, component in get_components():
         obj.root["{}-readme.md".format(name)] = j2('templates/docs/service_component.md.j2',
-                                                   {"service_component": component.to_dict(), "inventory": inv.parameters.to_dict()})
+                                                   {"service_component": component.to_dict(),
+                                                    "inventory": inv.parameters.to_dict()})
     return obj
 
 
