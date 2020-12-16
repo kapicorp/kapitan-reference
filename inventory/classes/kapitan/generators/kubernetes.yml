@@ -17,6 +17,7 @@ parameters:
       output_type: plain
       input_params:
         function: generate_docs
+        template_path: templates/docs/service_component.md.j2
       input_paths:
         - components/generators/kubernetes
 

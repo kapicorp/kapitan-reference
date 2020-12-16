@@ -604,16 +604,18 @@ def get_components():
             yield name, component
 
 
-def generate_docs():
+def generate_docs(input_params):
     obj = BaseObj()
-    for name, component in get_components():
-        obj.root["{}-readme.md".format(name)] = j2('templates/docs/service_component.md.j2',
-                                                   {"service_component": component.to_dict(),
-                                                    "inventory": inv.parameters.to_dict()})
+    template = input_params.get("template_path", None)
+    if template:
+        for name, component in get_components():
+            obj.root["{}-readme.md".format(name)] = j2(template,
+                                                       {"service_component": component.to_dict(),
+                                                        "inventory": inv.parameters.to_dict()})
     return obj
 
 
-def generate_manifests():
+def generate_manifests(input_params):
     obj = BaseObj()
     for name, component in get_components():
 
@@ -664,4 +666,4 @@ def main(input_params):
     whitelisted_functions = ["generate_manifests", "generate_docs"]
     function = input_params.get("function", "generate_manifests")
     if function in whitelisted_functions:
-        return globals()[function]()
+        return globals()[function](input_params)
