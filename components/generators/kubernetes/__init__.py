@@ -381,7 +381,7 @@ class Workload(BaseObj):
             workload = Deployment(name=name, component=self.kwargs.component)
         elif component.type == "statefulset":
             workload = StatefulSet(name=name, component=self.kwargs.component)
-        elif component.type == "Job":
+        elif component.type == "job":
             workload = Job(name=name, component=self.kwargs.component)
         else:
             raise ()
