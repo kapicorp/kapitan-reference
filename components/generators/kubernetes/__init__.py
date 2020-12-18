@@ -285,7 +285,9 @@ class Container(BaseObj):
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
                 if "secretKeyRef" in value:
-                    value["secretKeyRef"]["name"] = self.kwargs.name
+                    if "name" not in value["secretKeyRef"]:
+                        value["secretKeyRef"]["name"] = self.find_key_in_config()
+
                     self.root.env += [{"name": name, "valueFrom": value}]
             else:
                 self.root.env += [{"name": name, "value": str(value)}]
