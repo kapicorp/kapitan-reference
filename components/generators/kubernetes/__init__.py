@@ -306,9 +306,9 @@ class Container(BaseObj):
                         config_name = self.find_key_in_config(value["configMapKeyRef"]["key"], container.config_maps)
                         # TODO(ademaria) I keep repeating this logic. Refactor.
                         if len(container.config_maps.keys()) == 1:
-                            value["secretKeyRef"]["name"] = self.kwargs.name
+                            value["configMapKeyRef"]["name"] = self.kwargs.name
                         else:
-                            value["secretKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
+                            value["configMapKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
 
                     self.root.env += [{"name": name, "valueFrom": value}]
             else:

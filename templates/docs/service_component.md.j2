@@ -15,6 +15,8 @@
 {% if env_value is mapping %}
 {% if env_value.secretKeyRef is defined %}
 |{{env}} | taken from secret with key: ``{{env_value.secretKeyRef.key}}``|
+{% elif env_value.configMapKeyRef is defined %}
+|{{env}} | taken from config map with key: ``{{env_value.configMapKeyRef.key}}``|
 {% else  %}
 |{{env}} | UNMATCHED {{env_value}}|
 {% endif %}
