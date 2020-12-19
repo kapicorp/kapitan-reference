@@ -20,10 +20,10 @@ parameters:
         MONGODB_ROOT_PASSWORD:
           secretKeyRef:
             key: mongodb-root-password
-        MONGODB_ENABLE_IPV6: no
-        MONGODB_DISABLE_SYSTEM_LOG: no
-        MONGODB_SYSTEM_LOG_VERBOSITY: 0
-        MONGODB_ENABLE_DIRECTORY_PER_DB: no
+        MONGODB_ENABLE_IPV6: 'no'
+        MONGODB_DISABLE_SYSTEM_LOG: 'no'
+        MONGODB_SYSTEM_LOG_VERBOSITY: '0'
+        MONGODB_ENABLE_DIRECTORY_PER_DB: 'no'
         MONGODB_USERNAME: ${pritunl:auth:username}
         MONGODB_PASSWORD: ${pritunl:auth:password}
         MONGODB_DATABASE: ${pritunl:database:name}

@@ -127,4 +127,3 @@ spec:
     label: test
   policyTypes:
     - Ingress
-    - Egress
