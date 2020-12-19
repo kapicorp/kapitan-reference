@@ -281,12 +281,34 @@ class Container(BaseObj):
         self.need("name")
         self.need("container")
 
+    @staticmethod
+    def find_key_in_config(key, configs):
+        for name, config in configs.items():
+            if key in config.data.keys():
+                return name
+        raise (BaseException("Unable to find key {} in your configs definitions".format(key)))
+
     def process_envs(self, container):
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
                 if "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
-                        value["secretKeyRef"]["name"] = self.find_key_in_config()
+                        config_name = self.find_key_in_config(value["secretKeyRef"]["key"], container.secrets)
+                        # TODO(ademaria) I keep repeating this logic. Refactor.
+                        if len(container.secrets.keys()) == 1:
+                            value["secretKeyRef"]["name"] = self.kwargs.name
+                        else:
+                            value["secretKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
+
+                    self.root.env += [{"name": name, "valueFrom": value}]
+                if "configMapKeyRef" in value:
+                    if "name" not in value["configMapKeyRef"]:
+                        config_name = self.find_key_in_config(value["configMapKeyRef"]["key"], container.config_maps)
+                        # TODO(ademaria) I keep repeating this logic. Refactor.
+                        if len(container.config_maps.keys()) == 1:
+                            value["secretKeyRef"]["name"] = self.kwargs.name
+                        else:
+                            value["secretKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
 
                     self.root.env += [{"name": name, "valueFrom": value}]
             else:
