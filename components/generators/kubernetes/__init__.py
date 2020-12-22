@@ -114,10 +114,15 @@ class ServiceAccount(k8s.Base):
         self.kwargs.apiVersion = "v1"
         self.kwargs.kind = "ServiceAccount"
         super().new()
+        self.need("component")
 
     def body(self):
         super().body()
+        component = self.kwargs.component
         self.add_namespace(inv.parameters.namespace)
+        self.add_annotations(component.service_account.annotations)
+        if component.image_pull_secrets or inv.parameters.pull_secret.name:
+            self.root.imagePullSecrets = [{"name": component.get('image_pull_secrets', inv.parameters.pull_secret.name)}]
 
 
 class ConfigMap(k8s.Base):
@@ -230,7 +235,9 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
-        self.root.spec.strategy = component.get("strategy", default_strategy)
+        self.root.spec.strategy = component.get("update_strategy", default_strategy)
+        self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        self.set_replicas(component.get('replicas', 1))
 
 
 class StatefulSet(k8s.Base, WorkloadCommon):
@@ -255,6 +262,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get("update_strategy", update_strategy)
         self.root.spec.serviceName = name
+        self.set_replicas(component.get('replicas', 1))
 
 
 class Job(k8s.Base, WorkloadCommon):
@@ -269,7 +277,6 @@ class Job(k8s.Base, WorkloadCommon):
         name = self.kwargs.name
         component = self.kwargs.component
         self.root.spec.template.metadata.labels = self.root.metadata.labels
-        self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Never")
         self.root.spec.backoffLimit = component.get("backoff_limit", 1)
         self.root.spec.completions = component.get("completions", 1)
@@ -413,6 +420,7 @@ class Workload(BaseObj):
         workload.add_namespace(inv.parameters.namespace)
         workload.set_replicas(component.get('replicas', 1))
         workload.add_annotations(component.get('annotations', {}))
+        workload.root.spec.template.metadata.annotations = component.get('pod_annotations', {})
         workload.add_labels(component.get('labels', {}))
         workload.add_volumes(component.volumes)
         workload.add_volume_claims(component.volume_claims)
@@ -680,8 +688,8 @@ def generate_manifests(input_params):
 
         obj.root["{}-bundle".format(name)] = bundle
 
-        if component.service_account.get('enabled', False):
-            sa = ServiceAccount(name=name).root
+        if component.service_account.get('create', False):
+            sa = ServiceAccount(name=name, component=component).root
             obj.root["{}-sa".format(name)] = sa
     return obj
 
