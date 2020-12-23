@@ -22,6 +22,8 @@ parameters:
         CLOUDSQL_INSTANCE_NAME: ${database:instance}
         GOOGLE_APPLICATION_CREDENTIALS: /opt/secrets/service_account_file
       replicas: 3
+      pdb_min_available: 2
+      vpa: Auto
       healthcheck:
         liveness:
           type: tcp
