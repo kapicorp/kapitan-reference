@@ -16,19 +16,13 @@ def j2(filename, ctx):
 
 
 def merge(source, destination):
-    """
-    run me with nosetests --with-doctest file.py
-
-    >>> a = { 'first' : { 'all_rows' : { 'pass' : 'dog', 'number' : '1' } } }
-    >>> b = { 'first' : { 'all_rows' : { 'fail' : 'cat', 'number' : '5' } } }
-    >>> merge(b, a) == { 'first' : { 'all_rows' : { 'pass' : 'dog', 'fail' : 'cat', 'number' : '5' } } }
-    True
-    """
     for key, value in source.items():
         if isinstance(value, dict):
-            # get node or create one
-            node = destination.setdefault(key, {})
-            merge(value, node)
+            node = destination.setdefault(key, value)
+            if node is None:
+                destination[key] = value
+            else:
+                merge(value, node)
         else:
             destination[key] = destination.setdefault(key, value)
 
@@ -139,6 +133,7 @@ class ConfigMap(k8s.Base):
         config = self.kwargs.config
         component = self.kwargs.component
         self.add_labels(component.globals.config_maps.labels)
+        self.add_annotations(component.globals.config_maps.annotations)
 
         for key, config_spec in config.data.items():
             if "value" in config_spec:
@@ -170,6 +165,7 @@ class Secret(k8s.Base):
         config = self.kwargs.config
         component = self.kwargs.component
         self.add_labels(component.globals.secrets.labels)
+        self.add_annotations(component.globals.secrets.annotations)
 
         if use_tesoro:
             data = self.root.stringData
@@ -298,7 +294,9 @@ class Container(BaseObj):
     def process_envs(self, container):
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
-                if "secretKeyRef" in value:
+                if "fieldRef" in value:
+                    self.root.env += [{"name": name, "valueFrom": value}]
+                elif "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
                         config_name = self.find_key_in_config(value["secretKeyRef"]["key"], container.secrets)
                         # TODO(ademaria) I keep repeating this logic. Refactor.
@@ -418,7 +416,6 @@ class Workload(BaseObj):
             raise ()
 
         workload.add_namespace(inv.parameters.namespace)
-        workload.set_replicas(component.get('replicas', 1))
         workload.add_annotations(component.get('annotations', {}))
         workload.root.spec.template.metadata.annotations = component.get('pod_annotations', {})
         workload.add_labels(component.get('labels', {}))
@@ -440,41 +437,52 @@ class Workload(BaseObj):
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get("grace_period", 30)
 
-        if component.prefer_pods_in_different_nodes:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+        if component.prefer_pods_in_node_with_expression:
+            workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions":
-                                [{
-                                    "key": "app",
-                                    "operator": "In",
-                                    "values": [name]
-                                }]
-                        },
-                        "topologyKey": "kubernetes.io/hostname"
-                    },
-                    "weight": 1
-                }]
+                    "preference":
+                        {
 
-        if component.prefer_pods_in_different_zones:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions":
-                                [{
-                                    "key": "app",
-                                    "operator": "In",
-                                    "values": [name]
-                                }]
-                        },
-                        "topologyKey": "failure-domain.beta.kubernetes.io/zone"
-                    },
-                    "weight": 1
-                }]
+                            "matchExpressions": [component.prefer_pods_in_node_with_expression]
+                        }, "weight": 1
+                }
+            ]
 
-        self.root = workload.root
+            if component.prefer_pods_in_different_nodes:
+                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                    {
+                        "podAffinityTerm": {
+                            "labelSelector": {
+                                "matchExpressions":
+                                    [{
+                                        "key": "app",
+                                        "operator": "In",
+                                        "values": [name]
+                                    }]
+                            },
+                            "topologyKey": "kubernetes.io/hostname"
+                        },
+                        "weight": 1
+                    }]
+
+            if component.prefer_pods_in_different_zones:
+                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                    {
+                        "podAffinityTerm": {
+                            "labelSelector": {
+                                "matchExpressions":
+                                    [{
+                                        "key": "app",
+                                        "operator": "In",
+                                        "values": [name]
+                                    }]
+                            },
+                            "topologyKey": "failure-domain.beta.kubernetes.io/zone"
+                        },
+                        "weight": 1
+                    }]
+
+            self.root = workload.root
 
 
 class GeneratePolicies(BaseObj):
@@ -557,11 +565,13 @@ class ServiceMonitor(k8s.Base):
         self.kwargs.kind = "ServiceMonitor"
         super().new()
         self.need("component")
+        self.need("workload")
 
     def body(self):
         # TODO(ademaria) This name mangling is here just to simplify diff.
         # Change it once done
         component_name = self.kwargs.name
+        workload = self.kwargs.workload
         self.kwargs.name = "{}-metrics".format(component_name)
 
         super().body()
@@ -570,8 +580,8 @@ class ServiceMonitor(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
-        self.root.spec.namespaceSelector.matchNames = [component_name]
-        self.root.spec.selector.matchLabels["name"] = component_name
+        self.root.spec.namespaceSelector.matchNames = [inv.parameters.namespace]
+        self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
 
 
 class MutatingWebhookConfiguration(k8s.Base):
@@ -617,23 +627,63 @@ class ClusterRoleBinding(k8s.Base):
         self.root.subjects = component.cluster_role.binding.subjects
 
 
+class PodDisruptionBudget(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "policy/v1beta1"
+        self.kwargs.kind = "PodDisruptionBudget"
+        super().new()
+        self.need("component")
+        self.need("workload")
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        self.add_namespace(inv.parameters.namespace)
+        self.root.spec.minAvailable = component.pdb_min_available
+        self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
+
+
+class VerticalPodAutoscaler(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "autoscaling.k8s.io/v1beta2"
+        self.kwargs.kind = "VerticalPodAutoscaler"
+        super().new()
+        self.need("component")
+        self.need("workload")
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        self.add_namespace(inv.parameters.namespace)
+        self.root.spec.targetRef.apiVersion = workload.apiVersion
+        self.root.spec.targetRef.kind = workload.kind
+        self.root.spec.targetRef.name = workload.metadata.name
+        self.root.spec.updatePolicy.updateMode = component.vpa
+
+        # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
+        self.root.spec.resourcePolicy.containerPolicies = [{"containerName": "istio-proxy", "mode": "Off"}]
+
+
 def get_components():
     if 'components' in inv.parameters:
         generator_defaults = inv.parameters.generators.manifest.default_config
 
         for name, component in inv.parameters.components.items():
-            if "application" in component:
-                application_defaults = inv.parameters.applications.get(
-                    component.application, {}).get(
-                    'component_defaults', {})
-                merge(generator_defaults, application_defaults)
-                if component.get("type", "undefined") in component.globals:
-                    merge(application_defaults, component.globals.get(component.type, {}))
-                merge(application_defaults, component)
+            if component.get("enabled", True):
+                if "application" in component:
+                    application_defaults = inv.parameters.applications.get(
+                        component.application, {}).get(
+                        'component_defaults', {})
+                    merge(generator_defaults, application_defaults)
+                    if component.get("type", "undefined") in component.globals:
+                        merge(application_defaults, component.globals.get(component.type, {}))
+                    merge(application_defaults, component)
 
-            merge(generator_defaults, component)
-            component.name = name
-            yield name, component
+                merge(generator_defaults, component)
+                component.name = name
+                yield name, component
 
 
 def generate_docs(input_params):
@@ -660,6 +710,14 @@ def generate_manifests(input_params):
         workload = Workload(name=name, component=component).root
 
         bundle += [workload]
+        if component.vpa:
+            vpa = VerticalPodAutoscaler(name=name, component=component, workload=workload).root
+            bundle += [vpa]
+
+        if component.pdb_min_available:
+            pdb = PodDisruptionBudget(name=name, component=component, workload=workload).root
+            bundle += [pdb]
+
         if component.service:
             service = Service(name=name, component=component, workload=workload).root
             bundle += [service]
@@ -673,7 +731,7 @@ def generate_manifests(input_params):
             bundle += [webhooks]
 
         if component.service_monitors:
-            service_monitor = ServiceMonitor(name=name, component=component).root
+            service_monitor = ServiceMonitor(name=name, component=component, workload=workload).root
             bundle += [service_monitor]
 
         if component.prometheus_rules:
@@ -689,7 +747,8 @@ def generate_manifests(input_params):
         obj.root["{}-bundle".format(name)] = bundle
 
         if component.service_account.get('create', False):
-            sa = ServiceAccount(name=name, component=component).root
+            sa_name = component.service_account.get('name', name)
+            sa = ServiceAccount(name=sa_name, component=component).root
             obj.root["{}-sa".format(name)] = sa
     return obj
 
