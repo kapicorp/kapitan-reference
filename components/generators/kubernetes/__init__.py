@@ -116,7 +116,8 @@ class ServiceAccount(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.add_annotations(component.service_account.annotations)
         if component.image_pull_secrets or inv.parameters.pull_secret.name:
-            self.root.imagePullSecrets = [{"name": component.get('image_pull_secrets', inv.parameters.pull_secret.name)}]
+            self.root.imagePullSecrets = [
+                {"name": component.get('image_pull_secrets', inv.parameters.pull_secret.name)}]
 
 
 class ConfigMap(k8s.Base):
@@ -448,41 +449,41 @@ class Workload(BaseObj):
                 }
             ]
 
-            if component.prefer_pods_in_different_nodes:
-                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                    {
-                        "podAffinityTerm": {
-                            "labelSelector": {
-                                "matchExpressions":
-                                    [{
-                                        "key": "app",
-                                        "operator": "In",
-                                        "values": [name]
-                                    }]
-                            },
-                            "topologyKey": "kubernetes.io/hostname"
+        if component.prefer_pods_in_different_nodes:
+            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                {
+                    "podAffinityTerm": {
+                        "labelSelector": {
+                            "matchExpressions":
+                                [{
+                                    "key": "app",
+                                    "operator": "In",
+                                    "values": [name]
+                                }]
                         },
-                        "weight": 1
-                    }]
+                        "topologyKey": "kubernetes.io/hostname"
+                    },
+                    "weight": 1
+                }]
 
-            if component.prefer_pods_in_different_zones:
-                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                    {
-                        "podAffinityTerm": {
-                            "labelSelector": {
-                                "matchExpressions":
-                                    [{
-                                        "key": "app",
-                                        "operator": "In",
-                                        "values": [name]
-                                    }]
-                            },
-                            "topologyKey": "failure-domain.beta.kubernetes.io/zone"
+        if component.prefer_pods_in_different_zones:
+            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                {
+                    "podAffinityTerm": {
+                        "labelSelector": {
+                            "matchExpressions":
+                                [{
+                                    "key": "app",
+                                    "operator": "In",
+                                    "values": [name]
+                                }]
                         },
-                        "weight": 1
-                    }]
+                        "topologyKey": "failure-domain.beta.kubernetes.io/zone"
+                    },
+                    "weight": 1
+                }]
 
-            self.root = workload.root
+        self.root = workload.root
 
 
 class GeneratePolicies(BaseObj):
@@ -708,8 +709,8 @@ def generate_manifests(input_params):
 
         bundle = []
         workload = Workload(name=name, component=component).root
-
         bundle += [workload]
+
         if component.vpa:
             vpa = VerticalPodAutoscaler(name=name, component=component, workload=workload).root
             bundle += [vpa]
