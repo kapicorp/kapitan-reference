@@ -75,6 +75,7 @@ kind: VerticalPodAutoscaler
 metadata:
   labels:
     name: postgres-proxy
+    tier: db
   name: postgres-proxy
   namespace: postgres-proxy
 spec:
