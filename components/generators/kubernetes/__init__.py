@@ -1,4 +1,5 @@
 import base64
+import copy
 
 from kapitan.inputs.kadet import BaseObj, inventory
 from kapitan.utils import render_jinja2_file
@@ -133,8 +134,9 @@ class ConfigMap(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         config = self.kwargs.config
         component = self.kwargs.component
-        self.add_labels(component.globals.config_maps.labels)
-        self.add_annotations(component.globals.config_maps.annotations)
+        if component.globals:
+            self.add_labels(component.globals.config_maps.labels)
+            self.add_annotations(component.globals.config_maps.annotations)
 
         for key, config_spec in config.data.items():
             if "value" in config_spec:
@@ -165,8 +167,9 @@ class Secret(k8s.Base):
         use_tesoro = inv.parameters.use_tesoro
         config = self.kwargs.config
         component = self.kwargs.component
-        self.add_labels(component.globals.secrets.labels)
-        self.add_annotations(component.globals.secrets.annotations)
+        if component.globals:
+            self.add_labels(component.globals.secrets.labels)
+            self.add_annotations(component.globals.secrets.annotations)
 
         if use_tesoro:
             data = self.root.stringData
@@ -180,7 +183,7 @@ class Secret(k8s.Base):
                 else:
                     data[key] = spec.get('value')
             if "template" in spec:
-                self.root.data[key] = j2(spec.template, spec.get('values', {}))
+                data[key] = j2(spec.template, spec.get('values', {}))
 
 
 class Service(k8s.Base):
@@ -202,7 +205,7 @@ class Service(k8s.Base):
         self.root.spec.sessionAffinity = component.service.get("session_affinity", "None")
         all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()]
 
-        for port_name, port_spec in all_ports.pop().items():
+        for port_name, port_spec in sorted(all_ports.pop().items()):
             if "service_port" in port_spec:
                 self.root.spec.ports += [{
                     "name": port_name,
@@ -234,6 +237,7 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
         self.root.spec.strategy = component.get("update_strategy", default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
         self.set_replicas(component.get('replicas', 1))
 
 
@@ -256,6 +260,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
+        self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get("update_strategy", update_strategy)
         self.root.spec.serviceName = name
@@ -278,6 +283,22 @@ class Job(k8s.Base, WorkloadCommon):
         self.root.spec.backoffLimit = component.get("backoff_limit", 1)
         self.root.spec.completions = component.get("completions", 1)
         self.root.spec.parallelism = component.get("parallelism", 1)
+
+
+class CronJob(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "batch/v1beta1"
+        self.kwargs.kind = "CronJob"
+        super().new()
+        self.need("component")
+        self.need("job")
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        job = self.kwargs.job
+        self.root.spec.jobTemplate.spec = job.root.spec
+        self.root.spec.schedule = component.schedule
 
 
 class Container(BaseObj):
@@ -359,7 +380,7 @@ class Container(BaseObj):
 
             if probe_definition.type == "http":
                 probe.root.httpGet.scheme = probe_definition.get('scheme', "HTTP")
-                probe.root.httpGet.port = probe_definition.port
+                probe.root.httpGet.port = probe_definition.get("port", 80)
                 probe.root.httpGet.path = probe_definition.path
                 probe.root.httpGet.httpHeaders = probe_definition.httpHeaders
             if probe_definition.type == "tcp":
@@ -387,7 +408,7 @@ class Container(BaseObj):
         self.add_volume_mounts_from_configs()
         self.add_volume_mounts(container.volume_mounts)
 
-        for name, port in container.ports.items():
+        for name, port in sorted(container.ports.items()):
             self.root.ports += [{
                 "containerPort": port.get('container_port', port.service_port),
                 "name": name,
@@ -424,7 +445,6 @@ class Workload(BaseObj):
         workload.add_volume_claims(component.volume_claims)
         workload.root.spec.template.spec.securityContext = component.workload_security_context
         workload.root.spec.minReadySeconds = component.min_ready_seconds
-        workload.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
         if component.service_account.enabled:
             workload.root.spec.template.spec.serviceAccountName = component.service_account.get("name", name)
 
@@ -658,6 +678,7 @@ class VerticalPodAutoscaler(k8s.Base):
         component = self.kwargs.component
         workload = self.kwargs.workload
         self.add_namespace(inv.parameters.namespace)
+        self.add_labels(workload.metadata.labels)
         self.root.spec.targetRef.apiVersion = workload.apiVersion
         self.root.spec.targetRef.kind = workload.kind
         self.root.spec.targetRef.name = workload.metadata.name
@@ -683,6 +704,11 @@ def get_components():
                     merge(application_defaults, component)
 
                 merge(generator_defaults, component)
+                component_type = component.get("type", generator_defaults.type)
+                if component_type in inv.parameters.generators.manifest.resource_defaults:
+                    component_defaults = inv.parameters.generators.manifest.resource_defaults[component_type]
+                    merge(component_defaults, component)
+
                 component.name = name
                 yield name, component
 
@@ -708,19 +734,27 @@ def generate_manifests(input_params):
         obj.root["{}-secret".format(name)] = secrets
 
         bundle = []
-        workload = Workload(name=name, component=component).root
-        bundle += [workload]
 
-        if component.vpa:
-            vpa = VerticalPodAutoscaler(name=name, component=component, workload=workload).root
+        workload = Workload(name=name, component=component)
+
+        if component.schedule:
+            workload = CronJob(name=name, component=component, job=workload)
+
+        workload_spec = workload.root
+
+
+        bundle += [workload_spec]
+
+        if component.vpa and component.type != "job":
+            vpa = VerticalPodAutoscaler(name=name, component=component, workload=workload_spec).root
             bundle += [vpa]
 
         if component.pdb_min_available:
-            pdb = PodDisruptionBudget(name=name, component=component, workload=workload).root
+            pdb = PodDisruptionBudget(name=name, component=component, workload=workload_spec).root
             bundle += [pdb]
 
         if component.service:
-            service = Service(name=name, component=component, workload=workload).root
+            service = Service(name=name, component=component, workload=workload_spec).root
             bundle += [service]
 
         if component.network_policies:
@@ -732,7 +766,7 @@ def generate_manifests(input_params):
             bundle += [webhooks]
 
         if component.service_monitors:
-            service_monitor = ServiceMonitor(name=name, component=component, workload=workload).root
+            service_monitor = ServiceMonitor(name=name, component=component, workload=workload_spec).root
             bundle += [service_monitor]
 
         if component.prometheus_rules:
