@@ -1,0 +1,13 @@
+parameters:
+  kapitan:
+    compile:
+    - output_path: terraform
+      input_type: kadet
+      output_type: json
+      input_paths:
+        - components/generators/terraform
+    - input_type: copy
+      ignore_missing: true
+      input_paths:
+        - resources/state/${target_name}/.terraform.lock.hcl
+      output_path: terraform/

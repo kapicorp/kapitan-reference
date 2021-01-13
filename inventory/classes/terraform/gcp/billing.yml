@@ -1,0 +1,10 @@
+parameters:
+  gcp_billing_account: 017012-945270-0844F0
+  kapicorp:
+    resource:
+      google_project:
+        project:
+          name: ${name}
+          project_id: ${google:project}
+          billing_account: ${gcp_billing_account}
+          org_id: 163756623419

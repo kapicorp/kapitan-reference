@@ -1,0 +1,7 @@
+classes:
+- terraform.providers.gcp
+
+parameters:
+  state_bucket_name: state-kapicorp-terraform-admin
+  scripts:
+    - templates/scripts/terraform

@@ -1,0 +1,16 @@
+parameters:
+  kapicorp:
+    resource:
+      google_project_service:
+        enable_cloudbilling_service:
+          service: cloudbilling.googleapis.com
+          project: \${google_project.project.project_id}
+        enable_iam_service:
+          service: iam.googleapis.com
+          project: \${google_project.project.project_id}
+        enable_compute_service:
+          service: compute.googleapis.com
+          project: \${google_project.project.project_id}
+        enable_compute_service:
+          service: storage-component.googleapis.com
+          project: \${google_project.project.project_id}

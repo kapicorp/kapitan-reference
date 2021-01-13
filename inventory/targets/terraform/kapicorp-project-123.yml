@@ -1,0 +1,11 @@
+classes:
+  - common
+  - terraform.common
+  - terraform.gcp.billing
+  - terraform.gcp.services
+  - terraform.remote-state
+  - terraform.providers.gcp-impersonate
+
+parameters:
+  name: Example Terraform Project
+
