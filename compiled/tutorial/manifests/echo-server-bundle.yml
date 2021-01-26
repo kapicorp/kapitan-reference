@@ -127,6 +127,7 @@ spec:
         - port: 6379
           protocol: TCP
   podSelector:
-    label: test
+    matchLabels:
+      name: echo-server
   policyTypes:
     - Ingress
