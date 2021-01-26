@@ -29,8 +29,6 @@ parameters:
       # One or many network policies
       network_policies:
         default:
-          pod_selector: 
-            label: test
           ingress:
             - from:
               - podSelector:
@@ -108,6 +106,9 @@ parameters:
     global:
       paths:
         - backend:
-            serviceName: echo-server
-            servicePort: 80
+            service:
+              name: echo-server
+              port:
+                number: 80
           path: /echo/*
+          pathType: Prefix

@@ -90,11 +90,13 @@ class NetworkPolicy(k8s.Base):
         self.kwargs.kind = "NetworkPolicy"
         super().new()
         self.need("policy")
+        self.need("workload")
 
     def body(self):
         super().body()
         policy = self.kwargs.policy
-        self.root.spec.podSelector = policy.pod_selector
+        workload = self.kwargs.workload
+        self.root.spec.podSelector.matchLabels = workload.metadata.labels
         self.root.spec.ingress = policy.ingress
         self.root.spec.egress = policy.egress
         if self.root.spec.ingress:
@@ -510,16 +512,18 @@ class GeneratePolicies(BaseObj):
     def new(self):
         self.need("name")
         self.need("component")
+        self.need("workload")
 
     def body(self):
         component = self.kwargs.component
+        workload = self.kwargs.workload
         name = self.kwargs.name
 
         if len(component.network_policies.items()) == 1:
-            self.root = [NetworkPolicy(name=name, policy=policy) for policy_name, policy in
+            self.root = [NetworkPolicy(name=name, policy=policy, workload=workload) for policy_name, policy in
                          component.network_policies.items()]
         else:
-            self.root = [NetworkPolicy(name=policy_name, policy=policy) for policy_name, policy in
+            self.root = [NetworkPolicy(name=policy_name, policy=policy, workload=workload) for policy_name, policy in
                          component.network_policies.items()]
 
 
@@ -758,7 +762,7 @@ def generate_manifests(input_params):
             bundle += [service]
 
         if component.network_policies:
-            policies = GeneratePolicies(name=name, component=component).root
+            policies = GeneratePolicies(name=name, component=component, workload=workload_spec).root
             bundle += policies
 
         if component.webhooks:
