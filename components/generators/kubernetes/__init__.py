@@ -1,7 +1,7 @@
 import base64
 import copy
 
-from kapitan.inputs.kadet import BaseObj, inventory
+from kapitan.inputs.kadet import BaseObj, inventory, CompileError
 from kapitan.utils import render_jinja2_file
 from kapitan.cached import args
 
@@ -35,7 +35,8 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
-        self.root.spec.template.spec.containers += [container.root for container in containers]
+        self.root.spec.template.spec.containers += [
+            container.root for container in containers]
 
     def add_volumes(self, volumes):
         for key, value in volumes.items():
@@ -89,12 +90,12 @@ class NetworkPolicy(k8s.Base):
         self.kwargs.apiVersion = "networking.k8s.io/v1"
         self.kwargs.kind = "NetworkPolicy"
         super().new()
-        self.need("policy")
+        self.need("config")
         self.need("workload")
 
     def body(self):
         super().body()
-        policy = self.kwargs.policy
+        policy = self.kwargs.config
         workload = self.kwargs.workload
         self.root.spec.podSelector.matchLabels = workload.metadata.labels
         self.root.spec.ingress = policy.ingress
@@ -144,7 +145,8 @@ class ConfigMap(k8s.Base):
             if "value" in config_spec:
                 self.root.data[key] = config_spec.get('value')
             if "template" in config_spec:
-                self.root.data[key] = j2(config_spec.template, config_spec.get('values', {}))
+                self.root.data[key] = j2(
+                    config_spec.template, config_spec.get('values', {}))
 
 
 class Secret(k8s.Base):
@@ -181,7 +183,8 @@ class Secret(k8s.Base):
         for key, spec in config.data.items():
             if "value" in spec:
                 if spec.get('b64_encode', False):
-                    data[key] = Secret.encode_string(spec.get('value'), use_tesoro)
+                    data[key] = Secret.encode_string(
+                        spec.get('value'), use_tesoro)
                 else:
                     data[key] = spec.get('value')
             if "template" in spec:
@@ -204,8 +207,10 @@ class Service(k8s.Base):
         self.add_labels(component.get('labels', {}))
         self.root.spec.selector = workload.spec.template.metadata.labels
         self.root.spec.type = component.service.type
-        self.root.spec.sessionAffinity = component.service.get("session_affinity", "None")
-        all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()]
+        self.root.spec.sessionAffinity = component.service.get(
+            "session_affinity", "None")
+        all_ports = [component.ports] + \
+            [container.ports for container in component.additional_containers.values()]
 
         for port_name, port_spec in sorted(all_ports.pop().items()):
             if "service_port" in port_spec:
@@ -236,8 +241,10 @@ class Deployment(k8s.Base, WorkloadCommon):
         component = self.kwargs.component
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
-        self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
-        self.root.spec.strategy = component.get("update_strategy", default_strategy)
+        self.root.spec.template.spec.restartPolicy = component.get(
+            "restart_policy", "Always")
+        self.root.spec.strategy = component.get(
+            "update_strategy", default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
         self.set_replicas(component.get('replicas', 1))
@@ -253,7 +260,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
     def body(self):
         default_strategy = {}
         update_strategy = {"rollingUpdate":
-                               {"partition": 0},
+                           {"partition": 0},
                            "type": "RollingUpdate"}
 
         super().body()
@@ -261,10 +268,12 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         component = self.kwargs.component
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.selector.matchLabels = self.root.metadata.labels
-        self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Always")
+        self.root.spec.template.spec.restartPolicy = component.get(
+            "restart_policy", "Always")
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get("strategy", default_strategy)
-        self.root.spec.updateStrategy = component.get("update_strategy", update_strategy)
+        self.root.spec.updateStrategy = component.get(
+            "update_strategy", update_strategy)
         self.root.spec.serviceName = name
         self.set_replicas(component.get('replicas', 1))
 
@@ -281,7 +290,8 @@ class Job(k8s.Base, WorkloadCommon):
         name = self.kwargs.name
         component = self.kwargs.component
         self.root.spec.template.metadata.labels = self.root.metadata.labels
-        self.root.spec.template.spec.restartPolicy = component.get("restart_policy", "Never")
+        self.root.spec.template.spec.restartPolicy = component.get(
+            "restart_policy", "Never")
         self.root.spec.backoffLimit = component.get("backoff_limit", 1)
         self.root.spec.completions = component.get("completions", 1)
         self.root.spec.parallelism = component.get("parallelism", 1)
@@ -313,7 +323,8 @@ class Container(BaseObj):
         for name, config in configs.items():
             if key in config.data.keys():
                 return name
-        raise (BaseException("Unable to find key {} in your configs definitions".format(key)))
+        raise (BaseException(
+            "Unable to find key {} in your configs definitions".format(key)))
 
     def process_envs(self, container):
         for name, value in sorted(container.env.items()):
@@ -322,22 +333,26 @@ class Container(BaseObj):
                     self.root.env += [{"name": name, "valueFrom": value}]
                 elif "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
-                        config_name = self.find_key_in_config(value["secretKeyRef"]["key"], container.secrets)
+                        config_name = self.find_key_in_config(
+                            value["secretKeyRef"]["key"], container.secrets)
                         # TODO(ademaria) I keep repeating this logic. Refactor.
                         if len(container.secrets.keys()) == 1:
                             value["secretKeyRef"]["name"] = self.kwargs.name
                         else:
-                            value["secretKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
+                            value["secretKeyRef"]["name"] = "{}-{}".format(
+                                self.kwargs.name, config_name)
 
                     self.root.env += [{"name": name, "valueFrom": value}]
                 if "configMapKeyRef" in value:
                     if "name" not in value["configMapKeyRef"]:
-                        config_name = self.find_key_in_config(value["configMapKeyRef"]["key"], container.config_maps)
+                        config_name = self.find_key_in_config(
+                            value["configMapKeyRef"]["key"], container.config_maps)
                         # TODO(ademaria) I keep repeating this logic. Refactor.
                         if len(container.config_maps.keys()) == 1:
                             value["configMapKeyRef"]["name"] = self.kwargs.name
                         else:
-                            value["configMapKeyRef"]["name"] = "{}-{}".format(self.kwargs.name, config_name)
+                            value["configMapKeyRef"]["name"] = "{}-{}".format(
+                                self.kwargs.name, config_name)
 
                     self.root.env += [{"name": name, "valueFrom": value}]
             else:
@@ -348,20 +363,28 @@ class Container(BaseObj):
         container = self.kwargs.container
         configs = container.config_maps.items()
         secrets = container.secrets.items()
-        for name, spec in configs:
+        for object_name, spec in configs:
+            if spec == None:
+                raise CompileError(
+                    f"error with '{object_name}' for component {name}: configuration cannot be empty!")
+
             if "mount" in spec:
                 self.root.volumeMounts += [{
                     "mountPath": spec.mount,
                     "readOnly": True,
-                    "name": name,
+                    "name": object_name,
                     "subPath": spec.subPath
                 }]
-        for name, spec in secrets:
+        for object_name, spec in secrets:
+            if spec == None:
+                raise CompileError(
+                    f"error with '{object_name}' for component {name}: configuration cannot be empty!")
+
             if "mount" in spec:
                 self.root.volumeMounts += [{
                     "mountPath": spec.mount,
                     "readOnly": True,
-                    "name": name,
+                    "name": object_name,
                     "subPath": spec.subPath
                 }]
 
@@ -374,14 +397,20 @@ class Container(BaseObj):
     def create_probe(probe_definition):
         probe = BaseObj()
         if "type" in probe_definition:
-            probe.root.initialDelaySeconds = probe_definition.get('initial_delay_seconds', 0)
-            probe.root.periodSeconds = probe_definition.get('period_seconds', 10)
-            probe.root.timeoutSeconds = probe_definition.get('timeout_seconds', 5)
-            probe.root.successThreshold = probe_definition.get('success_threshold', 1)
-            probe.root.failureThreshold = probe_definition.get('failure_threshold', 3)
+            probe.root.initialDelaySeconds = probe_definition.get(
+                'initial_delay_seconds', 0)
+            probe.root.periodSeconds = probe_definition.get(
+                'period_seconds', 10)
+            probe.root.timeoutSeconds = probe_definition.get(
+                'timeout_seconds', 5)
+            probe.root.successThreshold = probe_definition.get(
+                'success_threshold', 1)
+            probe.root.failureThreshold = probe_definition.get(
+                'failure_threshold', 3)
 
             if probe_definition.type == "http":
-                probe.root.httpGet.scheme = probe_definition.get('scheme', "HTTP")
+                probe.root.httpGet.scheme = probe_definition.get(
+                    'scheme', "HTTP")
                 probe.root.httpGet.port = probe_definition.get("port", 80)
                 probe.root.httpGet.path = probe_definition.path
                 probe.root.httpGet.httpHeaders = probe_definition.httpHeaders
@@ -397,7 +426,8 @@ class Container(BaseObj):
 
         self.root.name = name
         self.root.image = container.image
-        self.root.imagePullPolicy = container.get('pull_policy', 'IfNotPresent')
+        self.root.imagePullPolicy = container.get(
+            'pull_policy', 'IfNotPresent')
         self.root.resources = container.resources
         self.root.args = container.args
         self.root.command = container.command
@@ -417,8 +447,10 @@ class Container(BaseObj):
                 "protocol": port.get("protocol", "TCP")
             }]
 
-        self.root.livenessProbe = self.create_probe(container.healthcheck.liveness)
-        self.root.readinessProbe = self.create_probe(container.healthcheck.readiness)
+        self.root.livenessProbe = self.create_probe(
+            container.healthcheck.liveness)
+        self.root.readinessProbe = self.create_probe(
+            container.healthcheck.readiness)
         self.process_envs(container)
 
 
@@ -441,14 +473,16 @@ class Workload(BaseObj):
 
         workload.add_namespace(inv.parameters.namespace)
         workload.add_annotations(component.get('annotations', {}))
-        workload.root.spec.template.metadata.annotations = component.get('pod_annotations', {})
+        workload.root.spec.template.metadata.annotations = component.get(
+            'pod_annotations', {})
         workload.add_labels(component.get('labels', {}))
         workload.add_volumes(component.volumes)
         workload.add_volume_claims(component.volume_claims)
         workload.root.spec.template.spec.securityContext = component.workload_security_context
         workload.root.spec.minReadySeconds = component.min_ready_seconds
         if component.service_account.enabled:
-            workload.root.spec.template.spec.serviceAccountName = component.service_account.get("name", name)
+            workload.root.spec.template.spec.serviceAccountName = component.service_account.get(
+                "name", name)
 
         container = Container(name=name, container=component)
         additional_containers = [Container(name=name, container=component) for name, component in
@@ -458,7 +492,8 @@ class Workload(BaseObj):
         workload.add_volumes_from_config()
         workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
-        workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get("grace_period", 30)
+        workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
+            "grace_period", 30)
 
         if component.prefer_pods_in_node_with_expression:
             workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
@@ -508,59 +543,43 @@ class Workload(BaseObj):
         self.root = workload.root
 
 
-class GeneratePolicies(BaseObj):
+class GenerateMultipleObjectsForClass(BaseObj):
+    """Helper to generate multiple classes
+
+    As a convention for generators we have that if you define only one policy/config/secret configuration
+    for your component, then the name of that resource will be the component {name} itself.
+
+    However if there are multiple objects being defined, then we call them: {name}-{object_name}
+
+    This class helps achieve that for policies/config/secrets to avoid duplication.
+    """
+
     def new(self):
         self.need("name")
         self.need("component")
+        self.need("objects")
+        self.need("generating_class")
         self.need("workload")
 
     def body(self):
+        objects = self.kwargs.objects
+        name = self.kwargs.name
         component = self.kwargs.component
+        generating_class = self.kwargs.generating_class
         workload = self.kwargs.workload
-        name = self.kwargs.name
 
-        if len(component.network_policies.items()) == 1:
-            self.root = [NetworkPolicy(name=name, policy=policy, workload=workload) for policy_name, policy in
-                         component.network_policies.items()]
-        else:
-            self.root = [NetworkPolicy(name=policy_name, policy=policy, workload=workload) for policy_name, policy in
-                         component.network_policies.items()]
+        for object_name, object_config in objects.items():
+            if object_config == None:
+                raise CompileError(
+                    f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
+            if len(objects.items()) == 1:
+                name_format = f"{name}"
+            else:
+                name_format = f"{name}-{object_name}"
 
-class GenerateConfigMaps(BaseObj):
-    def new(self):
-        self.need("name")
-        self.need("component")
-
-    def body(self):
-        component = self.kwargs.component
-        name = self.kwargs.name
-
-        if len(component.config_maps.items()) == 1:
-            self.root = [ConfigMap(name=name, config=config, component=component) for config_name, config in
-                         component.config_maps.items()]
-        else:
-            self.root = [ConfigMap(name="{}-{}".format(name, config_name), config=config, component=component) for
-                         config_name, config in
-                         component.config_maps.items()]
-
-
-class GenerateSecrets(BaseObj):
-    def new(self):
-        self.need("name")
-        self.need("component")
-
-    def body(self):
-        component = self.kwargs.component
-        name = self.kwargs.name
-
-        if len(component.secrets.items()) == 1:
-            self.root = [Secret(name=name, config=config, component=component) for secret_name, config in
-                         component.secrets.items()]
-        else:
-            self.root = [Secret(name="{}-{}".format(name, secret_name), config=config, component=component) for
-                         secret_name, config in
-                         component.secrets.items()]
+            self.root += [generating_class(name=name_format,
+                                           config=object_config, component=component, workload=workload)]
 
 
 class PrometheusRule(k8s.Base):
@@ -581,7 +600,8 @@ class PrometheusRule(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
-        self.root.spec.groups += [{"name": "tesoro.rules", "rules": component.prometheus_rules.rules}]
+        self.root.spec.groups += [{"name": "tesoro.rules",
+                                   "rules": component.prometheus_rules.rules}]
 
 
 class ServiceMonitor(k8s.Base):
@@ -605,7 +625,8 @@ class ServiceMonitor(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
-        self.root.spec.namespaceSelector.matchNames = [inv.parameters.namespace]
+        self.root.spec.namespaceSelector.matchNames = [
+            inv.parameters.namespace]
         self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
 
 
@@ -689,7 +710,8 @@ class VerticalPodAutoscaler(k8s.Base):
         self.root.spec.updatePolicy.updateMode = component.vpa
 
         # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
-        self.root.spec.resourcePolicy.containerPolicies = [{"containerName": "istio-proxy", "mode": "Off"}]
+        self.root.spec.resourcePolicy.containerPolicies = [
+            {"containerName": "istio-proxy", "mode": "Off"}]
 
 
 def get_components():
@@ -704,13 +726,15 @@ def get_components():
                         'component_defaults', {})
                     merge(generator_defaults, application_defaults)
                     if component.get("type", "undefined") in component.globals:
-                        merge(application_defaults, component.globals.get(component.type, {}))
+                        merge(application_defaults,
+                              component.globals.get(component.type, {}))
                     merge(application_defaults, component)
 
                 merge(generator_defaults, component)
                 component_type = component.get("type", generator_defaults.type)
                 if component_type in inv.parameters.generators.manifest.resource_defaults:
-                    component_defaults = inv.parameters.generators.manifest.resource_defaults[component_type]
+                    component_defaults = inv.parameters.generators.manifest.resource_defaults[
+                        component_type]
                     merge(component_defaults, component)
 
                 component.name = name
@@ -731,12 +755,6 @@ def generate_docs(input_params):
 def generate_manifests(input_params):
     obj = BaseObj()
     for name, component in get_components():
-
-        config_maps = GenerateConfigMaps(name=name, component=component).root
-        secrets = GenerateSecrets(name=name, component=component).root
-        obj.root["{}-config".format(name)] = config_maps
-        obj.root["{}-secret".format(name)] = secrets
-
         bundle = []
 
         workload = Workload(name=name, component=component)
@@ -746,41 +764,54 @@ def generate_manifests(input_params):
 
         workload_spec = workload.root
 
-
         bundle += [workload_spec]
 
+        obj.root[f"{name}-config"] = GenerateMultipleObjectsForClass(
+            name=name, component=component, generating_class=ConfigMap, objects=component.config_maps, workload=workload_spec).root
+        obj.root[f"{name}-secret"] = GenerateMultipleObjectsForClass(
+            name=name, component=component, generating_class=Secret, objects=component.secrets, workload=workload_spec).root
+
         if component.vpa and component.type != "job":
-            vpa = VerticalPodAutoscaler(name=name, component=component, workload=workload_spec).root
+            vpa = VerticalPodAutoscaler(
+                name=name, component=component, workload=workload_spec).root
             bundle += [vpa]
 
         if component.pdb_min_available:
-            pdb = PodDisruptionBudget(name=name, component=component, workload=workload_spec).root
+            pdb = PodDisruptionBudget(
+                name=name, component=component, workload=workload_spec).root
             bundle += [pdb]
 
         if component.service:
-            service = Service(name=name, component=component, workload=workload_spec).root
+            service = Service(name=name, component=component,
+                              workload=workload_spec).root
             bundle += [service]
 
         if component.network_policies:
-            policies = GeneratePolicies(name=name, component=component, workload=workload_spec).root
+
+            policies = GenerateMultipleObjectsForClass(
+                name=name, component=component, generating_class=NetworkPolicy, objects=component.network_policies, workload=workload_spec).root
             bundle += policies
 
         if component.webhooks:
-            webhooks = MutatingWebhookConfiguration(name=name, component=component).root
+            webhooks = MutatingWebhookConfiguration(
+                name=name, component=component).root
             bundle += [webhooks]
 
         if component.service_monitors:
-            service_monitor = ServiceMonitor(name=name, component=component, workload=workload_spec).root
+            service_monitor = ServiceMonitor(
+                name=name, component=component, workload=workload_spec).root
             bundle += [service_monitor]
 
         if component.prometheus_rules:
-            prometheus_rule = PrometheusRule(name=name, component=component).root
+            prometheus_rule = PrometheusRule(
+                name=name, component=component).root
             bundle += [prometheus_rule]
 
         if component.cluster_role:
             cluster_role = ClusterRole(name=name, component=component).root
             bundle += [cluster_role]
-            cluster_role_binding = ClusterRoleBinding(name=name, component=component).root
+            cluster_role_binding = ClusterRoleBinding(
+                name=name, component=component).root
             bundle += [cluster_role_binding]
 
         obj.root["{}-bundle".format(name)] = bundle
