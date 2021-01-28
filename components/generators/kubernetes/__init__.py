@@ -1,5 +1,6 @@
 import base64
 import copy
+import os
 
 from kapitan.inputs.kadet import BaseObj, inventory, CompileError
 from kapitan.utils import render_jinja2_file
@@ -64,7 +65,7 @@ class WorkloadCommon(BaseObj):
             self.root.spec.template.spec.volumes += [{
                 "name": reference_name,
                 "configMap": {
-                    "defaultMode": 420,
+                    "defaultMode": spec.get('default_mode', 420),
                     "name": name,
                     "items": [{"key": value, "path": value} for value in spec.get('items', [])]
                 }
@@ -78,7 +79,7 @@ class WorkloadCommon(BaseObj):
             self.root.spec.template.spec.volumes += [{
                 "name": reference_name,
                 "secret": {
-                    "defaultMode": 420,
+                    "defaultMode": spec.get('default_mode', 420),
                     "secretName": name,
                     "items": [{"key": value, "path": value} for value in spec.get('items', [])]
                 }
@@ -141,12 +142,20 @@ class ConfigMap(k8s.Base):
             self.add_labels(component.globals.config_maps.labels)
             self.add_annotations(component.globals.config_maps.annotations)
 
-        for key, config_spec in config.data.items():
-            if "value" in config_spec:
-                self.root.data[key] = config_spec.get('value')
-            if "template" in config_spec:
-                self.root.data[key] = j2(
-                    config_spec.template, config_spec.get('values', {}))
+        if "data" in config:
+            for key, config_spec in config.data.items():
+                if "value" in config_spec:
+                    self.root.data[key] = config_spec.get('value')
+                if "template" in config_spec:
+                    self.root.data[key] = j2(
+                        config_spec.template, config_spec.get('values', {}))
+                if "file" in config_spec:
+                    with open(config_spec.file, 'r') as f:
+                        self.root.data[key] = f.read()
+        elif "directory" in config:
+            for filename in os.listdir(config.directory):
+                with open(f"{config.directory}/{filename}", "r") as f:
+                    self.root.data[filename] = f.read()
 
 
 class Secret(k8s.Base):
@@ -205,12 +214,13 @@ class Service(k8s.Base):
         component = self.kwargs.component
         workload = self.kwargs.workload
         self.add_labels(component.get('labels', {}))
+        self.add_annotations(component.service.annotations)
         self.root.spec.selector = workload.spec.template.metadata.labels
         self.root.spec.type = component.service.type
         self.root.spec.sessionAffinity = component.service.get(
             "session_affinity", "None")
-        all_ports = [component.ports] + \
-            [container.ports for container in component.additional_containers.values()]
+        all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()
+                                         if 'ports' in container]
 
         for port_name, port_spec in sorted(all_ports.pop().items()):
             if "service_port" in port_spec:
@@ -220,6 +230,20 @@ class Service(k8s.Base):
                     "targetPort": port_name,
                     "protocol": port_spec.get("protocol", "TCP")
                 }]
+
+
+class NameSpace(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "v1"
+        self.kwargs.kind = "Namespace"
+        super().new()
+        self.need("name")
+
+    def body(self):
+        super().body()
+        name = self.kwargs.name
+        labels = inv.parameters.generators.kubernetes.namespace.labels
+        self.add_labels(labels)
 
 
 class Deployment(k8s.Base, WorkloadCommon):
@@ -309,6 +333,7 @@ class CronJob(k8s.Base):
         super().body()
         component = self.kwargs.component
         job = self.kwargs.job
+        self.root.metadata = job.root.metadata
         self.root.spec.jobTemplate.spec = job.root.spec
         self.root.spec.schedule = component.schedule
 
@@ -428,6 +453,8 @@ class Container(BaseObj):
         self.root.image = container.image
         self.root.imagePullPolicy = container.get(
             'pull_policy', 'IfNotPresent')
+        if container.lifecycle:
+            self.root.lifecycle = container.lifecycle
         self.root.resources = container.resources
         self.root.args = container.args
         self.root.command = container.command
@@ -604,6 +631,23 @@ class PrometheusRule(k8s.Base):
                                    "rules": component.prometheus_rules.rules}]
 
 
+class BackendConfig(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "cloud.google.com/v1"
+        self.kwargs.kind = "BackendConfig"
+        super().new()
+        self.need("component")
+
+    def body(self):
+        component_name = self.kwargs.name
+        self.kwargs.name = f"{component_name}-backend-config"
+        super().body()
+        name = self.kwargs.name
+        component = self.kwargs.component
+        self.add_namespace(inv.parameters.namespace)
+        self.root.spec = component.backend_config
+
+
 class ServiceMonitor(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "monitoring.coreos.com/v1"
@@ -752,6 +796,15 @@ def generate_docs(input_params):
     return obj
 
 
+def generate_pre_deploy(input_params):
+    obj = BaseObj()
+    name = inv.parameters.namespace
+    namespace = NameSpace(name=name)
+    obj.root["{}-namespace".format(name)] = namespace
+
+    return obj
+
+
 def generate_manifests(input_params):
     obj = BaseObj()
     for name, component in get_components():
@@ -814,6 +867,10 @@ def generate_manifests(input_params):
                 name=name, component=component).root
             bundle += [cluster_role_binding]
 
+        if component.backend_config:
+            backend_config = BackendConfig(name=name, component=component).root
+            bundle += [backend_config]
+
         obj.root["{}-bundle".format(name)] = bundle
 
         if component.service_account.get('create', False):
@@ -824,7 +881,8 @@ def generate_manifests(input_params):
 
 
 def main(input_params):
-    whitelisted_functions = ["generate_manifests", "generate_docs"]
+    whitelisted_functions = ["generate_manifests",
+                             "generate_docs", "generate_pre_deploy"]
     function = input_params.get("function", "generate_manifests")
     if function in whitelisted_functions:
         return globals()[function](input_params)
