@@ -20,6 +20,13 @@ parameters:
         template_path: templates/docs/service_component.md.j2
       input_paths:
         - components/generators/kubernetes
+    - output_path: pre-deploy
+      input_type: kadet
+      output_type: yml
+      input_params:
+        function: generate_pre_deploy
+      input_paths:
+        - components/generators/kubernetes
 
   generators:
     manifest:

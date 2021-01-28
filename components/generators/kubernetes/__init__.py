@@ -798,9 +798,9 @@ def generate_docs(input_params):
 
 def generate_pre_deploy(input_params):
     obj = BaseObj()
-    name = inv.parameters.generators.kubernetes.namespace.name
+    name = inv.parameters.namespace
     namespace = NameSpace(name=name)
-    obj.root['01_namespace'] = namespace
+    obj.root["{}-namespace".format(name)] = namespace
 
     return obj
 
