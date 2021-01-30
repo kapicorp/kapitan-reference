@@ -1,8 +1,0 @@
-classes:
-  - common
-  - projects.localhost.kubernetes.kind
-  - applications.sock-shop
-
-
-parameters:
-  target_name: sock-shop
