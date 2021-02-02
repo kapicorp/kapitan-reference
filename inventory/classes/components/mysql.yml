@@ -1,4 +1,13 @@
 parameters:
+  mysql:
+    settings:
+      client:
+        port: 3306
+        socket: /var/run/mysqld/mysqld.sock
+      mysqld:
+        bind-address: 127.0.0.1
+        max_allowed_packet: 64M
+        thread_concurrency: 8        # Max CPU * 2
   components:
     mysql:
       type: statefulset
@@ -36,6 +45,8 @@ parameters:
                 ignore-db-dir=lost+found
             mytemplate.cnf:
               template: components/mysql/mytemplate.cnf.j2
+              values:
+                mysql: ${mysql:settings}
                 
 
       secrets:
