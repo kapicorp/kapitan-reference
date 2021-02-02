@@ -34,7 +34,7 @@ local p = kap.parameters;
       [if 'mount' in utils.objectGet(utils.objectGet(service_component, type, {}), name, config_object[name].config) then name]: {
         subPath: utils.objectGet(config, 'subPath'),
         mountPath: utils.objectGet(config, 'mount'),
-        readOnly: true,
+        readOnly: utils.objectGet(config, 'readOnly'),
       }
       for name in std.objectFields(config_object)
     };
