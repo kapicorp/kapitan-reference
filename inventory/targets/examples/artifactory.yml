@@ -8,38 +8,46 @@ classes:
 parameters:
   target_name: artifactory
 
+  artifactory:
+    chart_name: artifactory
+    chart_version: 11.7.6
+    namespace: artifactory
+
   kapitan:
     dependencies:
-    - type: https
-      source: https://charts.jfrog.io/artifactory/helm/artifactory-11.7.6.tgz
-      unpack: True
-      output_path: components/charts
+    - type: helm
+      output_path: components/charts/artifactory
+      source: https://charts.jfrog.io/
+      version: ${artifactory:chart_version}
+      chart_name: ${artifactory:chart_name}
+
     compile:
     - input_type: helm
       input_paths:
         - components/charts/artifactory
       output_path: .
-      helm_values:
-        name: artifactory
-        artifactory:
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 2
-              memory: 4Gi
-          javaOpts:
-            xms: 1g
-            xmx: 4g
-        nginx:
-          resources:
-            requests:
-              cpu: 100m
-              memory: 250Mi
-            limits:
-              cpu: 250m
-              memory: 500Mi
-      namespace: artifactory
-    vars:
-      target: ${target_name}
+      helm:
+        params:
+          namespace: ${artifactory:namespace}
+          release_name: ${artifactory:chart_name}
+        values:
+          name: artifactory
+          artifactory:
+            resources:
+              requests:
+                cpu: 500m
+                memory: 1Gi
+              limits:
+                cpu: 2
+                memory: 4Gi
+            javaOpts:
+              xms: 1g
+              xmx: 4g
+          nginx:
+            resources:
+              requests:
+                cpu: 100m
+                memory: 250Mi
+              limits:
+                cpu: 250m
+                memory: 500Mi
