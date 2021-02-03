@@ -3,18 +3,18 @@ kind: Service
 metadata:
   annotations: null
   labels:
-    app.kubernetes.io/instance: null
+    app.kubernetes.io/instance: artifactory
     app.kubernetes.io/managed-by: Tiller
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-9.3.4
-  name: -postgresql
+  name: artifactory-postgresql
 spec:
   ports:
     - name: tcp-postgresql
       port: 5432
       targetPort: tcp-postgresql
   selector:
-    app.kubernetes.io/instance: null
+    app.kubernetes.io/instance: artifactory
     app.kubernetes.io/name: postgresql
     role: master
   type: ClusterIP

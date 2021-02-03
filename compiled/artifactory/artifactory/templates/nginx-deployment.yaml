@@ -6,26 +6,26 @@ metadata:
     chart: artifactory-11.7.6
     component: nginx
     heritage: Tiller
-    release: null
-  name: -artifactory-nginx
+    release: artifactory
+  name: artifactory-artifactory-nginx
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: artifactory
       component: nginx
-      release: null
+      release: artifactory
   template:
     metadata:
       annotations:
-        checksum/nginx-artifactory-conf: 5b75ab376aa69ae65d8ee2b56f979404bf3d43f02fd2c8989606a0e74f8fc748
-        checksum/nginx-conf: bf8a87e3bccdbfbe24b92a47cc0fe2adc81a6ed5334404da48341df14049f389
+        checksum/nginx-artifactory-conf: a68df595112f8195872657616c5474077783d2fd8121d729aef7c7a2b54ab3db
+        checksum/nginx-conf: 9a43269824f35c12a82c167b0ec22e1cc0f6f30283c12ffc6848edf6a659d872
       labels:
         app: artifactory
         chart: artifactory-11.7.6
         component: nginx
         heritage: Tiller
-        release: null
+        release: artifactory
     spec:
       containers:
         - command:
@@ -93,16 +93,16 @@ spec:
       securityContext:
         fsGroup: 107
         runAsUser: 104
-      serviceAccountName: -artifactory
+      serviceAccountName: artifactory-artifactory
       volumes:
         - configMap:
-            name: -artifactory-nginx-conf
+            name: artifactory-artifactory-nginx-conf
           name: nginx-conf
         - configMap:
-            name: -artifactory-nginx-artifactory-conf
+            name: artifactory-artifactory-nginx-artifactory-conf
           name: nginx-artifactory-conf
         - emptyDir: {}
           name: nginx-volume
         - name: ssl-certificates
           secret:
-            secretName: -artifactory-nginx-certificate
+            secretName: artifactory-artifactory-nginx-certificate

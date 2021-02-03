@@ -6,12 +6,12 @@ metadata:
     chart: artifactory-11.7.6
     component: artifactory
     heritage: Tiller
-    release: null
-  name: -artifactory
+    release: artifactory
+  name: artifactory-artifactory
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: -artifactory
+  name: artifactory-artifactory
 subjects:
   - kind: ServiceAccount
-    name: -artifactory
+    name: artifactory-artifactory

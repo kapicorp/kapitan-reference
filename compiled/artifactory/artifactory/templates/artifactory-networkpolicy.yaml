@@ -5,8 +5,8 @@ metadata:
     app: artifactory
     chart: artifactory-11.7.6
     heritage: Tiller
-    release: null
-  name: -artifactory-artifactory-networkpolicy
+    release: artifactory
+  name: artifactory-artifactory-artifactory-networkpolicy
 spec:
   egress:
     - {}

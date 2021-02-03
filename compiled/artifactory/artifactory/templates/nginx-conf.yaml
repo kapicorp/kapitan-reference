@@ -26,5 +26,5 @@ metadata:
     app: artifactory
     chart: artifactory-11.7.6
     heritage: Tiller
-    release: null
-  name: -artifactory-nginx-conf
+    release: artifactory
+  name: artifactory-artifactory-nginx-conf
