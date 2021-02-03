@@ -1,0 +1,220 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    component: artifactory
+    heritage: Tiller
+    release: null
+  name: -artifactory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artifactory
+      release: null
+      role: artifactory
+  serviceName: artifactory
+  template:
+    metadata:
+      annotations:
+        checksum/access-config: f857ae53ffbe857b605382150fa645bd7b4604ac1d67034a1b5aafe2a6634e45
+        checksum/admin-creds: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        checksum/binarystore: d1b7d2fec4e95298afed19ba07b7665bf8f242f01876eb1e7de9964295094342
+        checksum/database-secrets: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        checksum/systemyaml: ea5a4a48de85fe5b36a4316201fc81d902a99d21da3fb53f590aaf65ed748316
+      labels:
+        app: artifactory
+        chart: artifactory-11.7.6
+        component: artifactory
+        heritage: Tiller
+        release: null
+        role: artifactory
+    spec:
+      containers:
+        - command:
+            - /bin/bash
+            - -c
+            - "set -e; if [ -d /artifactory_extra_conf ] && [ -d /artifactory_bootstrap\
+              \ ]; then\n  echo \"Copying bootstrap config from /artifactory_extra_conf\
+              \ to /artifactory_bootstrap\";\n  cp -Lrfv /artifactory_extra_conf/\
+              \ /artifactory_bootstrap/;\nfi; exec /entrypoint-artifactory.sh\n"
+          env:
+            - name: JF_SHARED_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: -postgresql
+          image: docker.bintray.io/jfrog/artifactory-pro:7.12.6
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /router/api/v1/system/health
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: artifactory
+          ports:
+            - containerPort: 8082
+              name: http
+            - containerPort: 8081
+              name: http-internal
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /router/api/v1/system/health
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: 2
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - mountPath: /var/opt/jfrog/artifactory
+              name: artifactory-volume
+            - mountPath: /artifactory_bootstrap/binarystore.xml
+              name: binarystore-xml
+              subPath: binarystore.xml
+            - mountPath: /artifactory_bootstrap/info/installer-info.json
+              name: installer-info
+              subPath: installer-info.json
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - rm -fv /var/opt/jfrog/artifactory/etc/db.properties
+          image: docker.bintray.io/alpine:3.12.1
+          imagePullPolicy: IfNotPresent
+          name: delete-db-properties
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/opt/jfrog/artifactory
+              name: artifactory-volume
+        - command:
+            - sh
+            - -c
+            - rm -rfv /var/opt/jfrog/artifactory/lost+found /var/opt/jfrog/artifactory/data/.lock
+          image: docker.bintray.io/alpine:3.12.1
+          imagePullPolicy: IfNotPresent
+          name: remove-lost-found
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/opt/jfrog/artifactory
+              name: artifactory-volume
+        - command:
+            - /bin/sh
+            - -c
+            - 'echo "Copy system.yaml to /var/opt/jfrog/artifactory/etc"; mkdir -p
+              /var/opt/jfrog/artifactory/etc; mkdir -p /var/opt/jfrog/artifactory/etc/access/keys/trusted;
+              cp -fv /tmp/etc/system.yaml /var/opt/jfrog/artifactory/etc/system.yaml;
+              echo "Remove /var/opt/jfrog/artifactory/lost+found folder if exists";
+              rm -rfv /var/opt/jfrog/artifactory/lost+found; echo "Copy access.config.patch.yml
+              to /var/opt/jfrog/artifactory/etc/access"; mkdir -p /var/opt/jfrog/artifactory/etc/access;
+              cp -fv /tmp/etc/access.config.patch.yml /var/opt/jfrog/artifactory/etc/access/access.config.patch.yml;
+
+              '
+          env: null
+          image: docker.bintray.io/alpine:3.12.1
+          name: copy-system-yaml
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/opt/jfrog/artifactory
+              name: artifactory-volume
+            - mountPath: /tmp/etc/system.yaml
+              name: systemyaml
+              subPath: system.yaml
+            - mountPath: /tmp/etc/access.config.patch.yml
+              name: access-config
+              subPath: access.config.patch.yml
+        - command:
+            - sh
+            - -c
+            - "until nc -z -w 2 -postgresql 5432 && echo database ok; do\n  sleep\
+              \ 2;\ndone;\n"
+          image: docker.bintray.io/alpine:3.12.1
+          name: wait-for-db
+          resources: {}
+        - command:
+            - /bin/bash
+            - -c
+            - 'scriptsPath="/opt/jfrog/artifactory/app/bin"; mkdir -p $scriptsPath;
+              echo "Copy migration scripts and Run migration"; cp -fv /tmp/migrate.sh
+              $scriptsPath/migrate.sh; cp -fv /tmp/migrationHelmInfo.yaml $scriptsPath/migrationHelmInfo.yaml;
+              cp -fv /tmp/migrationStatus.sh $scriptsPath/migrationStatus.sh; mkdir
+              -p /var/opt/jfrog/artifactory/log; bash $scriptsPath/migrationStatus.sh
+              7.12.6 3600 > >(tee /var/opt/jfrog/artifactory/log/helm-migration.log)
+              2>&1;
+
+              '
+          env:
+            - name: JF_SHARED_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: -postgresql
+          image: docker.bintray.io/jfrog/artifactory-pro:7.12.6
+          imagePullPolicy: IfNotPresent
+          name: migration-artifactory
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - mountPath: /tmp/migrate.sh
+              name: migration-scripts
+              subPath: migrate.sh
+            - mountPath: /tmp/migrationHelmInfo.yaml
+              name: migration-scripts
+              subPath: migrationHelmInfo.yaml
+            - mountPath: /tmp/migrationStatus.sh
+              name: migration-scripts
+              subPath: migrationStatus.sh
+            - mountPath: /var/opt/jfrog/artifactory
+              name: artifactory-volume
+            - mountPath: /artifactory_bootstrap/binarystore.xml
+              name: binarystore-xml
+              subPath: binarystore.xml
+      securityContext:
+        fsGroup: 1030
+        runAsUser: 1030
+      serviceAccountName: -artifactory
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: binarystore-xml
+          secret:
+            secretName: -artifactory-binarystore
+        - configMap:
+            name: -artifactory-migration-scripts
+          name: migration-scripts
+        - configMap:
+            name: -artifactory-installer-info
+          name: installer-info
+        - name: systemyaml
+          secret:
+            secretName: -artifactory-systemyaml
+        - name: access-config
+          secret:
+            secretName: -artifactory-access-config
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        name: artifactory-volume
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi

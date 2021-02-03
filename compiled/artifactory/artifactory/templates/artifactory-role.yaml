@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    component: artifactory
+    heritage: Tiller
+    release: null
+  name: -artifactory
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - watch
+      - list

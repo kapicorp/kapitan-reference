@@ -1,0 +1,30 @@
+apiVersion: v1
+data:
+  nginx.conf: "# Main Nginx configuration file\nworker_processes  4;\n\nerror_log\
+    \  /var/opt/jfrog/nginx/logs/error.log warn;\npid        /tmp/nginx.pid;\n\nevents\
+    \ {\n  worker_connections  1024;\n}\n\n\nhttp {\n  include       /etc/nginx/mime.types;\n\
+    \  default_type  application/octet-stream;\n\n  variables_hash_max_size 1024;\n\
+    \  variables_hash_bucket_size 64;\n  server_names_hash_max_size 4096;\n  server_names_hash_bucket_size\
+    \ 128;\n  types_hash_max_size 2048;\n  types_hash_bucket_size 64;\n  proxy_read_timeout\
+    \ 2400s;\n  client_header_timeout 2400s;\n  client_body_timeout 2400s;\n  proxy_connect_timeout\
+    \ 75s;\n  proxy_send_timeout 2400s;\n  proxy_buffer_size 128k;\n  proxy_buffers\
+    \ 40 128k;\n  proxy_busy_buffers_size 128k;\n  proxy_temp_file_write_size 250m;\n\
+    \  proxy_http_version 1.1;\n  client_body_buffer_size 128k;\n\n  log_format  main\
+    \  '$remote_addr - $remote_user [$time_local] \"$request\" '\n  '$status $body_bytes_sent\
+    \ \"$http_referer\" '\n  '\"$http_user_agent\" \"$http_x_forwarded_for\"';\n\n\
+    \  log_format timing 'ip = $remote_addr '\n  'user = \\\"$remote_user\\\" '\n\
+    \  'local_time = \\\"$time_local\\\" '\n  'host = $host '\n  'request = \\\"$request\\\
+    \" '\n  'status = $status '\n  'bytes = $body_bytes_sent '\n  'upstream = \\\"\
+    $upstream_addr\\\" '\n  'upstream_time = $upstream_response_time '\n  'request_time\
+    \ = $request_time '\n  'referer = \\\"$http_referer\\\" '\n  'UA = \\\"$http_user_agent\\\
+    \"';\n\n  access_log  /var/opt/jfrog/nginx/logs/access.log  timing;\n\n  sendfile\
+    \        on;\n  #tcp_nopush     on;\n\n  keepalive_timeout  65;\n\n  #gzip  on;\n\
+    \n  include /etc/nginx/conf.d/*.conf;\n\n}\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    heritage: Tiller
+    release: null
+  name: -artifactory-nginx-conf

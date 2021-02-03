@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  artifactory.conf: "\nssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;\nssl_certificate\
+    \  /var/opt/jfrog/nginx/ssl/tls.crt;\nssl_certificate_key  /var/opt/jfrog/nginx/ssl/tls.key;\n\
+    ssl_session_cache shared:SSL:1m;\nssl_prefer_server_ciphers   on;\n## server configuration\n\
+    server {\n  listen 443 ssl;\n  listen 80;\n  server_name ~(?<repo>.+)\\.-artifactory\
+    \ -artifactory;\n\n  if ($http_x_forwarded_proto = '') {\n    set $http_x_forwarded_proto\
+    \  $scheme;\n  }\n  ## Application specific logs\n  ## access_log /var/log/nginx/artifactory-access.log\
+    \ timing;\n  ## error_log /var/log/nginx/artifactory-error.log;\n  rewrite ^/artifactory/?$\
+    \ / redirect;\n  if ( $repo != \"\" ) {\n    rewrite ^/(v1|v2)/(.*) /artifactory/api/docker/$repo/$1/$2\
+    \ break;\n  }\n  chunked_transfer_encoding on;\n  client_max_body_size 0;\n\n\
+    \  location / {\n    proxy_read_timeout  900;\n    proxy_pass_header   Server;\n\
+    \    proxy_cookie_path   ~*^/.* /;\n    proxy_pass          http://-artifactory:8082/;\n\
+    \    proxy_set_header    X-JFrog-Override-Base-Url $http_x_forwarded_proto://$host:$server_port;\n\
+    \    proxy_set_header    X-Forwarded-Port  $server_port;\n    proxy_set_header\
+    \    X-Forwarded-Proto $http_x_forwarded_proto;\n    proxy_set_header    Host\
+    \              $http_host;\n    proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;\n\
+    \n    location /artifactory/ {\n      if ( $request_uri ~ ^/artifactory/(.*)$\
+    \ ) {\n        proxy_pass       http://-artifactory:8081/artifactory/$1;\n   \
+    \   }\n      proxy_pass         http://-artifactory:8081/artifactory/;\n    }\n\
+    \  }\n}\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    heritage: Tiller
+    release: null
+  name: -artifactory-nginx-artifactory-conf

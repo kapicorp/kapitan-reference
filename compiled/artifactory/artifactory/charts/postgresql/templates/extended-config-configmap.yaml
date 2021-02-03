@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  override.conf: 'listen_addresses=''*''
+
+    max_connections=1500
+
+    '
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: null
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-9.3.4
+  name: -postgresql-extended-configuration

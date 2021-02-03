@@ -1,0 +1,2077 @@
+apiVersion: v1
+data:
+  migrate.sh: "#!/bin/bash\n\n# Flags\nFLAG_Y=\"y\"\nFLAG_N=\"n\"\nFLAGS_Y_N=\"$FLAG_Y\
+    \ $FLAG_N\"\nFLAG_NOT_APPLICABLE=\"_NA_\"\n\nCURRENT_VERSION=$1\n\nWRAPPER_SCRIPT_TYPE_RPMDEB=\"\
+    RPMDEB\"\nWRAPPER_SCRIPT_TYPE_DOCKER_COMPOSE=\"DOCKERCOMPOSE\"\n\nSENSITIVE_KEY_VALUE=\"\
+    __sensitive_key_hidden___\"\n\n# Shared system keys\nSYS_KEY_SHARED_JFROGURL=\"\
+    shared.jfrogUrl\"\nSYS_KEY_SHARED_SECURITY_JOINKEY=\"shared.security.joinKey\"\
+    \nSYS_KEY_SHARED_SECURITY_MASTERKEY=\"shared.security.masterKey\"\n\nSYS_KEY_SHARED_NODE_ID=\"\
+    shared.node.id\"\nSYS_KEY_SHARED_JAVAHOME=\"shared.javaHome\"\n\nSYS_KEY_SHARED_DATABASE_TYPE=\"\
+    shared.database.type\"\nSYS_KEY_SHARED_DATABASE_TYPE_VALUE_POSTGRES=\"postgresql\"\
+    \nSYS_KEY_SHARED_DATABASE_DRIVER=\"shared.database.driver\"\nSYS_KEY_SHARED_DATABASE_URL=\"\
+    shared.database.url\"\nSYS_KEY_SHARED_DATABASE_USERNAME=\"shared.database.username\"\
+    \nSYS_KEY_SHARED_DATABASE_PASSWORD=\"shared.database.password\"\n\nSYS_KEY_SHARED_ELASTICSEARCH_URL=\"\
+    shared.elasticsearch.url\"\nSYS_KEY_SHARED_ELASTICSEARCH_USERNAME=\"shared.elasticsearch.username\"\
+    \nSYS_KEY_SHARED_ELASTICSEARCH_PASSWORD=\"shared.elasticsearch.password\"\nSYS_KEY_SHARED_ELASTICSEARCH_CLUSTERSETUP=\"\
+    shared.elasticsearch.clusterSetup\"\nSYS_KEY_SHARED_ELASTICSEARCH_UNICASTFILE=\"\
+    shared.elasticsearch.unicastFile\"\nSYS_KEY_SHARED_ELASTICSEARCH_CLUSTERSETUP_VALUE=\"\
+    YES\"\n\n# Define this in product specific script. Should contain the path to\
+    \ unitcast file\n# File used by insight server to write cluster active nodes info.\
+    \ This will be read by elasticsearch\n#SYS_KEY_SHARED_ELASTICSEARCH_UNICASTFILE_VALUE=\"\
+    \"\n\nSYS_KEY_RABBITMQ_ACTIVE_NODE_NAME=\"shared.rabbitMq.active.node.name\"\n\
+    SYS_KEY_RABBITMQ_ACTIVE_NODE_IP=\"shared.rabbitMq.active.node.ip\"\n\n# Filenames\n\
+    FILE_NAME_SYSTEM_YAML=\"system.yaml\"\nFILE_NAME_JOIN_KEY=\"join.key\"\nFILE_NAME_MASTER_KEY=\"\
+    master.key\"\nFILE_NAME_INSTALLER_YAML=\"installer.yaml\"\n\n# Global constants\
+    \ used in business logic\nNODE_TYPE_STANDALONE=\"standalone\"\nNODE_TYPE_CLUSTER_NODE=\"\
+    node\"\nNODE_TYPE_DATABASE=\"database\"\n\n# External(isable) databases \nDATABASE_POSTGRES=\"\
+    POSTGRES\"\nDATABASE_ELASTICSEARCH=\"ELASTICSEARCH\"\nDATABASE_RABBITMQ=\"RABBITMQ\"\
+    \n\nPOSTGRES_LABEL=\"PostgreSQL\"\nELASTICSEARCH_LABEL=\"Elasticsearch\"\nRABBITMQ_LABEL=\"\
+    Rabbitmq\"\n\nARTIFACTORY_LABEL=\"Artifactory\"\nJFMC_LABEL=\"Mission Control\"\
+    \nDISTRIBUTION_LABEL=\"Distribution\"\nXRAY_LABEL=\"Xray\"\n\nPOSTGRES_CONTAINER=\"\
+    postgres\"\nELASTICSEARCH_CONTAINER=\"elasticsearch\"\nRABBITMQ_CONTAINER=\"rabbitmq\"\
+    \nREDIS_CONTAINER=\"redis\"\n\n#Adding a small timeout before a read ensures it\
+    \ is positioned correctly in the screen\nread_timeout=0.5\n\n# Options related\
+    \ to data directory location\nPROMPT_DATA_DIR_LOCATION=\"Installation Directory\"\
+    \nKEY_DATA_DIR_LOCATION=\"installer.data_dir\"\n\nSYS_KEY_SHARED_NODE_HAENABLED=\"\
+    shared.node.haEnabled\"\nPROMPT_ADD_TO_CLUSTER=\"Are you adding an additional\
+    \ node to an existing product cluster?\"\nKEY_ADD_TO_CLUSTER=\"installer.ha\"\n\
+    VALID_VALUES_ADD_TO_CLUSTER=\"$FLAGS_Y_N\"\n\nMESSAGE_POSTGRES_INSTALL=\"The installer\
+    \ can install a $POSTGRES_LABEL database, or you can connect to an existing compatible\
+    \ $POSTGRES_LABEL database\\n(compatible databases: https://www.jfrog.com/confluence/display/JFROG/System+Requirements#SystemRequirements-RequirementsMatrix)\"\
+    \nPROMPT_POSTGRES_INSTALL=\"Do you want to install $POSTGRES_LABEL?\"\nKEY_POSTGRES_INSTALL=\"\
+    installer.install_postgresql\"\nVALID_VALUES_POSTGRES_INSTALL=\"$FLAGS_Y_N\"\n\
+    \n# Postgres connection details\nRPM_DEB_POSTGRES_HOME_DEFAULT=\"/var/opt/jfrog/postgres\"\
+    \nRPM_DEB_MESSAGE_STANDALONE_POSTGRES_DATA=\"$POSTGRES_LABEL home will have data\
+    \ and its configuration\"\nRPM_DEB_PROMPT_STANDALONE_POSTGRES_DATA=\"Type desired\
+    \ $POSTGRES_LABEL home location\"\nRPM_DEB_KEY_STANDALONE_POSTGRES_DATA=\"installer.postgresql.home\"\
+    \n\nMESSAGE_DATABASE_URL=\"Provide the database connection details\"\nPROMPT_DATABASE_URL(){\n\
+    \    local databaseURlExample=\n    case \"$PRODUCT_NAME\" in\n            $ARTIFACTORY_LABEL)\n\
+    \                databaseURlExample=\"jdbc:postgresql://<IP_ADDRESS>:<PORT>/artifactory\"\
+    \n            ;;\n            $JFMC_LABEL)\n                databaseURlExample=\"\
+    postgresql://<IP_ADDRESS>:<PORT>/mission_control?sslmode=disable\"\n         \
+    \   ;;\n            $DISTRIBUTION_LABEL)\n                databaseURlExample=\"\
+    jdbc:postgresql://<IP_ADDRESS>:<PORT>/distribution?sslmode=disable\"\n       \
+    \     ;;\n            $XRAY_LABEL)\n                databaseURlExample=\"postgres://<IP_ADDRESS>:<PORT>/xraydb?sslmode=disable\"\
+    \n            ;;\n        esac\n    if [ -z \"$databaseURlExample\" ]; then\n\
+    \        echo -n \"$POSTGRES_LABEL URL\" # For consistency with username and password\n\
+    \        return\n    fi\n    echo -n \"$POSTGRES_LABEL url. Example: [$databaseURlExample]\"\
+    \n}\nREGEX_DATABASE_URL(){\n    local databaseURlExample=\n    case \"$PRODUCT_NAME\"\
+    \ in\n            $ARTIFACTORY_LABEL)\n                databaseURlExample=\"jdbc:postgresql://.*/artifactory.*\"\
+    \n            ;;\n            $JFMC_LABEL)\n                databaseURlExample=\"\
+    postgresql://.*/mission_control.*\"\n            ;;\n            $DISTRIBUTION_LABEL)\n\
+    \                databaseURlExample=\"jdbc:postgresql://.*/distribution.*\"\n\
+    \            ;;\n            $XRAY_LABEL)\n                databaseURlExample=\"\
+    postgres://.*/xraydb.*\"\n            ;;\n        esac\n    echo -n \"^$databaseURlExample\\\
+    $\"\n}\nERROR_MESSAGE_DATABASE_URL=\"Invalid $POSTGRES_LABEL URL\"\nKEY_DATABASE_URL=\"\
+    $SYS_KEY_SHARED_DATABASE_URL\"\n#NOTE: It is important to display the label. Since\
+    \ the message may be hidden if URL is known\nPROMPT_DATABASE_USERNAME=\"$POSTGRES_LABEL\
+    \ username\"\nKEY_DATABASE_USERNAME=\"$SYS_KEY_SHARED_DATABASE_USERNAME\"\n#NOTE:\
+    \ It is important to display the label. Since the message may be hidden if URL\
+    \ is known\nPROMPT_DATABASE_PASSWORD=\"$POSTGRES_LABEL password\"\nKEY_DATABASE_PASSWORD=\"\
+    $SYS_KEY_SHARED_DATABASE_PASSWORD\"\nIS_SENSITIVE_DATABASE_PASSWORD=\"$FLAG_Y\"\
+    \n\nMESSAGE_STANDALONE_ELASTICSEARCH_INSTALL=\"The installer can install a $ELASTICSEARCH_LABEL\
+    \ database or you can connect to an existing compatible $ELASTICSEARCH_LABEL database\"\
+    \nPROMPT_STANDALONE_ELASTICSEARCH_INSTALL=\"Do you want to install $ELASTICSEARCH_LABEL?\"\
+    \nKEY_STANDALONE_ELASTICSEARCH_INSTALL=\"installer.install_elasticsearch\"\nVALID_VALUES_STANDALONE_ELASTICSEARCH_INSTALL=\"\
+    $FLAGS_Y_N\"\n\n# Elasticsearch connection details\nMESSAGE_ELASTICSEARCH_DETAILS=\"\
+    Provide the $ELASTICSEARCH_LABEL connection details\"\nPROMPT_ELASTICSEARCH_URL=\"\
+    $ELASTICSEARCH_LABEL URL\"\nKEY_ELASTICSEARCH_URL=\"$SYS_KEY_SHARED_ELASTICSEARCH_URL\"\
+    \n\nPROMPT_ELASTICSEARCH_USERNAME=\"$ELASTICSEARCH_LABEL username\"\nKEY_ELASTICSEARCH_USERNAME=\"\
+    $SYS_KEY_SHARED_ELASTICSEARCH_USERNAME\"\n\nPROMPT_ELASTICSEARCH_PASSWORD=\"$ELASTICSEARCH_LABEL\
+    \ password\"\nKEY_ELASTICSEARCH_PASSWORD=\"$SYS_KEY_SHARED_ELASTICSEARCH_PASSWORD\"\
+    \nIS_SENSITIVE_ELASTICSEARCH_PASSWORD=\"$FLAG_Y\"\n\n# Cluster related questions\n\
+    MESSAGE_CLUSTER_MASTER_KEY=\"Provide the cluster's master key. It can be found\
+    \ in the data directory of the first node under /etc/security/master.key\"\nPROMPT_CLUSTER_MASTER_KEY=\"\
+    Master Key\"\nKEY_CLUSTER_MASTER_KEY=\"$SYS_KEY_SHARED_SECURITY_MASTERKEY\"\n\
+    IS_SENSITIVE_CLUSTER_MASTER_KEY=\"$FLAG_Y\"\n\nMESSAGE_JOIN_KEY=\"The Join key\
+    \ is the secret key used to establish trust between services in the JFrog Platform.\\\
+    n(You can copy the Join Key from Admin > Security > Settings)\"\nPROMPT_JOIN_KEY=\"\
+    Join Key\"\nKEY_JOIN_KEY=\"$SYS_KEY_SHARED_SECURITY_JOINKEY\"\nIS_SENSITIVE_JOIN_KEY=\"\
+    $FLAG_Y\"\nREGEX_JOIN_KEY=\"^[a-zA-Z0-9]{16,}\\$\"\nERROR_MESSAGE_JOIN_KEY=\"\
+    Invalid Join Key\"\n\n# Rabbitmq related cluster information\nMESSAGE_RABBITMQ_ACTIVE_NODE_NAME=\"\
+    Provide an active ${RABBITMQ_LABEL} node name. Run the command [ hostname -s ]\
+    \ on any of the existing nodes in the product cluster to get this\"\nPROMPT_RABBITMQ_ACTIVE_NODE_NAME=\"\
+    ${RABBITMQ_LABEL} active node name\"\nKEY_RABBITMQ_ACTIVE_NODE_NAME=\"$SYS_KEY_RABBITMQ_ACTIVE_NODE_NAME\"\
+    \n\n# Rabbitmq related cluster information (necessary only for docker-compose)\n\
+    PROMPT_RABBITMQ_ACTIVE_NODE_IP=\"${RABBITMQ_LABEL} active node ip\"\nKEY_RABBITMQ_ACTIVE_NODE_IP=\"\
+    $SYS_KEY_RABBITMQ_ACTIVE_NODE_IP\"\n\nMESSAGE_JFROGURL(){\n    echo -e \"The JFrog\
+    \ URL allows ${PRODUCT_NAME} to connect to a JFrog Platform Instance.\\n(You can\
+    \ copy the JFrog URL from Admin > Security > Settings)\"\n}\nPROMPT_JFROGURL=\"\
+    JFrog URL\"\nKEY_JFROGURL=\"$SYS_KEY_SHARED_JFROGURL\"\nREGEX_JFROGURL=\"^https?://.*:{0,}[0-9]{0,4}\\\
+    $\"\nERROR_MESSAGE_JFROGURL=\"Invalid JFrog URL\"\n\n\n# Set this to FLAG_Y on\
+    \ upgrade\nIS_UPGRADE=\"${FLAG_N}\"\n\n# This belongs in JFMC but is the ONLY\
+    \ one that needs it so keeping it here for now. Can be made into a method and\
+    \ overridden if necessary\nMESSAGE_MULTIPLE_PG_SCHEME=\"Please setup $POSTGRES_LABEL\
+    \ with schema as described in https://www.jfrog.com/confluence/display/JFROG/Installing+Mission+Control\"\
+    \n\n_getMethodOutputOrVariableValue() {\n    unset EFFECTIVE_MESSAGE\n    local\
+    \ keyToSearch=$1\n    local effectiveMessage=\n    local result=\"0\"\n    # logSilly\
+    \ \"Searching for method: [$keyToSearch]\"\n    LC_ALL=C type \"$keyToSearch\"\
+    \ > /dev/null 2>&1 || result=\"$?\"\n    if [[ \"$result\" == \"0\" ]]; then\n\
+    \        # logSilly \"Found method for [$keyToSearch]\"\n        EFFECTIVE_MESSAGE=\"\
+    $($keyToSearch)\"\n        return\n    fi\n    eval EFFECTIVE_MESSAGE=\\${$keyToSearch}\n\
+    \    if [ ! -z \"$EFFECTIVE_MESSAGE\" ]; then\n        return\n    fi\n    # logSilly\
+    \ \"Didn't find method or variable for [$keyToSearch]\"\n}\n\n\n# REF https://misc.flogisoft.com/bash/tip_colors_and_formatting\n\
+    cClear=\"\\e[0m\"\ncBlue=\"\\e[38;5;69m\"\ncRedDull=\"\\e[1;31m\"\ncYellow=\"\\\
+    e[1;33m\"\ncRedBright=\"\\e[38;5;197m\"\ncBold=\"\\e[1m\"\n\n\n_loggerGetModeRaw()\
+    \ {\n    local MODE=\"$1\"\n    case $MODE in\n    INFO)\n        printf \"\"\n\
+    \    ;;\n    DEBUG)\n        printf \"%s\" \"[${MODE}] \"\n    ;;\n    WARN)\n\
+    \        printf \"${cRedDull}%s%s${cClear}\" \"[\" \"${MODE}\" \"] \"\n    ;;\n\
+    \    ERROR)\n        printf \"${cRedBright}%s%s${cClear}\" \"[\" \"${MODE}\" \"\
+    ] \"\n    ;;\n    esac\n}\n\n\n_loggerGetMode() {\n    local MODE=\"$1\"\n   \
+    \ case $MODE in\n    INFO)\n        printf \"${cBlue}%s%-5s%s${cClear}\" \"[\"\
+    \ \"${MODE}\" \"]\"\n    ;;\n    DEBUG)\n        printf \"%-7s\" \"[${MODE}]\"\
+    \n    ;;\n    WARN)\n        printf \"${cRedDull}%s%-5s%s${cClear}\" \"[\" \"\
+    ${MODE}\" \"]\"\n    ;;\n    ERROR)\n        printf \"${cRedBright}%s%-5s%s${cClear}\"\
+    \ \"[\" \"${MODE}\" \"]\"\n    ;;\n    esac\n}\n\n# Capitalises the first letter\
+    \ of the message\n_loggerGetMessage() {\n    local originalMessage=\"$*\"\n  \
+    \  local firstChar=$(echo \"${originalMessage:0:1}\" | awk '{ print toupper($0)\
+    \ }')\n    local resetOfMessage=\"${originalMessage:1}\"\n    echo \"$firstChar$resetOfMessage\"\
+    \n}\n\n# The spec also says content should be left-trimmed but this is not necessary\
+    \ in our case. We don't reach the limit.\n_loggerGetStackTrace() {\n    printf\
+    \ \"%s%-30s%s\" \"[\" \"$1:$2\" \"]\"\n}\n\n_loggerGetThread() {\n    printf \"\
+    %s\" \"[main]\"\n}\n\n_loggerGetServiceType() {\n    printf \"%s%-5s%s\" \"[\"\
+    \ \"shell\" \"]\"\n}\n\n#Trace ID is not applicable to scripts\n_loggerGetTraceID()\
+    \ {\n    printf \"%s\" \"[]\"\n}\n\nlogRaw() {\n    echo \"\"\n    printf \"$1\"\
+    \n    echo \"\"\n}\n\nlogBold(){\n    echo \"\"\n    printf \"${cBold}$1${cClear}\"\
+    \n    echo \"\"\n}\n\n# The date binary works differently based on whether it\
+    \ is GNU/BSD\nis_date_supported=0\ndate --version > /dev/null 2>&1 || is_date_supported=1\n\
+    IS_GNU=$(echo $is_date_supported)\n\n_loggerGetTimestamp() {\n    if [ \"${IS_GNU}\"\
+    \ == \"0\" ]; then\n        echo -n $(date -u +%FT%T.%3NZ)\n    else\n       \
+    \ echo -n $(date -u +%FT%T.000Z)\n    fi\n}\n\n# https://www.shellscript.sh/tips/spinner/\n\
+    _spin()\n{\n    spinner=\"/|\\\\-/|\\\\-\"\n    while :\n    do\n    for i in\
+    \ `seq 0 7`\n    do\n        echo -n \"${spinner:$i:1}\"\n        echo -en \"\\\
+    010\"\n        sleep 1\n    done\n    done\n}\n\nshowSpinner() {\n    # Start\
+    \ the Spinner:\n    _spin &\n    # Make a note of its Process ID (PID):\n    SPIN_PID=$!\n\
+    \    # Kill the spinner on any signal, including our own exit.\n    trap \"kill\
+    \ -9 $SPIN_PID\" `seq 0 15` &> /dev/null || return 0\n}\n\nstopSpinner() {\n \
+    \   local occurrences=$(ps -ef | grep -wc \"${SPIN_PID}\")\n    let \"occurrences+=0\"\
+    \n    # validate that it is present (2 since this search itself will show up in\
+    \ the results)\n    if [ $occurrences -gt 1 ]; then\n        kill -9 $SPIN_PID\
+    \ &>/dev/null || return 0\n        wait $SPIN_ID &>/dev/null\n    fi\n}\n\n_getEffectiveMessage(){\n\
+    \    local MESSAGE=\"$1\"\n    local MODE=${2-\"INFO\"}\n\n    if [ -z \"$CONTEXT\"\
+    \ ]; then\n        CONTEXT=$(caller)\n    fi\n\n    _EFFECTIVE_MESSAGE=\n    if\
+    \ [ -z \"$LOG_BEHAVIOR_ADD_META\" ]; then\n        _EFFECTIVE_MESSAGE=\"$(_loggerGetModeRaw\
+    \ $MODE)$(_loggerGetMessage $MESSAGE)\"\n    else\n        local SERVICE_TYPE=\"\
+    script\"\n        local TRACE_ID=\"\"\n        local THREAD=\"main\"\n       \
+    \ \n        local CONTEXT_LINE=$(echo \"$CONTEXT\" | awk '{print $1}')\n     \
+    \   local CONTEXT_FILE=$(echo \"$CONTEXT\" | awk -F\"/\" '{print $NF}')\n    \
+    \    \n        _EFFECTIVE_MESSAGE=\"$(_loggerGetTimestamp) $(_loggerGetServiceType)\
+    \ $(_loggerGetMode $MODE) $(_loggerGetTraceID) $(_loggerGetStackTrace $CONTEXT_FILE\
+    \ $CONTEXT_LINE) $(_loggerGetThread) - $(_loggerGetMessage $MESSAGE)\"\n    fi\n\
+    \    CONTEXT=\n}\n\n# Important - don't call any log method from this method.\
+    \ Will become an infinite loop. Use echo to debug\n_logToFile() {\n    local MODE=${1-\"\
+    INFO\"}\n    local targetFile=\"$LOG_BEHAVIOR_ADD_REDIRECTION\"\n    # IF the\
+    \ file isn't passed, abort\n    if [ -z \"$targetFile\" ]; then\n        return\n\
+    \    fi\n    # IF this is not being run in verbose mode and mode is debug or lower,\
+    \ abort\n    if [ \"${VERBOSE_MODE}\" != \"$FLAG_Y\" ] && [ \"${VERBOSE_MODE}\"\
+    \ != \"true\" ] && [ \"${VERBOSE_MODE}\" != \"debug\" ]; then\n        if [ \"\
+    $MODE\" == \"DEBUG\" ] || [ \"$MODE\" == \"SILLY\" ]; then\n            return\n\
+    \        fi\n    fi\n\n    # Create the file if it doesn't exist\n    if [ ! -f\
+    \ \"${targetFile}\" ]; then\n        return\n        # touch $targetFile > /dev/null\
+    \ 2>&1 || true\n    fi\n    # # Make it readable\n    # chmod 640 $targetFile\
+    \ > /dev/null 2>&1 || true\n\n    # Log contents\n    printf \"%s\\n\" \"$_EFFECTIVE_MESSAGE\"\
+    \ >> \"$targetFile\" || true\n}\n\nlogger() {\n    if [ \"$LOG_BEHAVIOR_ADD_NEW_LINE\"\
+    \ == \"$FLAG_Y\" ]; then\n        echo \"\"\n    fi\n    _getEffectiveMessage\
+    \ \"$@\"\n    local MODE=${2-\"INFO\"}\n    printf \"%s\\n\" \"$_EFFECTIVE_MESSAGE\"\
+    \n    _logToFile \"$MODE\"\n}\n\nlogDebug(){\n    VERBOSE_MODE=${VERBOSE_MODE-\"\
+    false\"}\n    CONTEXT=$(caller)\n    if [ \"${VERBOSE_MODE}\" == \"$FLAG_Y\" ]\
+    \ || [ \"${VERBOSE_MODE}\" == \"true\" ] || [ \"${VERBOSE_MODE}\" == \"debug\"\
+    \ ];then\n        logger \"$1\" \"DEBUG\"\n    else\n        logger \"$1\" \"\
+    DEBUG\" >&6\n    fi\n    CONTEXT=\n}\n\nlogSilly(){\n    VERBOSE_MODE=${VERBOSE_MODE-\"\
+    false\"}\n    CONTEXT=$(caller)\n    if [ \"${VERBOSE_MODE}\" == \"silly\" ];then\n\
+    \        logger \"$1\" \"DEBUG\"\n    else\n        logger \"$1\" \"DEBUG\" >&6\n\
+    \    fi\n    CONTEXT=\n}\n\nlogError() {\n    CONTEXT=$(caller)\n    logger \"\
+    $1\" \"ERROR\"\n    CONTEXT=\n}\n\nerrorExit () {\n    CONTEXT=$(caller)\n   \
+    \ logger \"$1\" \"ERROR\"\n    CONTEXT=\n    exit 1\n}\n\nwarn () {\n    CONTEXT=$(caller)\n\
+    \    logger \"$1\" \"WARN\"\n    CONTEXT=\n}\n\nnote () {\n    CONTEXT=$(caller)\n\
+    \    logger \"$1\" \"NOTE\"\n    CONTEXT=\n}\n\nbannerStart() {\n    title=$1\n\
+    \    echo\n    echo -e \"\\033[1m${title}\\033[0m\"\n    echo\n}\n\nbannerSection()\
+    \ {\n    title=$1\n    echo\n    echo -e \"******************************** ${title}\
+    \ ********************************\"\n    echo\n}\n\nbannerSubSection() {\n  \
+    \  title=$1\n    echo\n    echo -e \"************** ${title} *******************\"\
+    \n    echo\n}\n\nbannerMessge() {\n    title=$1\n    echo\n    echo -e \"********************************\"\
+    \n    echo -e \"${title}\"\n    echo -e \"********************************\"\n\
+    \    echo\n}\n\nsetRed () {\n    local input=\"$1\"\n    echo -e \\\\033[31m${input}\\\
+    \\033[0m\n}\nsetGreen () {\n    local input=\"$1\"\n    echo -e \\\\033[32m${input}\\\
+    \\033[0m\n}\nsetYellow () {\n    local input=\"$1\"\n    echo -e \\\\033[33m${input}\\\
+    \\033[0m\n}\n\nlogger_addLinebreak () {\n    echo -e \"---\\n\"\n}\n\nbannerImportant()\
+    \ {\n    title=$1\n    local bold=\"\\033[1m\"\n    local noColour=\"\\033[0m\"\
+    \n    echo\n    echo -e \"${bold}######################################## IMPORTANT\
+    \ ########################################${noColour}\"\n    echo -e \"${bold}${title}${noColour}\"\
+    \n    echo -e \"${bold}###########################################################################################${noColour}\"\
+    \n    echo\n}\n\nbannerEnd() {\n    #TODO pass a title and calculate length dynamically\
+    \ so that start and end look alike\n    echo\n    echo \"*****************************************************************************\"\
+    \n    echo\n}\n\nbanner() {\n    title=$1\n    content=$2\n    bannerStart \"\
+    ${title}\"\n    echo -e \"$content\"\n}\n\n# The logic below helps us redirect\
+    \ content we'd normally hide to the log file. \n    #\n    # We have several commands\
+    \ which clutter the console with output and so use \n    # `cmd > /dev/null` -\
+    \ this redirects the command's output to null.\n    # \n    # However, the information\
+    \ we just hid maybe useful for support. Using the code pattern\n    # `cmd >&6`\
+    \ (instead of `cmd> >/dev/null` ), the command's output is hidden from the console\
+    \ \n    # but redirected to the installation log file\n    # \n\n#Default value\
+    \ of 6 is just null\nexec 6>>/dev/null\nredirectLogsToFile() {\n    echo \"\"\n\
+    \    # local file=$1\n\n    # [ ! -z \"${file}\" ] || return 0\n\n    # local\
+    \ logDir=$(dirname \"$file\")\n\n    # if [ ! -f \"${file}\" ]; then\n    #  \
+    \   [ -d \"${logDir}\" ] || mkdir -p ${logDir} || \\\n    #     ( echo \"WARNING\
+    \ : Could not create parent directory (${logDir}) to redirect console log : ${file}\"\
+    \ ; return 0 )\n    # fi\n\n    # #6 now points to the log file\n    # exec 6>>${file}\n\
+    \    # #reference https://unix.stackexchange.com/questions/145651/using-exec-and-tee-to-redirect-logs-to-stdout-and-a-log-file-in-the-same-time\n\
+    \    # exec 2>&1 > >(tee -a \"${file}\")\n}\n\n# Check if a give key contains\
+    \ any sensitive string as part of it\n# Based on the result, the caller can decide\
+    \ its value can be displayed or not\n#   Sample usage : isKeySensitive \"${key}\"\
+    \ && displayValue=\"******\" || displayValue=${value}\nisKeySensitive(){\n   \
+    \ local key=$1\n    local sensitiveKeys=\"password|secret|key|token\"\n    \n\
+    \    if [ -z \"${key}\" ]; then\n        return 1\n    else\n        local lowercaseKey=$(echo\
+    \ \"${key}\" | tr '[:upper:]' '[:lower:]' 2>/dev/null)\n        [[ \"${lowercaseKey}\"\
+    \ =~ ${sensitiveKeys} ]] && return 0 || return 1\n    fi\n}\n\ngetPrintableValueOfKey(){\n\
+    \    local displayValue=\n    local key=\"$1\"\n    if [ -z \"$key\" ]; then\n\
+    \        # This is actually an incorrect usage of this method but any logging\
+    \ will cause unexpected content in the caller\n        echo -n \"\"\n        return\n\
+    \    fi\n\n    local value=\"$2\"\n    isKeySensitive \"${key}\" && displayValue=\"\
+    $SENSITIVE_KEY_VALUE\" || displayValue=\"${value}\"\n    echo -n $displayValue\n\
+    }\n\n_createConsoleLog(){\n    if [ -z \"${JF_PRODUCT_HOME}\" ]; then\n      \
+    \  return\n    fi\n    local targetFile=\"${JF_PRODUCT_HOME}/var/log/console.log\"\
+    \n    mkdir -p \"${JF_PRODUCT_HOME}/var/log\" || true\n    if [ ! -f ${targetFile}\
+    \ ]; then\n        touch $targetFile > /dev/null 2>&1 || true\n    fi\n    chmod\
+    \ 640 $targetFile > /dev/null 2>&1 || true\n}\n\n# Output from application's logs\
+    \ are piped to this method. It checks a configuration variable to determine if\
+    \ content should be logged to \n# the common console.log file\nredirectServiceLogsToFile()\
+    \ {\n\n    local result=\"0\"\n    # check if the function getSystemValue exists\n\
+    \    LC_ALL=C type getSystemValue > /dev/null 2>&1 || result=\"$?\"\n    if [[\
+    \ \"$result\" != \"0\" ]]; then\n        warn \"Couldn't find the systemYamlHelper.\
+    \ Skipping log redirection\"\n        return 0\n    fi\n\n    getSystemValue \"\
+    shared.consoleLog\" \"NOT_SET\"\n    if [[ \"${YAML_VALUE}\" == \"false\" ]];\
+    \ then\n        logger \"Redirection is set to false. Skipping log redirection\"\
+    \n        return 0;\n    fi\n\n    if [ -z \"${JF_PRODUCT_HOME}\" ] || [ \"${JF_PRODUCT_HOME}\"\
+    \ == \"\" ]; then\n        warn \"JF_PRODUCT_HOME is unavailable. Skipping log\
+    \ redirection\"\n        return 0\n    fi\n\n    local targetFile=\"${JF_PRODUCT_HOME}/var/log/console.log\"\
+    \n    \n    _createConsoleLog\n\n    while read -r line; do\n        printf '%s\\\
+    n' \"${line}\" >> $targetFile || return 0 # Don't want to log anything - might\
+    \ clutter the screen\n    done\n}\n\n## Display environment variables starting\
+    \ with JF_ along with its value\n## Value of sensitive keys will be displayed\
+    \ as \"******\"\n##\n## Sample Display :\n##\n## ========================\n##\
+    \ JF Environment variables\n## ========================\n##\n## JF_SHARED_NODE_ID\
+    \                   : locahost\n## JF_SHARED_JOINKEY                   : ******\n\
+    ##\n##\ndisplayEnv() {\n    local JFEnv=$(printenv | grep ^JF_ 2>/dev/null)\n\
+    \    local key=\n    local value=\n\n    if [ -z \"${JFEnv}\" ]; then\n      \
+    \  return\n    fi\n\n    cat << ENV_START_MESSAGE\n\n========================\n\
+    JF Environment variables\n========================\nENV_START_MESSAGE\n\n    for\
+    \ entry in ${JFEnv}; do\n        key=$(echo \"${entry}\" | awk -F'=' '{print $1}')\n\
+    \        value=$(echo \"${entry}\" | awk -F'=' '{print $2}')\n\n        isKeySensitive\
+    \ \"${key}\" && value=\"******\" || value=${value}\n        \n        printf \"\
+    \\n%-35s%s\" \"${key}\" \" : ${value}\"\n    done\n    echo;\n}\n\n_addLogRotateConfiguration()\
+    \ {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    # mandatory inputs\n    local\
+    \ confFile=\"$1\"\n    local logFile=\"$2\"\n\n    # Method available in _ioOperations.sh\n\
+    \    LC_ALL=C type io_setYQPath > /dev/null 2>&1 || return 1\n\n    io_setYQPath\n\
+    \n    # Method available in _systemYamlHelper.sh\n    LC_ALL=C type getSystemValue\
+    \ > /dev/null 2>&1 || return 1\n\n    local frequency=\"daily\"\n    local archiveFolder=\"\
+    archived\"\n\n    local compressLogFiles=\n    getSystemValue \"shared.logging.rotation.compress\"\
+    \ \"true\"\n    if [[ \"${YAML_VALUE}\" == \"true\" ]]; then\n        compressLogFiles=\"\
+    compress\"\n    fi\n\n    getSystemValue \"shared.logging.rotation.maxFiles\"\
+    \ \"10\"\n    local noOfBackupFiles=\"${YAML_VALUE}\"\n\n    getSystemValue \"\
+    shared.logging.rotation.maxSizeMb\" \"25\"\n    local sizeOfFile=\"${YAML_VALUE}M\"\
+    \n\n    logDebug \"Adding logrotate configuration for [$logFile] to [$confFile]\"\
+    \n\n    # Add configuration to file\n    local confContent=$(cat << LOGROTATECONF\n\
+    $logFile {\n    $frequency\n    missingok\n    rotate $noOfBackupFiles\n    $compressLogFiles\n\
+    \    notifempty\n    olddir $archiveFolder\n    dateext\n    extension .log\n\
+    \    dateformat -%Y-%m-%d\n    size ${sizeOfFile}\n}\nLOGROTATECONF\n) \n    echo\
+    \ \"${confContent}\" > ${confFile} || return 1\n}\n\n_operationIsBySameUser()\
+    \ {\n    local targetUser=\"$1\"\n    local currentUserID=$(id -u)\n    local\
+    \ currentUserName=$(id -un)\n\n    if [ $currentUserID == $targetUser ] || [ $currentUserName\
+    \ == $targetUser ]; then\n        echo -n \"yes\"\n    else   \n        echo -n\
+    \ \"no\"\n    fi\n}\n\n_addCronJobForLogrotate() {\n    logDebug \"Method ${FUNCNAME[0]}\"\
+    \n    \n    # Abort if logrotate is not available\n    [ \"$(io_commandExists\
+    \ 'crontab')\" != \"yes\" ] && warn \"cron is not available\" && return 1\n\n\
+    \    # mandatory inputs\n    local productHome=\"$1\"\n    local confFile=\"$2\"\
+    \n    local cronJobOwner=\"$3\"\n\n    # We want to use our binary if possible.\
+    \ It may be more recent than the one in the OS\n    local logrotateBinary=\"$productHome/app/third-party/logrotate/logrotate\"\
+    \n\n    if [ ! -f \"$logrotateBinary\" ]; then\n        logrotateBinary=\"logrotate\"\
+    \n        [ \"$(io_commandExists 'logrotate')\" != \"yes\" ] && warn \"logrotate\
+    \ is not available\" && return 1\n    fi\n    local cmd=\"$logrotateBinary ${confFile}\
+    \ --state $productHome/var/etc/logrotate/logrotate-state\" #--verbose\n\n    id\
+    \ -u $cronJobOwner > /dev/null 2>&1 || { warn \"User $cronJobOwner does not exist.\
+    \ Aborting logrotate configuration\" && return 1; }\n    \n    # Remove the existing\
+    \ line\n    removeLogRotation \"$productHome\" \"$cronJobOwner\" || true\n\n \
+    \   # Run logrotate daily at 23:55 hours\n    local cronInterval=\"55 23 * * *\
+    \ $cmd\"\n\n    local standaloneMode=$(_operationIsBySameUser \"$cronJobOwner\"\
+    )\n\n    # If this is standalone mode, we cannot use -u - the user running this\
+    \ process may not have the necessary privileges\n    if [ \"$standaloneMode\"\
+    \ == \"no\" ]; then\n        (crontab -l -u $cronJobOwner 2>/dev/null; echo \"\
+    $cronInterval\") | crontab -u $cronJobOwner -\n    else\n        (crontab -l 2>/dev/null;\
+    \ echo \"$cronInterval\") | crontab -\n    fi\n}\n\n## Configure logrotate for\
+    \ a product\n## Failure conditions:\n## If logrotation could not be setup for\
+    \ some reason\n## Parameters:\n## $1: The product name\n## $2: The product home\n\
+    ## Depends on global: none\n## Updates global: none\n## Returns: NA\n\nconfigureLogRotation()\
+    \ {\n    logDebug \"Method ${FUNCNAME[0]}\"\n\n    # mandatory inputs\n    local\
+    \ productName=\"$1\"\n    if [ -z $productName ]; then\n        warn \"Incorrect\
+    \ usage. A product name is necessary for configuring log rotation\" && return\
+    \ 1\n    fi\n    \n    local productHome=\"$2\"\n    if [ -z $productHome ]; then\n\
+    \        warn \"Incorrect usage. A product home folder is necessary for configuring\
+    \ log rotation\" && return 1\n    fi\n\n    local logFile=\"${productHome}/var/log/console.log\"\
+    \n    if [[ $(uname) == \"Darwin\" ]]; then\n        logger \"Log rotation for\
+    \ [$logFile] has not been configured. Please setup manually\"\n        return\
+    \ 0\n    fi\n    \n    local userID=\"$3\"\n    if [ -z $userID ]; then\n    \
+    \    warn \"Incorrect usage. A userID is necessary for configuring log rotation\"\
+    \ && return 1\n    fi\n\n    local groupID=${4:-$userID}\n    local logConfigOwner=${5:-$userID}\n\
+    \n    logDebug \"Configuring log rotation as user [$userID], group [$groupID],\
+    \ effective cron User [$logConfigOwner]\"\n    \n    local errorMessage=\"Could\
+    \ not configure logrotate. Please configure log rotation of the file: [$logFile]\
+    \ manually\"\n\n    local confFile=\"${productHome}/var/etc/logrotate/logrotate.conf\"\
+    \n\n    # TODO move to recursive method\n    createDir \"${productHome}\" \"$userID\"\
+    \ \"$groupID\" || { warn \"${errorMessage}\" && return 1; }\n    createDir \"\
+    ${productHome}/var\" \"$userID\" \"$groupID\" || { warn \"${errorMessage}\" &&\
+    \ return 1; }\n    createDir \"${productHome}/var/log\" \"$userID\" \"$groupID\"\
+    \ || { warn \"${errorMessage}\" && return 1; }\n    createDir \"${productHome}/var/log/archived\"\
+    \ \"$userID\" \"$groupID\" || { warn \"${errorMessage}\" && return 1; }\n    \n\
+    \    # TODO move to recursive method\n    createDir \"${productHome}/var/etc\"\
+    \  \"$userID\" \"$groupID\" || { warn \"${errorMessage}\" && return 1; }\n   \
+    \ createDir \"${productHome}/var/etc/logrotate\" \"$logConfigOwner\" || { warn\
+    \ \"${errorMessage}\" && return 1; }\n\n    # conf file should be owned by the\
+    \ user running the script\n    createFile \"${confFile}\" \"${logConfigOwner}\"\
+    \ || { warn \"Could not create configuration file [$confFile]\" return 1; }\n\n\
+    \    _addLogRotateConfiguration \"${confFile}\" \"${logFile}\" \"$userID\" \"\
+    $groupID\" || { warn \"${errorMessage}\" && return 1; }\n    _addCronJobForLogrotate\
+    \ \"${productHome}\" \"${confFile}\" \"${logConfigOwner}\" || { warn \"${errorMessage}\"\
+    \ && return 1; }\n}\n\n_pauseExecution() {\n    if [ \"${VERBOSE_MODE}\" == \"\
+    debug\" ]; then\n        \n        local breakPoint=\"$1\"\n        if [ ! -z\
+    \ \"$breakPoint\" ]; then\n            printf \"${cBlue}Breakpoint${cClear} [$breakPoint]\
+    \ \"\n            echo \"\"\n        fi\n        printf \"${cBlue}Press enter\
+    \ once you are ready to continue${cClear}\"\n        read -s choice\n        echo\
+    \ \"\"\n    fi\n}\n\n# removeLogRotation \"$productHome\" \"$cronJobOwner\" ||\
+    \ true\nremoveLogRotation() {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    if\
+    \ [[ $(uname) == \"Darwin\" ]]; then\n        logDebug \"Not implemented for Darwin.\"\
+    \n        return 0\n    fi\n    local productHome=\"$1\"\n    local cronJobOwner=\"\
+    $2\"\n    local standaloneMode=$(_operationIsBySameUser \"$cronJobOwner\")\n\n\
+    \    local confFile=\"${productHome}/var/etc/logrotate/logrotate.conf\"\n    \n\
+    \    if [ \"$standaloneMode\" == \"no\" ]; then\n        crontab -l -u $cronJobOwner\
+    \ 2>/dev/null | grep -v \"$confFile\" | crontab -u $cronJobOwner -\n    else\n\
+    \        crontab -l 2>/dev/null | grep -v \"$confFile\" | crontab -\n    fi\n\
+    }\n\n# NOTE: This method does not check the configuration to see if redirection\
+    \ is necessary.\n# This is intentional. If we don't redirect, tomcat logs might\
+    \ get redirected to a folder/file\n# that does not exist, causing the service\
+    \ itself to not start\nsetupTomcatRedirection() {\n    logDebug \"Method ${FUNCNAME[0]}\"\
+    \n    local consoleLog=\"${JF_PRODUCT_HOME}/var/log/console.log\"\n    _createConsoleLog\n\
+    \    export CATALINA_OUT=\"${consoleLog}\"\n}\n\nsetupScriptLogsRedirection()\
+    \ {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    if [ -z \"${JF_PRODUCT_HOME}\"\
+    \ ]; then\n        logDebug \"No JF_PRODUCT_HOME. Returning\"\n        return\n\
+    \    fi\n    # Create the console.log file if it is not already present\n    #\
+    \ _createConsoleLog || true\n    # # Ensure any logs (logger/logError/warn) also\
+    \ get redirected to the console.log\n    # # Using installer.log as a temparory\
+    \ fix. Please change this to console.log once INST-291 is fixed\n    export LOG_BEHAVIOR_ADD_REDIRECTION=\"\
+    ${JF_PRODUCT_HOME}/var/log/console.log\"\n    export LOG_BEHAVIOR_ADD_META=\"\
+    $FLAG_Y\"\n}\n\n# Returns Y if this method is run inside a container\nisRunningInsideAContainer()\
+    \ {\n    if [ -f \"/.dockerenv\" ]; then\n        echo -n \"$FLAG_Y\"\n    else\n\
+    \        echo -n \"$FLAG_N\"\n    fi \n}\n\nPOSTGRES_USER=999\nNGINX_USER=104\n\
+    NGINX_GROUP=107\nES_USER=1000\nREDIS_USER=999\nMONGO_USER=999\nRABBITMQ_USER=999\n\
+    LOG_FILE_PERMISSION=640\nPID_FILE_PERMISSION=644\n\n# Copy file\ncopyFile(){\n\
+    \    local source=$1\n    local target=$2\n    local mode=${3:-overwrite}\n  \
+    \  local enableVerbose=${4:-\"${FLAG_N}\"}\n    local verboseFlag=\"\"\n\n   \
+    \ if [ ! -z \"${enableVerbose}\" ] && [ \"${enableVerbose}\" == \"${FLAG_Y}\"\
+    \ ]; then\n        verboseFlag=\"-v\"\n    fi\n\n    if [[ ! ( $source && $target\
+    \ ) ]]; then\n        warn \"Source and target is mandatory to copy file\"\n \
+    \       return 1\n    fi\n\n    if [[ -f \"${target}\" ]]; then\n        [[ \"\
+    $mode\" = \"overwrite\" ]] && ( cp ${verboseFlag} -f \"$source\" \"$target\" ||\
+    \ errorExit \"Unable to copy file, command : cp -f ${source} ${target}\") || true\n\
+    \    else\n        cp ${verboseFlag} -f \"$source\" \"$target\" || errorExit \"\
+    Unable to copy file, command : cp -f ${source} ${target}\"\n    fi\n}\n\n# Copy\
+    \ files recursively from given source directory to destination directory\n# This\
+    \ method wil copy but will NOT overwrite\n# Destination will be created if its\
+    \ not available\ncopyFilesNoOverwrite(){\n    local src=$1\n    local dest=$2\n\
+    \    local enableVerboseCopy=\"${3:-${FLAG_Y}}\"\n\n    if [[ -z \"${src}\" ||\
+    \ -z \"${dest}\" ]]; then\n        return\n    fi\n\n    if [ -d \"${src}\" ]\
+    \ && [ \"$(ls -A ${src})\" ]; then\n        local relativeFilePath=\"\"\n    \
+    \    local targetFilePath=\"\"\n\n        for file in $(find ${src} -type f 2>/dev/null)\
+    \ ; do\n            # Derive relative path and attach it to destination \n   \
+    \         # Example : \n            #       src=/extra_config\n            # \
+    \      dest=/var/opt/jfrog/artifactory/etc\n            #       file=/extra_config/config.xml\n\
+    \            #       relativeFilePath=config.xml\n            #       targetFilePath=/var/opt/jfrog/artifactory/etc/config.xml\n\
+    \            relativeFilePath=${file/${src}/}\n            targetFilePath=${dest}${relativeFilePath}\n\
+    \n            createDir \"$(dirname \"$targetFilePath\")\"\n            copyFile\
+    \ \"${file}\" \"${targetFilePath}\" \"no_overwrite\" \"${enableVerboseCopy}\"\n\
+    \        done\n    fi    \n}\n\n#    TODO : WINDOWS ?\n#  Check the max open files\
+    \ and open processes set on the system\ncheckULimits () {\n    local minMaxOpenFiles=${1:-32000}\n\
+    \    local minMaxOpenProcesses=${2:-1024}\n    local setValue=${3:-true}\n   \
+    \ local warningMsgForFiles=${4}\n    local warningMsgForProcesses=${5}\n\n   \
+    \ logger \"Checking open files and processes limits\"\n\n    local currentMaxOpenFiles=$(ulimit\
+    \ -n)\n    logger \"Current max open files is $currentMaxOpenFiles\"\n    if [\
+    \ ${currentMaxOpenFiles} != \"unlimited\" ] && [ \"$currentMaxOpenFiles\" -lt\
+    \ \"$minMaxOpenFiles\" ]; then\n        if [ \"${setValue}\" ]; then\n       \
+    \     ulimit -n \"${minMaxOpenFiles}\" >/dev/null 2>&1 || warn \"Max number of\
+    \ open files $currentMaxOpenFiles is low!\"\n            [ -z \"${warningMsgForFiles}\"\
+    \ ] || warn \"${warningMsgForFiles}\"\n        else\n            errorExit \"\
+    Max number of open files $currentMaxOpenFiles, is too low. Cannot run the application!\"\
+    \n        fi\n    fi\n\n    local currentMaxOpenProcesses=$(ulimit -u)\n    logger\
+    \ \"Current max open processes is $currentMaxOpenProcesses\"\n    if [ \"$currentMaxOpenProcesses\"\
+    \ != \"unlimited\" ] && [ \"$currentMaxOpenProcesses\" -lt \"$minMaxOpenProcesses\"\
+    \ ]; then\n        if [ \"${setValue}\" ]; then\n            ulimit -u \"${minMaxOpenProcesses}\"\
+    \ >/dev/null 2>&1 || warn \"Max number of open files $currentMaxOpenFiles is low!\"\
+    \n            [ -z \"${warningMsgForProcesses}\" ] || warn \"${warningMsgForProcesses}\"\
+    \n        else\n            errorExit \"Max number of open files $currentMaxOpenProcesses,\
+    \ is too low. Cannot run the application!\"\n        fi\n    fi\n}\n\ncreateDirs()\
+    \ {\n    local appDataDir=$1\n    local serviceName=$2\n    local folders=\"backup\
+    \ bootstrap data etc logs work\"\n\n    [ -z \"${appDataDir}\" ]  && errorExit\
+    \ \"An application directory is mandatory to create its data structure\"  || true\n\
+    \    [ -z \"${serviceName}\" ] && errorExit \"A service name is mandatory to create\
+    \ service data structure\"         || true\n\n    for folder in ${folders}\n \
+    \   do\n        folder=${appDataDir}/${folder}/${serviceName}\n        if [ !\
+    \ -d \"${folder}\" ]; then\n            logger \"Creating folder : ${folder}\"\
+    \n            mkdir -p \"${folder}\" || errorExit \"Failed to create ${folder}\"\
+    \n        fi\n    done\n}\n\n\ntestReadWritePermissions () {\n    local dir_to_check=$1\n\
+    \    local error=false\n\n    [ -d ${dir_to_check} ] || errorExit \"'${dir_to_check}'\
+    \ is not a directory\"\n\n    local test_file=${dir_to_check}/test-permissions\n\
+    \n    # Write file\n    if echo test > ${test_file} 1> /dev/null 2>&1; then\n\
+    \        # Write succeeded. Testing read...\n        if cat ${test_file} > /dev/null;\
+    \ then\n            rm -f ${test_file}\n        else\n            error=true\n\
+    \        fi\n    else\n        error=true\n    fi\n\n    if [ ${error} == true\
+    \ ]; then\n        return 1\n    else\n        return 0\n    fi\n}\n\n# Test directory\
+    \ has read/write permissions for current user\ntestDirectoryPermissions () {\n\
+    \    local dir_to_check=$1\n    local error=false\n\n    [ -d ${dir_to_check}\
+    \  ] || errorExit \"'${dir_to_check}' is not a directory\"\n\n    local u_id=$(id\
+    \ -u)\n    local id_str=\"id ${u_id}\"\n\n    logger \"Testing directory ${dir_to_check}\
+    \ has read/write permissions for user ${id_str}\"\n\n    if ! testReadWritePermissions\
+    \ ${dir_to_check}; then\n        error=true\n    fi\n\n    if [ \"${error}\" ==\
+    \ true ]; then\n        local stat_data=$(stat -Lc \"Directory: %n, permissions:\
+    \ %a, owner: %U, group: %G\" ${dir_to_check})\n        logger \"###########################################################\"\
+    \n        logger \"${dir_to_check} DOES NOT have proper permissions for user ${id_str}\"\
+    \n        logger \"${stat_data}\"\n        logger \"Mounted directory must have\
+    \ read/write permissions for user ${id_str}\"\n        logger \"###########################################################\"\
+    \n        errorExit \"Directory ${dir_to_check} has bad permissions for user ${id_str}\"\
+    \n    fi\n    logger \"Permissions for ${dir_to_check} are good\"\n}\n\n# Utility\
+    \ method to create a directory path recursively with chown feature as\n# Failure\
+    \ conditions:\n## Exits if unable to create a directory\n# Parameters:\n## $1:\
+    \ Root directory from where the path can be created\n## $2: List of recursive\
+    \ child directories seperated by space\n## $3: user who should own the directory.\
+    \ Optional\n## $4: group who should own the directory. Optional\n# Depends on\
+    \ global: none\n# Updates global: none\n# Returns: NA\n#\n# Usage:\n# createRecursiveDir\
+    \ \"/opt/jfrog/product/var\" \"bootstrap tomcat lib\" \"user_name\" \"group_name\"\
+    \ncreateRecursiveDir(){\n    local rootDir=$1\n    local pathDirs=$2\n    local\
+    \ user=$3\n    local group=${4:-${user}}\n    local fullPath=\n\n    [ ! -z \"\
+    ${rootDir}\" ] || return 0\n\n    createDir \"${rootDir}\" \"${user}\" \"${group}\"\
+    \n\n    [ ! -z \"${pathDirs}\" ] || return 0\n\n    fullPath=${rootDir}\n\n  \
+    \  for dir in ${pathDirs}; do\n        fullPath=${fullPath}/${dir}\n        createDir\
+    \ \"${fullPath}\" \"${user}\" \"${group}\"\n    done\n}\n\n# Utility method to\
+    \ create a directory\n# Failure conditions:\n## Exits if unable to create a directory\n\
+    # Parameters:\n## $1: directory to create\n## $2: user who should own the directory.\
+    \ Optional\n## $3: group who should own the directory. Optional\n# Depends on\
+    \ global: none\n# Updates global: none\n# Returns: NA\n\ncreateDir(){\n    local\
+    \ dirName=\"$1\"\n    local printMessage=no\n    logSilly \"Method ${FUNCNAME[0]}\
+    \ invoked with [$dirName]\"\n    [ -z \"${dirName}\" ] && return\n    \n    logDebug\
+    \ \"Attempting to create ${dirName}\"\n    mkdir -p \"${dirName}\" || errorExit\
+    \ \"Unable to create directory: [${dirName}]\"\n    local userID=\"$2\"\n    local\
+    \ groupID=${3:-$userID}\n\n    # If UID/GID is passed, chown the folder\n    if\
+    \ [ ! -z \"$userID\" ] && [ ! -z \"$groupID\" ]; then\n        # Earlier, this\
+    \ line would have returned 1 if it failed. Now it just warns. \n        # This\
+    \ is intentional. Earlier, this line would NOT be reached if the folder already\
+    \ existed. \n        # Since it will always come to this line and the script may\
+    \ be running as a non-root user, this method will just warn if\n        # setting\
+    \ permissions fails (so as to not affect any existing flows)\n        io_setOwnershipNonRecursive\
+    \ \"$dirName\" \"$userID\" \"$groupID\" || warn \"Could not set owner of [$dirName]\
+    \ to [$userID:$groupID]\"\n    fi\n    # logging message to print created dir\
+    \ with user and group\n    local logMessage=${4:-$printMessage}\n    if [[ \"\
+    ${logMessage}\" == \"yes\" ]]; then\n        logger \"Successfully created directory\
+    \ [${dirName}].  Owner: [${userID}:${groupID}]\"\n    fi\n}\n\nremoveSoftLinkAndCreateDir\
+    \ () {\n    local dirName=\"$1\"\n    local userID=\"$2\"\n    local groupID=\"\
+    $3\"\n    local logMessage=\"$4\"\n    removeSoftLink \"${dirName}\"\n    createDir\
+    \ \"${dirName}\" \"${userID}\" \"${groupID}\" \"${logMessage}\"\n}\n\n# Utility\
+    \ method to remove a soft link\nremoveSoftLink () {\n    local dirName=\"$1\"\n\
+    \    if [[ -L \"${dirName}\" ]]; then\n        targetLink=$(readlink -f \"${dirName}\"\
+    )\n        logger \"Removing the symlink [${dirName}] pointing to [${targetLink}]\"\
+    \n        rm -f \"${dirName}\"\n    fi\n}\n\n# Check Directory exist in the path\n\
+    checkDirExists () {\n    local directoryPath=\"$1\"\n\n    [[ -d \"${directoryPath}\"\
+    \ ]] && echo -n \"true\" || echo -n \"false\"\n}\n\n\n# Utility method to create\
+    \ a file\n# Failure conditions:\n# Parameters:\n## $1: file to create\n# Depends\
+    \ on global: none\n# Updates global: none\n# Returns: NA\n\ncreateFile(){\n  \
+    \  local fileName=\"$1\"\n    logSilly \"Method ${FUNCNAME[0]} [$fileName]\"\n\
+    \    [ -f \"${fileName}\" ] && return 0\n    touch \"${fileName}\" || return 1\n\
+    \n    local userID=\"$2\"\n    local groupID=${3:-$userID}\n\n    # If UID/GID\
+    \ is passed, chown the folder\n    if [ ! -z \"$userID\" ] && [ ! -z \"$groupID\"\
+    \ ]; then\n        io_setOwnership \"$fileName\" \"$userID\" \"$groupID\" || return\
+    \ 1\n    fi\n}\n\n# Check File exist in the filePath\n# IMPORTANT- DON'T ADD LOGGING\
+    \ to this method\ncheckFileExists () {\n    local filePath=\"$1\"\n\n    [[ -f\
+    \ \"${filePath}\" ]] && echo -n \"true\" || echo -n \"false\"\n}\n\n# Check for\
+    \ directories contains any (files or sub directories)\n# IMPORTANT- DON'T ADD\
+    \ LOGGING to this method\ncheckDirContents () {\n    local directoryPath=\"$1\"\
+    \n    if [[ \"$(ls -1 \"${directoryPath}\" | wc -l)\" -gt 0 ]]; then\n       \
+    \ echo -n \"true\"\n    else\n        echo -n \"false\"\n    fi\n}\n\n# Check\
+    \ contents exist in directory\n# IMPORTANT- DON'T ADD LOGGING to this method\n\
+    checkContentExists () {\n    local source=\"$1\"\n\n    if [[ \"$(checkDirContents\
+    \ \"${source}\")\" != \"true\" ]]; then\n        echo -n \"false\"\n    else\n\
+    \        echo -n \"true\"\n    fi\n}\n\n# Resolve the variable\n# IMPORTANT- DON'T\
+    \ ADD LOGGING to this method\nevalVariable () {\n    local output=\"$1\"\n   \
+    \ local input=\"$2\"\n\n    eval \"${output}\"=\\${\"${input}\"}\n    eval echo\
+    \ \\${\"${output}\"}\n}\n\n# Usage: if [ \"$(io_commandExists 'curl')\" == \"\
+    yes\" ]\n# IMPORTANT- DON'T ADD LOGGING to this method\nio_commandExists() {\n\
+    \    local commandToExecute=\"$1\"\n    hash \"${commandToExecute}\" 2>/dev/null\n\
+    \    local rt=$?\n    if [ \"$rt\" == 0 ]; then echo -n \"yes\"; else echo -n\
+    \ \"no\"; fi\n}\n\n# Usage: if [ \"$(io_curlExists)\" != \"yes\" ]\n# IMPORTANT-\
+    \ DON'T ADD LOGGING to this method\nio_curlExists() {\n    io_commandExists \"\
+    curl\"\n}\n\n\nio_hasMatch() {\n    logSilly \"Method ${FUNCNAME[0]}\"\n    local\
+    \ result=0\n    logDebug \"Executing [echo \\\"$1\\\" | grep \\\"$2\\\" >/dev/null\
+    \ 2>&1]\"\n    echo \"$1\" | grep \"$2\" >/dev/null 2>&1 || result=1\n    return\
+    \ $result\n}\n\n# Utility method to check if the string passed (usually a connection\
+    \ url) corresponds to this machine itself\n# Failure conditions: None\n# Parameters:\n\
+    ## $1: string to check against\n# Depends on global: none\n# Updates global: IS_LOCALHOST\
+    \ with value \"yes/no\"\n# Returns: NA\n\nio_getIsLocalhost() {\n    logSilly\
+    \ \"Method ${FUNCNAME[0]}\"\n    IS_LOCALHOST=\"$FLAG_N\"\n    local inputString=\"\
+    $1\"\n    logDebug \"Parsing [$inputString] to check if we are dealing with this\
+    \ machine itself\"\n\n    io_hasMatch \"$inputString\" \"localhost\" && {\n  \
+    \      logDebug \"Found localhost. Returning [$FLAG_Y]\"\n        IS_LOCALHOST=\"\
+    $FLAG_Y\" && return;\n    } || logDebug \"Did not find match for localhost\"\n\
+    \    \n    local hostIP=$(io_getPublicHostIP)\n    io_hasMatch \"$inputString\"\
+    \ \"$hostIP\" && {\n        logDebug \"Found $hostIP. Returning [$FLAG_Y]\"\n\
+    \        IS_LOCALHOST=\"$FLAG_Y\" && return;\n    } || logDebug \"Did not find\
+    \ match for $hostIP\"\n    \n    local hostID=$(io_getPublicHostID)\n    io_hasMatch\
+    \ \"$inputString\" \"$hostID\" && {\n        logDebug \"Found $hostID. Returning\
+    \ [$FLAG_Y]\"\n        IS_LOCALHOST=\"$FLAG_Y\" && return;\n    } || logDebug\
+    \ \"Did not find match for $hostID\"\n    \n    local hostName=$(io_getPublicHostName)\n\
+    \    io_hasMatch  \"$inputString\" \"$hostName\" && {\n        logDebug \"Found\
+    \ $hostName. Returning [$FLAG_Y]\"\n        IS_LOCALHOST=\"$FLAG_Y\" && return;\n\
+    \    } || logDebug \"Did not find match for $hostName\"\n    \n}\n\n# Usage: if\
+    \ [ \"$(io_tarExists)\" != \"yes\" ]\n# IMPORTANT- DON'T ADD LOGGING to this method\n\
+    io_tarExists() {\n    io_commandExists \"tar\"\n}\n\n# IMPORTANT- DON'T ADD LOGGING\
+    \ to this method\nio_getPublicHostIP() {\n    local OS_TYPE=$(uname)\n    local\
+    \ publicHostIP=\n    if [ \"${OS_TYPE}\" == \"Darwin\" ]; then\n        ipStatus=$(ifconfig\
+    \ en0 | grep \"status\" | awk '{print$2}')\n        if [ \"${ipStatus}\" == \"\
+    active\" ]; then\n            publicHostIP=$(ifconfig en0 | grep inet | grep -v\
+    \ inet6 | awk '{print $2}')\n        else\n            errorExit \"Host IP could\
+    \ not be resolved!\"\n        fi\n    elif [ \"${OS_TYPE}\" == \"Linux\" ]; then\n\
+    \        publicHostIP=$(hostname -i 2>/dev/null || echo \"127.0.0.1\")\n    fi\n\
+    \    publicHostIP=$(echo \"${publicHostIP}\" | awk '{print $1}')\n    echo -n\
+    \ \"${publicHostIP}\"\n}\n\n# Will return the short host name (up to the first\
+    \ dot)\n# IMPORTANT- DON'T ADD LOGGING to this method\nio_getPublicHostName()\
+    \ {\n    echo -n \"$(hostname -s)\"\n}\n\n# Will return the full host name (use\
+    \ this as much as possible)\n# IMPORTANT- DON'T ADD LOGGING to this method\nio_getPublicHostID()\
+    \ {\n    echo -n \"$(hostname)\"\n}\n\n# Utility method to backup a file\n# Failure\
+    \ conditions: NA\n# Parameters: filePath\n# Depends on global: none,\n# Updates\
+    \ global: none\n# Returns: NA\nio_backupFile() {\n    logSilly \"Method ${FUNCNAME[0]}\"\
+    \n    fileName=\"$1\"\n    if [ ! -f \"${filePath}\" ]; then\n        logDebug\
+    \ \"No file: [${filePath}] to backup\"\n        return\n    fi\n    dateTime=$(date\
+    \ +\"%Y-%m-%d-%H-%M-%S\")\n    targetFileName=\"${fileName}.backup.${dateTime}\"\
+    \n    yes | \\cp -f \"$fileName\" \"${targetFileName}\"\n    logger \"File [${fileName}]\
+    \ backedup as [${targetFileName}]\"\n}\n\n# Reference https://stackoverflow.com/questions/4023830/how-to-compare-two-strings-in-dot-separated-version-format-in-bash/4025065#4025065\n\
+    is_number() {\n    case \"$BASH_VERSION\" in\n        3.1.*)\n            PATTERN='\\\
+    ^\\[0-9\\]+\\$'\n            ;;\n        *)\n            PATTERN='^[0-9]+$'\n\
+    \            ;;\n    esac\n\n    [[ \"$1\" =~ $PATTERN ]]\n}\n\nio_compareVersions()\
+    \ {\n    if [[ $# != 2 ]]\n    then\n        echo \"Usage: min_version current\
+    \ minimum\"\n        return\n    fi\n\n    A=\"${1%%.*}\"\n    B=\"${2%%.*}\"\n\
+    \n    if [[ \"$A\" != \"$1\" && \"$B\" != \"$2\" && \"$A\" == \"$B\" ]]\n    then\n\
+    \        io_compareVersions \"${1#*.}\" \"${2#*.}\"\n    else\n        if is_number\
+    \ \"$A\" && is_number \"$B\"\n        then\n            if [[ \"$A\" -eq \"$B\"\
+    \ ]]; then\n                echo \"0\"\n            elif [[ \"$A\" -gt \"$B\"\
+    \ ]]; then\n                echo \"1\"\n            elif [[ \"$A\" -lt \"$B\"\
+    \ ]]; then\n                echo \"-1\"\n            fi\n        fi\n    fi\n\
+    }\n\n# Reference https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable\n\
+    # Strip all leading and trailing spaces\n# IMPORTANT- DON'T ADD LOGGING to this\
+    \ method\nio_trim() {\n    local var=\"$1\"\n    # remove leading whitespace characters\n\
+    \    var=\"${var#\"${var%%[![:space:]]*}\"}\"\n    # remove trailing whitespace\
+    \ characters\n    var=\"${var%\"${var##*[![:space:]]}\"}\"\n    echo -n \"$var\"\
+    \n}\n\n# temporary function will be removing it ASAP\n# search for string and\
+    \ replace text in file\nreplaceText_migration_hook () {\n    local regexString=\"\
+    $1\"\n    local replaceText=\"$2\"\n    local file=\"$3\"\n\n    if [[ \"$(checkFileExists\
+    \ \"${file}\")\" != \"true\" ]]; then\n        return\n    fi\n    if [[ $(uname)\
+    \ == \"Darwin\" ]]; then\n        sed -i '' -e \"s/${regexString}/${replaceText}/\"\
+    \ \"${file}\" || warn \"Failed to replace the text in ${file}\"\n    else\n  \
+    \      sed -i -e \"s/${regexString}/${replaceText}/\" \"${file}\" || warn \"Failed\
+    \ to replace the text in ${file}\"\n    fi\n}\n\n# search for string and replace\
+    \ text in file\nreplaceText () {\n    local regexString=\"$1\"\n    local replaceText=\"\
+    $2\"\n    local file=\"$3\"\n\n    if [[ \"$(checkFileExists \"${file}\")\" !=\
+    \ \"true\" ]]; then\n        return\n    fi\n    if [[ $(uname) == \"Darwin\"\
+    \ ]]; then\n        sed -i '' -e \"s#${regexString}#${replaceText}#\" \"${file}\"\
+    \ || warn \"Failed to replace the text in ${file}\"\n    else\n        sed -i\
+    \ -e \"s#${regexString}#${replaceText}#\" \"${file}\" || warn \"Failed to replace\
+    \ the text in ${file}\"\n        logDebug \"Replaced [$regexString] with [$replaceText]\
+    \ in [$file]\"\n    fi\n}\n\n# search for string and prepend text in file\nprependText\
+    \ () {\n    local regexString=\"$1\"\n    local text=\"$2\"\n    local file=\"\
+    $3\"\n\n    if [[ \"$(checkFileExists \"${file}\")\" != \"true\" ]]; then\n  \
+    \      return\n    fi\n    if [[ $(uname) == \"Darwin\" ]]; then\n        sed\
+    \ -i '' -e '/'\"${regexString}\"'/i\\'$'\\n\\\\'\"${text}\"''$'\\n' \"${file}\"\
+    \ || warn \"Failed to prepend the text in ${file}\"\n    else\n        sed -i\
+    \ -e '/'\"${regexString}\"'/i\\'$'\\n\\\\'\"${text}\"''$'\\n' \"${file}\" || warn\
+    \ \"Failed to prepend the text in ${file}\"\n    fi\n}\n\n# add text to beginning\
+    \ of the file\naddText () {\n    local text=\"$1\"\n    local file=\"$2\"\n\n\
+    \    if [[ \"$(checkFileExists \"${file}\")\" != \"true\" ]]; then\n        return\n\
+    \    fi\n    if [[ $(uname) == \"Darwin\" ]]; then\n        sed -i '' -e '1s/^/'\"\
+    ${text}\"'\\'$'\\n/' \"${file}\" || warn \"Failed to add the text in ${file}\"\
+    \n    else\n        sed -i -e '1s/^/'\"${text}\"'\\'$'\\n/' \"${file}\" || warn\
+    \ \"Failed to add the text in ${file}\"\n    fi\n}\n\nio_replaceString () {\n\
+    \    local value=\"$1\"\n    local firstString=\"$2\"\n    local secondString=\"\
+    $3\"\n    local separator=${4:-\"/\"}\n    local updateValue=\n    if [[ $(uname)\
+    \ == \"Darwin\" ]]; then\n        updateValue=$(echo \"${value}\" | sed \"s${separator}${firstString}${separator}${secondString}${separator}\"\
+    )\n    else\n        updateValue=$(echo \"${value}\" | sed \"s${separator}${firstString}${separator}${secondString}${separator}\"\
+    )\n    fi\n    echo -n \"${updateValue}\"\n}\n\n_findYQ() {\n    # logSilly \"\
+    Method ${FUNCNAME[0]}\" (Intentionally not logging. Does not add value)\n    local\
+    \ parentDir=\"$1\"\n    if [ -z \"$parentDir\" ]; then\n        return\n    fi\n\
+    \    logDebug \"Executing command [find \"${parentDir}\" -name third-party -type\
+    \ d]\"\n    local yq=$(find \"${parentDir}\" -name third-party -type d)\n    if\
+    \ [ -d \"${yq}/yq\" ]; then\n        export YQ_PATH=\"${yq}/yq\"\n    fi\n}\n\n\
+    \nio_setYQPath() {\n    # logSilly \"Method ${FUNCNAME[0]}\" (Intentionally not\
+    \ logging. Does not add value)\n    if [ \"$(io_commandExists 'yq')\" == \"yes\"\
+    \ ]; then\n        return\n    fi\n    \n    if [ ! -z \"${JF_PRODUCT_HOME}\"\
+    \ ] && [ -d \"${JF_PRODUCT_HOME}\" ]; then\n        _findYQ \"${JF_PRODUCT_HOME}\"\
+    \n    fi\n    \n    if [ -z \"${YQ_PATH}\" ] && [ ! -z \"${COMPOSE_HOME}\" ] &&\
+    \ [ -d \"${COMPOSE_HOME}\" ]; then\n        _findYQ \"${COMPOSE_HOME}\"\n    fi\n\
+    \    # TODO We can remove this block after all the code is restructured.\n   \
+    \ if [ -z \"${YQ_PATH}\" ] && [ ! -z \"${SCRIPT_HOME}\" ] && [ -d \"${SCRIPT_HOME}\"\
+    \ ]; then\n        _findYQ \"${SCRIPT_HOME}\"\n    fi\n    \n}\n\nio_getLinuxDistribution()\
+    \ {\n    LINUX_DISTRIBUTION=\n\n    # Make sure running on Linux\n    [ $(uname\
+    \ -s) != \"Linux\" ] && return\n\n    # Find out what Linux distribution we are\
+    \ on\n\n    cat /etc/*-release | grep -i Red >/dev/null 2>&1 && LINUX_DISTRIBUTION=RedHat\
+    \ || true\n\n    # OS 6.x\n    cat /etc/issue.net | grep Red >/dev/null 2>&1 &&\
+    \ LINUX_DISTRIBUTION=RedHat || true\n\n    # OS 7.x\n    cat /etc/*-release |\
+    \ grep -i centos >/dev/null 2>&1 && LINUX_DISTRIBUTION=CentOS && LINUX_DISTRIBUTION_VER=\"\
+    7\" || true\n\n    # OS 8.x\n    grep -q -i \"release 8\" /etc/redhat-release\
+    \ >/dev/null 2>&1 && LINUX_DISTRIBUTION_VER=\"8\" || true\n\n    # OS 7.x\n  \
+    \  grep -q -i \"release 7\" /etc/redhat-release >/dev/null 2>&1 && LINUX_DISTRIBUTION_VER=\"\
+    7\" || true\n\n    # OS 6.x\n    grep -q -i \"release 6\" /etc/redhat-release\
+    \ >/dev/null 2>&1 && LINUX_DISTRIBUTION_VER=\"6\" || true\n\n    cat /etc/*-release\
+    \ | grep -i Red | grep -i 'VERSION=7' >/dev/null 2>&1 && LINUX_DISTRIBUTION=RedHat\
+    \ && LINUX_DISTRIBUTION_VER=\"7\" || true\n\n    cat /etc/*-release | grep -i\
+    \ debian >/dev/null 2>&1 && LINUX_DISTRIBUTION=Debian || true\n\n    cat /etc/*-release\
+    \ | grep -i ubuntu >/dev/null 2>&1 && LINUX_DISTRIBUTION=Ubuntu || true\n}\n\n\
+    ## Utility method to check ownership of folders/files\n## Failure conditions:\n\
+    \    ## If invoked with incorrect inputs - FATAL\n    ## If file is not owned\
+    \ by the user & group\n## Parameters:\n    ## user\n    ## group\n    ## folder\
+    \ to chown    \n## Globals: none\n## Returns: none\n## NOTE: The method does NOTHING\
+    \ if the OS is Mac\nio_checkOwner () {\n    logSilly \"Method ${FUNCNAME[0]}\"\
+    \n    local osType=$(uname)\n    \n    if [ \"${osType}\" != \"Linux\" ]; then\n\
+    \        logDebug \"Unsupported OS. Skipping check\"\n        return 0\n    fi\n\
+    \n    local file_to_check=$1\n    local user_id_to_check=$2\n    \n\n    if [\
+    \ -z \"$user_id_to_check\" ] || [ -z \"$file_to_check\" ]; then\n        errorExit\
+    \ \"Invalid invocation of method. Missing mandatory inputs\"\n    fi\n\n    local\
+    \ group_id_to_check=${3:-$user_id_to_check}\n    local check_user_name=${4:-\"\
+    no\"}\n\n    logDebug \"Checking permissions on [$file_to_check] for user [$user_id_to_check]\
+    \ & group [$group_id_to_check]\"\n\n    local stat=\n\n    if [ \"${check_user_name}\"\
+    \ == \"yes\" ]; then\n        stat=( $(stat -Lc \"%U %G\" ${file_to_check}) )\n\
+    \    else\n        stat=( $(stat -Lc \"%u %g\" ${file_to_check}) )\n    fi\n\n\
+    \    local user_id=${stat[0]}\n    local group_id=${stat[1]}\n\n    if [[ \"${user_id}\"\
+    \ != \"${user_id_to_check}\" ]] || [[ \"${group_id}\" != \"${group_id_to_check}\"\
+    \ ]] ; then\n        logDebug \"Ownership mismatch. [${file_to_check}] is not\
+    \ owned by [${user_id_to_check}:${group_id_to_check}]\"\n        return 1\n  \
+    \  else\n        return 0\n    fi\n}\n\n## Utility method to change ownership\
+    \ of a file/folder - NON recursive\n## Failure conditions:\n    ## If invoked\
+    \ with incorrect inputs - FATAL\n    ## If chown operation fails - returns 1\n\
+    ## Parameters: \n    ## user\n    ## group\n    ## file to chown    \n## Globals:\
+    \ none\n## Returns: none\n## NOTE: The method does NOTHING if the OS is Mac\n\n\
+    io_setOwnershipNonRecursive() {\n    \n    local osType=$(uname)\n    if [ \"\
+    ${osType}\" != \"Linux\" ]; then\n        return\n    fi\n\n    local targetFile=$1\n\
+    \    local user=$2\n\n    if [ -z \"$user\" ] || [ -z \"$targetFile\" ]; then\n\
+    \        errorExit \"Invalid invocation of method. Missing mandatory inputs\"\n\
+    \    fi\n\n    local group=${3:-$user}\n    logDebug \"Method ${FUNCNAME[0]}.\
+    \ Executing [chown ${user}:${group} ${targetFile}]\"\n    chown ${user}:${group}\
+    \ ${targetFile} || return 1\n}\n\n## Utility method to change ownership of a file.\
+    \ \n## IMPORTANT \n## If being called on a folder, should ONLY be called for fresh\
+    \ folders or may cause performance issues\n## Failure conditions:\n    ## If invoked\
+    \ with incorrect inputs - FATAL\n    ## If chown operation fails - returns 1\n\
+    ## Parameters: \n    ## user\n    ## group\n    ## file to chown    \n## Globals:\
+    \ none\n## Returns: none\n## NOTE: The method does NOTHING if the OS is Mac\n\n\
+    io_setOwnership() {\n    \n    local osType=$(uname)\n    if [ \"${osType}\" !=\
+    \ \"Linux\" ]; then\n        return\n    fi\n\n    local targetFile=$1\n    local\
+    \ user=$2\n\n    if [ -z \"$user\" ] || [ -z \"$targetFile\" ]; then\n       \
+    \ errorExit \"Invalid invocation of method. Missing mandatory inputs\"\n    fi\n\
+    \n    local group=${3:-$user}\n    logDebug \"Method ${FUNCNAME[0]}. Executing\
+    \ [chown -R ${user}:${group} ${targetFile}]\"\n    chown -R ${user}:${group} ${targetFile}\
+    \ || return 1\n}\n\n## Utility method to create third party folder structure necessary\
+    \ for Postgres\n## Failure conditions:\n## If creation of directory or assigning\
+    \ permissions fails\n## Parameters: none\n## Globals:\n## POSTGRESQL_DATA_ROOT\n\
+    ## Returns: none\n## NOTE: The method does NOTHING if the folder already exists\n\
+    io_createPostgresDir() {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    [ -z \"\
+    ${POSTGRESQL_DATA_ROOT}\" ] && return 0\n\n    logDebug \"Property [${POSTGRESQL_DATA_ROOT}]\
+    \ exists. Proceeding\"\n\n    createDir \"${POSTGRESQL_DATA_ROOT}/data\"\n   \
+    \ io_setOwnership  \"${POSTGRESQL_DATA_ROOT}\" \"${POSTGRES_USER}\" \"${POSTGRES_USER}\"\
+    \ || errorExit \"Setting ownership of [${POSTGRESQL_DATA_ROOT}] to [${POSTGRES_USER}:${POSTGRES_USER}]\
+    \ failed\"\n}\n\n## Utility method to create third party folder structure necessary\
+    \ for Nginx\n## Failure conditions:\n## If creation of directory or assigning\
+    \ permissions fails\n## Parameters: none\n## Globals:\n## NGINX_DATA_ROOT\n##\
+    \ Returns: none\n## NOTE: The method does NOTHING if the folder already exists\n\
+    io_createNginxDir() {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    [ -z \"${NGINX_DATA_ROOT}\"\
+    \ ] && return 0\n\n    logDebug \"Property [${NGINX_DATA_ROOT}] exists. Proceeding\"\
+    \n\n    createDir \"${NGINX_DATA_ROOT}\"\n    io_setOwnership  \"${NGINX_DATA_ROOT}\"\
+    \ \"${NGINX_USER}\" \"${NGINX_GROUP}\" || errorExit \"Setting ownership of [${NGINX_DATA_ROOT}]\
+    \ to [${NGINX_USER}:${NGINX_GROUP}] failed\"\n}\n\n## Utility method to create\
+    \ third party folder structure necessary for ElasticSearch\n## Failure conditions:\n\
+    ## If creation of directory or assigning permissions fails\n## Parameters: none\n\
+    ## Globals:\n## ELASTIC_DATA_ROOT\n## Returns: none\n## NOTE: The method does\
+    \ NOTHING if the folder already exists\nio_createElasticSearchDir() {\n    logDebug\
+    \ \"Method ${FUNCNAME[0]}\"\n    [ -z \"${ELASTIC_DATA_ROOT}\" ] && return 0\n\
+    \n    logDebug \"Property [${ELASTIC_DATA_ROOT}] exists. Proceeding\"\n\n    createDir\
+    \ \"${ELASTIC_DATA_ROOT}/data\"\n    io_setOwnership  \"${ELASTIC_DATA_ROOT}\"\
+    \ \"${ES_USER}\" \"${ES_USER}\" || errorExit \"Setting ownership of [${ELASTIC_DATA_ROOT}]\
+    \ to [${ES_USER}:${ES_USER}] failed\"\n}\n\n## Utility method to create third\
+    \ party folder structure necessary for Redis\n## Failure conditions:\n## If creation\
+    \ of directory or assigning permissions fails\n## Parameters: none\n## Globals:\n\
+    ## REDIS_DATA_ROOT\n## Returns: none\n## NOTE: The method does NOTHING if the\
+    \ folder already exists\nio_createRedisDir() {\n    logDebug \"Method ${FUNCNAME[0]}\"\
+    \n    [ -z \"${REDIS_DATA_ROOT}\" ] && return 0\n\n    logDebug \"Property [${REDIS_DATA_ROOT}]\
+    \ exists. Proceeding\"\n\n    createDir \"${REDIS_DATA_ROOT}\"\n    io_setOwnership\
+    \  \"${REDIS_DATA_ROOT}\" \"${REDIS_USER}\" \"${REDIS_USER}\" || errorExit \"\
+    Setting ownership of [${REDIS_DATA_ROOT}] to [${REDIS_USER}:${REDIS_USER}] failed\"\
+    \n}\n\n## Utility method to create third party folder structure necessary for\
+    \ Mongo\n## Failure conditions:\n## If creation of directory or assigning permissions\
+    \ fails\n## Parameters: none\n## Globals:\n## MONGODB_DATA_ROOT\n## Returns: none\n\
+    ## NOTE: The method does NOTHING if the folder already exists\nio_createMongoDir()\
+    \ {\n    logDebug \"Method ${FUNCNAME[0]}\"\n    [ -z \"${MONGODB_DATA_ROOT}\"\
+    \ ] && return 0\n\n    logDebug \"Property [${MONGODB_DATA_ROOT}] exists. Proceeding\"\
+    \n\n    createDir \"${MONGODB_DATA_ROOT}/logs\"\n    createDir \"${MONGODB_DATA_ROOT}/configdb\"\
+    \n    createDir \"${MONGODB_DATA_ROOT}/db\"\n    io_setOwnership  \"${MONGODB_DATA_ROOT}\"\
+    \ \"${MONGO_USER}\" \"${MONGO_USER}\" || errorExit \"Setting ownership of [${MONGODB_DATA_ROOT}]\
+    \ to [${MONGO_USER}:${MONGO_USER}] failed\"\n}\n\n## Utility method to create\
+    \ third party folder structure necessary for RabbitMQ\n## Failure conditions:\n\
+    ## If creation of directory or assigning permissions fails\n## Parameters: none\n\
+    ## Globals:\n## RABBITMQ_DATA_ROOT\n## Returns: none\n## NOTE: The method does\
+    \ NOTHING if the folder already exists\nio_createRabbitMQDir() {\n    logDebug\
+    \ \"Method ${FUNCNAME[0]}\"\n    [ -z \"${RABBITMQ_DATA_ROOT}\" ] && return 0\n\
+    \n    logDebug \"Property [${RABBITMQ_DATA_ROOT}] exists. Proceeding\"\n\n   \
+    \ createDir \"${RABBITMQ_DATA_ROOT}\"\n    io_setOwnership  \"${RABBITMQ_DATA_ROOT}\"\
+    \ \"${RABBITMQ_USER}\" \"${RABBITMQ_USER}\" || errorExit \"Setting ownership of\
+    \ [${RABBITMQ_DATA_ROOT}] to [${RABBITMQ_USER}:${RABBITMQ_USER}] failed\"\n}\n\
+    \n# Add or replace a property in provided properties file\naddOrReplaceProperty()\
+    \ {\n    local propertyName=$1\n    local propertyValue=$2\n    local propertiesPath=$3\n\
+    \    local delimiter=${4:-\"=\"}\n\n    # Return if any of the inputs are empty\n\
+    \    [[ -z \"$propertyName\"   || \"$propertyName\"   == \"\" ]] && return\n \
+    \   [[ -z \"$propertyValue\"  || \"$propertyValue\"  == \"\" ]] && return\n  \
+    \  [[ -z \"$propertiesPath\" || \"$propertiesPath\" == \"\" ]] && return\n\n \
+    \   grep \"^${propertyName}\\s*${delimiter}.*$\" ${propertiesPath} > /dev/null\
+    \ 2>&1\n    [ $? -ne 0 ] && echo -e \"\\n${propertyName}${delimiter}${propertyValue}\"\
+    \ >> ${propertiesPath}\n    sed -i -e \"s|^${propertyName}\\s*${delimiter}.*$|${propertyName}${delimiter}${propertyValue}|g;\"\
+    \ ${propertiesPath}\n}\n\n# Set property only if its not set\nio_setPropertyNoOverride(){\n\
+    \    local propertyName=$1\n    local propertyValue=$2\n    local propertiesPath=$3\n\
+    \n    # Return if any of the inputs are empty\n    [[ -z \"$propertyName\"   ||\
+    \ \"$propertyName\"   == \"\" ]] && return\n    [[ -z \"$propertyValue\"  || \"\
+    $propertyValue\"  == \"\" ]] && return\n    [[ -z \"$propertiesPath\" || \"$propertiesPath\"\
+    \ == \"\" ]] && return\n\n    grep \"^${propertyName}:\" ${propertiesPath} > /dev/null\
+    \ 2>&1\n    if [ $? -ne 0 ]; then\n        echo -e \"${propertyName}: ${propertyValue}\"\
+    \ >> ${propertiesPath} || warn \"Setting property ${propertyName}: ${propertyValue}\
+    \ in [ ${propertiesPath} ] failed\"\n    else\n        logger \"Skipping update\
+    \ of property : ${propertyName}\" >&6\n    fi\n}\n\n# Add a line to a file if\
+    \ it doesn't already exist\naddLine() {\n    local line_to_add=$1\n    local target_file=$2\n\
+    \    logger \"Trying to add line $1 to $2\" >&6 2>&1\n    cat \"$target_file\"\
+    \ | grep -F \"$line_to_add\" -wq >&6 2>&1\n    if [ $? != 0  ]; then\n       \
+    \ logger \"Line does not exist and will be added\" >&6 2>&1\n        echo $line_to_add\
+    \ >> $target_file || errorExit \"Could not update $target_file\"\n    fi    \n\
+    }\n\n# Utility method to check if a value (first paramter) exists in an array\
+    \ (2nd parameter)\n# 1st parameter \"value to find\"\n# 2nd parameter \"The array\
+    \ to search in. Please pass a string with each value separated by space\"\n# Example:\
+    \ containsElement \"y\" \"y Y n N\"\ncontainsElement () {\n    local searchElement=$1\n\
+    \    local searchArray=($2)\n    local found=1\n    for elementInIndex in \"${searchArray[@]}\"\
+    ;do\n    if [[ $elementInIndex == $searchElement ]]; then\n        found=0\n \
+    \   fi\n    done\n    return $found\n}\n\n# Utility method to get user's choice\n\
+    # 1st parameter \"what to ask the user\"\n# 2nd parameter \"what choices to accept,\
+    \ separated by spaces\"\n# 3rd parameter \"what is the default choice (to use\
+    \ if the user simply presses Enter)\"\n# Example 'getUserChoice \"Are you feeling\
+    \ lucky? Punk!\" \"y n Y N\" \"y\"'\ngetUserChoice(){\n    configureLogOutput\n\
+    \    read_timeout=${read_timeout:-0.5}\n    local choice=\"na\"\n    local text_to_display=$1\n\
+    \    local choices=$2\n    local default_choice=$3\n    users_choice=\n\n    until\
+    \ containsElement \"$choice\" \"$choices\"; do\n        echo \"\";echo \"\";\n\
+    \        sleep $read_timeout #This ensures correct placement of the question.\n\
+    \        read -p  \"$text_to_display :\" choice\n        : ${choice:=$default_choice}\n\
+    \    done\n    users_choice=$choice\n    echo -e \"\\n$text_to_display: $users_choice\"\
+    \ >&6\n    sleep $read_timeout #This ensures correct logging\n}\n\nsetFilePermission\
+    \ () {\n    local permission=$1\n    local file=$2\n    chmod \"${permission}\"\
+    \ \"${file}\" || warn \"Setting permission ${permission} to file [ ${file} ] failed\"\
+    \n}\n\n\n#setting required paths\nsetAppDir (){\n    SCRIPT_DIR=$(dirname $0)\n\
+    \    SCRIPT_HOME=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\n    APP_DIR=\"\
+    `cd \"${SCRIPT_HOME}\";pwd`\"\n}\n\nZIP_TYPE=\"zip\"\nCOMPOSE_TYPE=\"compose\"\
+    \nHELM_TYPE=\"helm\"\nRPM_TYPE=\"rpm\"\nDEB_TYPE=\"debian\"\n\nsourceScript ()\
+    \ {\n    local file=\"$1\"\n\n    [ ! -z \"${file}\" ] || errorExit \"target file\
+    \ is not passed to source a file\"\n\n    if [ ! -f \"${file}\" ]; then\n    \
+    \    errorExit \"${file} file is not found\"\n    else\n        source \"${file}\"\
+    \ || errorExit \"Unable to source ${file}, please check if the user ${USER} has\
+    \ permissions to perform this action\"\n    fi\n}\n# Source required helpers\n\
+    initHelpers () {\n    local systemYamlHelper=\"${APP_DIR}/systemYamlHelper.sh\"\
+    \n    local thirdPartyDir=$(find ${APP_DIR}/.. -name third-party -type d)\n  \
+    \  export YQ_PATH=\"${thirdPartyDir}/yq\"\n    LIBXML2_PATH=\"${thirdPartyDir}/libxml2/bin/xmllint\"\
+    \n    export LD_LIBRARY_PATH=\"${thirdPartyDir}/libxml2/lib\"\n    sourceScript\
+    \ \"${systemYamlHelper}\"\n}\n# Check migration info yaml file available in the\
+    \ path\ncheckMigrationInfoYaml () {\n\n    if [[ -f \"${APP_DIR}/migrationHelmInfo.yaml\"\
+    \ ]]; then\n        MIGRATION_SYSTEM_YAML_INFO=\"${APP_DIR}/migrationHelmInfo.yaml\"\
+    \n        INSTALLER=\"${HELM_TYPE}\"\n    elif [[ -f \"${APP_DIR}/migrationZipInfo.yaml\"\
+    \ ]]; then\n        MIGRATION_SYSTEM_YAML_INFO=\"${APP_DIR}/migrationZipInfo.yaml\"\
+    \n        INSTALLER=\"${ZIP_TYPE}\"\n    elif [[ -f \"${APP_DIR}/migrationRpmInfo.yaml\"\
+    \ ]]; then\n        MIGRATION_SYSTEM_YAML_INFO=\"${APP_DIR}/migrationRpmInfo.yaml\"\
+    \n        INSTALLER=\"${RPM_TYPE}\"\n    elif [[ -f \"${APP_DIR}/migrationDebInfo.yaml\"\
+    \ ]]; then\n        MIGRATION_SYSTEM_YAML_INFO=\"${APP_DIR}/migrationDebInfo.yaml\"\
+    \n        INSTALLER=\"${DEB_TYPE}\"\n    elif [[ -f \"${APP_DIR}/migrationComposeInfo.yaml\"\
+    \ ]]; then\n        MIGRATION_SYSTEM_YAML_INFO=\"${APP_DIR}/migrationComposeInfo.yaml\"\
+    \n        INSTALLER=\"${COMPOSE_TYPE}\"\n    else\n        errorExit \"File migration\
+    \ Info yaml does not exist in [${APP_DIR}]\"\n    fi\n}\n\nretrieveYamlValue ()\
+    \ {\n    local yamlPath=\"$1\"\n    local value=\"$2\"\n    local output=\"$3\"\
+    \n    local message=\"$4\"\n\n    [[ -z \"${yamlPath}\" ]] && errorExit \"yamlPath\
+    \ is mandatory to get value from ${MIGRATION_SYSTEM_YAML_INFO}\"\n\n    getYamlValue\
+    \ \"${yamlPath}\" \"${MIGRATION_SYSTEM_YAML_INFO}\" \"false\"\n    value=\"${YAML_VALUE}\"\
+    \n    if [[ -z \"${value}\" ]]; then\n        if [[ \"${output}\" == \"Warning\"\
+    \ ]]; then\n            warn \"Empty value for ${yamlPath} in [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \n        elif [[ \"${output}\" == \"Skip\" ]]; then\n            return\n   \
+    \     else\n            errorExit \"${message}\"\n        fi\n    fi\n}\n\ncheckEnv\
+    \ () {\n    \n    if [[ \"${INSTALLER}\" == \"${ZIP_TYPE}\" ]]; then\n       \
+    \ # check Environment JF_PRODUCT_HOME is set before migration\n        NEW_DATA_DIR=\"\
+    $(evalVariable \"NEW_DATA_DIR\" \"JF_PRODUCT_HOME\")\"\n        if [[ -z \"${NEW_DATA_DIR}\"\
+    \ ]]; then\n            errorExit \"Environment variable JF_PRODUCT_HOME is not\
+    \ set, this is required to perform Migration\"\n        fi\n        # appending\
+    \ var directory to $JF_PRODUCT_HOME\n        NEW_DATA_DIR=\"${NEW_DATA_DIR}/var\"\
+    \n    elif [[ \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n        getCustomDataDir_hook\n\
+    \        NEW_DATA_DIR=\"${OLD_DATA_DIR}\"\n        if [[ -z \"${NEW_DATA_DIR}\"\
+    \ ]] && [[  -z \"${OLD_DATA_DIR}\" ]]; then\n            errorExit \"Could not\
+    \ find ${PROMPT_DATA_DIR_LOCATION} to perform Migration\"\n        fi\n    else\n\
+    \        # check Environment JF_ROOT_DATA_DIR is set before migration\n      \
+    \  OLD_DATA_DIR=\"$(evalVariable \"OLD_DATA_DIR\" \"JF_ROOT_DATA_DIR\")\"\n  \
+    \      # check Environment JF_ROOT_DATA_DIR is set before migration\n        NEW_DATA_DIR=\"\
+    $(evalVariable \"NEW_DATA_DIR\" \"JF_ROOT_DATA_DIR\")\"\n        if [[ -z \"${NEW_DATA_DIR}\"\
+    \ ]] && [[  -z \"${OLD_DATA_DIR}\" ]]; then\n            errorExit \"Could not\
+    \ find ${PROMPT_DATA_DIR_LOCATION} to perform Migration\"\n        fi\n      \
+    \      # appending var directory to $JF_PRODUCT_HOME\n            NEW_DATA_DIR=\"\
+    ${NEW_DATA_DIR}/var\"\n    fi\n    \n}\n\ngetDataDir () {\n\n    if [[ \"${INSTALLER}\"\
+    \ == \"${ZIP_TYPE}\" || \"${INSTALLER}\" == \"${COMPOSE_TYPE}\"|| \"${INSTALLER}\"\
+    \ == \"${HELM_TYPE}\" ]]; then\n        checkEnv\n    else\n        getCustomDataDir_hook\n\
+    \        NEW_DATA_DIR=\"`cd \"${APP_DIR}\"/../../;pwd`\"\n        NEW_DATA_DIR=\"\
+    ${NEW_DATA_DIR}/var\"\n    fi\n}\n\n# Retrieve Product name from MIGRATION_SYSTEM_YAML_INFO\n\
+    getProduct () {\n    retrieveYamlValue \"migration.product\" \"${YAML_VALUE}\"\
+    \ \"Fail\" \"Empty value under ${yamlPath} in [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \n    PRODUCT=\"${YAML_VALUE}\"\n    PRODUCT=$(echo \"${PRODUCT}\" | tr '[:upper:]'\
+    \ '[:lower:]' 2>/dev/null)\n    if [[ \"${PRODUCT}\" != \"artifactory\" && \"\
+    ${PRODUCT}\" != \"distribution\" && \"${PRODUCT}\" != \"xray\" ]]; then\n    \
+    \    errorExit \"migration.product in [${MIGRATION_SYSTEM_YAML_INFO}] is not correct,\
+    \ please set based on product as ARTIFACTORY or DISTRIBUTION\"\n    fi\n    if\
+    \ [[ \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n        JF_USER=\"${PRODUCT}\"\
+    \n    fi\n}\n# Compare product version with minProductVersion and maxProductVersion\n\
+    migrateCheckVersion () {\n    local productVersion=\"$1\"\n    local minProductVersion=\"\
+    $2\"\n    local maxProductVersion=\"$3\"\n    local productVersion618=\"6.18.0\"\
+    \n    local unSupportedProductVersions7=(\"7.2.0 7.2.1\")\n\n    if [[ \"$(io_compareVersions\
+    \ \"${productVersion}\" \"${maxProductVersion}\")\" -eq 0 || \"$(io_compareVersions\
+    \ \"${productVersion}\" \"${maxProductVersion}\")\" -eq 1 ]]; then\n        logger\
+    \ \"Migration not necessary. ${PRODUCT} is already ${productVersion}\"\n     \
+    \   exit 11\n    elif [[ \"$(io_compareVersions \"${productVersion}\" \"${minProductVersion}\"\
+    )\" -eq 0 || \"$(io_compareVersions \"${productVersion}\" \"${minProductVersion}\"\
+    )\" -eq 1 ]]; then\n        if [[ (\"$(io_compareVersions \"${productVersion}\"\
+    \ \"${productVersion618}\")\" -eq 0 || \"$(io_compareVersions \"${productVersion}\"\
+    \ \"${productVersion618}\")\" -eq 1) && \" ${unSupportedProductVersions7[@]} \"\
+    \ =~ \" ${CURRENT_VERSION} \" ]]; then\n            touch /tmp/error;\n      \
+    \      errorExit \"Current ${PRODUCT} version (${productVersion}) does not support\
+    \ migration to ${CURRENT_VERSION}\"\n        else\n            bannerStart \"\
+    Detected ${PRODUCT} ${productVersion}, initiating migration\"\n        fi\n  \
+    \  else\n        logger \"Current ${PRODUCT} ${productVersion} version is not\
+    \ supported for migration\"\n        exit 1\n    fi\n}\n\ngetProductVersion ()\
+    \ {\n    local minProductVersion=\"$1\"\n    local maxProductVersion=\"$2\"\n\
+    \    local newfilePath=\"$3\"\n    local oldfilePath=\"$4\"\n    local propertyInDocker=\"\
+    $5\"\n    local property=\"$6\"\n    local productVersion=\n    local status=\n\
+    \n    if [[ \"$INSTALLER\" == \"${COMPOSE_TYPE}\" ]]; then\n        if [[ -f \"\
+    ${oldfilePath}\" ]]; then\n            if [[ \"${PRODUCT}\" == \"artifactory\"\
+    \ ]]; then\n                productVersion=\"$(readKey \"${property}\" \"${oldfilePath}\"\
+    )\"\n            else\n                productVersion=\"$(cat \"${oldfilePath}\"\
+    )\"\n            fi\n            status=\"success\"\n        elif [[ -f \"${newfilePath}\"\
+    \ ]]; then\n            productVersion=\"$(readKey \"${propertyInDocker}\" \"\
+    ${newfilePath}\")\"\n            status=\"fail\"\n        else\n            logger\
+    \ \"File [${oldfilePath}] or [${newfilePath}] not found to get current version.\"\
+    \n            exit 0\n        fi\n    elif [[ \"$INSTALLER\" == \"${HELM_TYPE}\"\
+    \ ]]; then\n        if [[ -f \"${oldfilePath}\" ]]; then\n            if [[ \"\
+    ${PRODUCT}\" == \"artifactory\" ]]; then\n                productVersion=\"$(readKey\
+    \ \"${property}\" \"${oldfilePath}\")\"\n            else\n                productVersion=\"\
+    $(cat \"${oldfilePath}\")\"\n            fi\n            status=\"success\"\n\
+    \        else\n            productVersion=\"${CURRENT_VERSION}\"\n           \
+    \ [[ -z \"${productVersion}\" || \"${productVersion}\" == \"\" ]] && logger \"\
+    ${PRODUCT} CURRENT_VERSION is not set\" && exit 0\n        fi\n    else\n    \
+    \    if [[ -f \"${newfilePath}\" ]]; then\n            productVersion=\"$(readKey\
+    \ \"${property}\" \"${newfilePath}\")\"\n            status=\"fail\"\n       \
+    \ elif [[ -f \"${oldfilePath}\" ]]; then\n            productVersion=\"$(readKey\
+    \ \"${property}\" \"${oldfilePath}\")\"\n            status=\"success\"\n    \
+    \    else\n            if [[ \"${INSTALLER}\" == \"${ZIP_TYPE}\" ]]; then\n  \
+    \              logger \"File [${newfilePath}] not found to get current version.\"\
+    \n            else\n                logger \"File [${oldfilePath}] or [${newfilePath}]\
+    \ not found to get current version.\"\n            fi\n            exit 0\n  \
+    \      fi\n    fi\n    if [[ -z \"${productVersion}\" || \"${productVersion}\"\
+    \ == \"\" ]]; then\n        [[ \"${status}\" == \"success\" ]] && logger \"No\
+    \ version found in file [${oldfilePath}].\"\n        [[ \"${status}\" == \"fail\"\
+    \ ]] && logger \"No version found in file [${newfilePath}].\"\n        exit 0\n\
+    \    fi\n\n    migrateCheckVersion \"${productVersion}\" \"${minProductVersion}\"\
+    \ \"${maxProductVersion}\"\n}\n\nreadKey () {\n    local property=\"$1\"\n   \
+    \ local file=\"$2\"\n    local version=\n\n    while IFS='=' read -r key value\
+    \ || [ -n \"${key}\" ];\n    do\n        [[ ! \"${key}\" =~ \\#.* && ! -z \"${key}\"\
+    \ && ! -z \"${value}\" ]]\n        key=\"$(io_trim \"${key}\")\"\n        if [[\
+    \ \"${key}\" == \"${property}\" ]]; then\n            version=\"${value}\" &&\
+    \ check=true && break\n        else\n            check=false\n        fi\n   \
+    \ done < \"${file}\"\n    if [[ \"${check}\" == \"false\" ]]; then\n        return\n\
+    \    fi\n    echo \"${version}\"\n}\n\n# create Log directory\ncreateLogDir ()\
+    \ {\n    if [[ \"${INSTALLER}\" == \"${DEB_TYPE}\" || \"${INSTALLER}\" == \"${RPM_TYPE}\"\
+    \ ]]; then\n        getUserAndGroupFromFile\n        removeSoftLinkAndCreateDir\
+    \ \"${NEW_DATA_DIR}/log\" \"${USER_TO_CHECK}\" \"${GROUP_TO_CHECK}\"\n    fi\n\
+    }\n\n# Creating migration log file\ncreationMigrateLog () {\n    local LOG_FILE_NAME=\"\
+    migration.log\"\n    createLogDir\n    local MIGRATION_LOG_FILE=\"${NEW_DATA_DIR}/log/${LOG_FILE_NAME}\"\
+    \n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" == \"\
+    ${HELM_TYPE}\" ]]; then\n        MIGRATION_LOG_FILE=\"${SCRIPT_HOME}/${LOG_FILE_NAME}\"\
+    \n    fi\n    touch \"${MIGRATION_LOG_FILE}\"\n    setFilePermission \"${LOG_FILE_PERMISSION}\"\
+    \ \"${MIGRATION_LOG_FILE}\"\n    exec &> >(tee -a \"${MIGRATION_LOG_FILE}\") \
+    \  \n}\n# Set path where system.yaml should create\nsetSystemYamlPath () {\n \
+    \   SYSTEM_YAML_PATH=\"${NEW_DATA_DIR}/etc/system.yaml\"\n    if [[ \"${INSTALLER}\"\
+    \ != \"${HELM_TYPE}\" ]]; then\n        logger \"system.yaml will be created in\
+    \ path [${SYSTEM_YAML_PATH}]\"\n    fi\n}\n# Create directory\ncreateDirectory\
+    \ () {\n    local directory=\"$1\"\n    local output=\"$2\"\n    local check=false\n\
+    \    local message=\"Could not create directory ${directory}, please check if\
+    \ the user ${USER} has permissions to perform this action\"\n    removeSoftLink\
+    \ \"${directory}\"\n    mkdir -p \"${directory}\" && check=true || check=false\n\
+    \    if [[ \"${check}\" == \"false\" ]]; then\n        if [[ \"${output}\" ==\
+    \ \"Warning\" ]]; then\n            warn \"${message}\"\n        else\n      \
+    \      errorExit \"${message}\"\n        fi\n    fi\n    setOwnershipBasedOnInstaller\
+    \ \"${directory}\"\n}\n\nsetOwnershipBasedOnInstaller () {\n    local directory=\"\
+    $1\"\n    if [[ \"${INSTALLER}\" == \"${DEB_TYPE}\" || \"${INSTALLER}\" == \"\
+    ${RPM_TYPE}\" ]]; then\n        getUserAndGroupFromFile\n        chown -R ${USER_TO_CHECK}:${GROUP_TO_CHECK}\
+    \ \"${directory}\" || warn \"Setting ownership on $directory failed\"\n    elif\
+    \ [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" == \"${HELM_TYPE}\"\
+    \ ]]; then\n        io_setOwnership \"${directory}\" \"${JF_USER}\" \"${JF_USER}\"\
+    \n    fi\n}\n\ngetUserAndGroup () {\n    local file=\"$1\"\n    read uid gid <<<$(stat\
+    \ -c '%U %G' ${file})\n    USER_TO_CHECK=\"${uid}\"\n    GROUP_TO_CHECK=\"${gid}\"\
+    \n}\n    \n# set ownership\ngetUserAndGroupFromFile () {\n    case $PRODUCT in\n\
+    \        artifactory)\n            getUserAndGroup \"/etc/opt/jfrog/artifactory/artifactory.properties\"\
+    \n        ;;\n        distribution)\n            getUserAndGroup \"${OLD_DATA_DIR}/etc/versions.properties\"\
+    \n        ;;\n        xray)\n            getUserAndGroup \"${OLD_DATA_DIR}/security/master.key\"\
+    \n        ;;\n        esac\n} \n\n# creating required directories\ncreateRequiredDirs\
+    \ () {\n    bannerSubSection \"CREATING REQUIRED DIRECTORIES\"\n    if [[ \"${INSTALLER}\"\
+    \ == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" == \"${HELM_TYPE}\"  ]]; then\n \
+    \       removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/etc/security\" \"${JF_USER}\"\
+    \ \"${JF_USER}\" \"yes\"\n        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/data\"\
+    \ \"${JF_USER}\" \"${JF_USER}\" \"yes\"\n        removeSoftLinkAndCreateDir \"\
+    ${NEW_DATA_DIR}/log/archived\" \"${JF_USER}\" \"${JF_USER}\" \"yes\"\n       \
+    \ removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/work\" \"${JF_USER}\" \"${JF_USER}\"\
+    \ \"yes\"\n        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/backup\" \"${JF_USER}\"\
+    \ \"${JF_USER}\" \"yes\"\n        io_setOwnership \"${NEW_DATA_DIR}\" \"${JF_USER}\"\
+    \ \"${JF_USER}\"\n        if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" ]]; then\n\
+    \            removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/data/postgres\" \"${POSTGRES_USER}\"\
+    \ \"${POSTGRES_USER}\" \"yes\"\n        fi\n    elif [[ \"${INSTALLER}\" == \"\
+    ${DEB_TYPE}\" || \"${INSTALLER}\" == \"${RPM_TYPE}\" ]]; then\n        getUserAndGroupFromFile\n\
+    \        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/etc\" \"${USER_TO_CHECK}\"\
+    \ \"${GROUP_TO_CHECK}\" \"yes\"\n        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/etc/security\"\
+    \ \"${USER_TO_CHECK}\" \"${GROUP_TO_CHECK}\" \"yes\"\n        removeSoftLinkAndCreateDir\
+    \ \"${NEW_DATA_DIR}/data\" \"${USER_TO_CHECK}\" \"${GROUP_TO_CHECK}\" \"yes\"\n\
+    \        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/log/archived\" \"${USER_TO_CHECK}\"\
+    \ \"${GROUP_TO_CHECK}\" \"yes\"\n        removeSoftLinkAndCreateDir \"${NEW_DATA_DIR}/work\"\
+    \ \"${USER_TO_CHECK}\" \"${GROUP_TO_CHECK}\" \"yes\"\n        removeSoftLinkAndCreateDir\
+    \ \"${NEW_DATA_DIR}/backup\" \"${USER_TO_CHECK}\" \"${GROUP_TO_CHECK}\" \"yes\"\
+    \n    fi\n}\n\n# Check entry in map is format\ncheckMapEntry () {\n    local entry=\"\
+    $1\"\n\n    [[ \"${entry}\" != *\"=\"* ]] && echo -n \"false\" || echo -n \"true\"\
+    \n}\n# Check value Empty and warn\nwarnIfEmpty () {\n    local filePath=\"$1\"\
+    \n    local yamlPath=\"$2\"\n    local check=\n\n    if [[ -z \"${filePath}\"\
+    \ ]]; then\n        warn \"Empty value in yamlpath [${yamlPath} in [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \n        check=false\n    else\n        check=true\n    fi\n    echo \"${check}\"\
+    \n}\n\nlogCopyStatus () {\n    local status=\"$1\"\n    local logMessage=\"$2\"\
+    \n    local warnMessage=\"$3\"\n\n    [[ \"${status}\" == \"success\"  ]] && logger\
+    \ \"${logMessage}\"\n    [[ \"${status}\" == \"fail\" ]] && warn \"${warnMessage}\"\
+    \n}\n# copy contents from source to destination\ncopyCmd () {\n    local source=\"\
+    $1\"\n    local target=\"$2\"\n    local mode=\"$3\"\n    local status=\n    \n\
+    \    case $mode in\n        unique)\n            cp -up \"${source}\"/* \"${target}\"\
+    / && status=\"success\" || status=\"fail\"\n            logCopyStatus \"${status}\"\
+    \ \"Successfully copied directory contents from [${source}] to [${target}]\" \"\
+    Failed to copy directory contents from [${source}] to [${target}]\"\n        ;;\n\
+    \        specific)\n            cp -pf \"${source}\" \"${target}\"/ && status=\"\
+    success\" || status=\"fail\"\n            logCopyStatus \"${status}\" \"Successfully\
+    \ copied file [${source}] to [${target}]\" \"Failed to copy file [${source}] to\
+    \ [${target}]\"\n        ;;\n        patternFiles)\n            cp -pf \"${source}\"\
+    * \"${target}\"/ && status=\"success\" || status=\"fail\"\n            logCopyStatus\
+    \ \"${status}\" \"Successfully copied files matching [${source}*] to [${target}]\"\
+    \ \"Failed to copy files matching [${source}*] to [${target}]\"\n        ;;\n\
+    \        full)\n            cp -prf \"${source}\"/* \"${target}\"/ && status=\"\
+    success\" || status=\"fail\"\n            logCopyStatus \"${status}\" \"Successfully\
+    \ copied directory contents from [${source}] to [${target}]\" \"Failed to copy\
+    \ directory contents from [${source}] to [${target}]\"\n        ;;\n    esac\n\
+    }\n# Check contents exist in source before copying\ncopyOnContentExist () {\n\
+    \    local source=\"$1\"\n    local target=\"$2\"\n    local mode=\"$3\"\n\n \
+    \   if [[ \"$(checkContentExists \"${source}\")\" == \"true\" ]]; then\n     \
+    \   copyCmd \"${source}\" \"${target}\" \"${mode}\"\n    else\n        logger\
+    \ \"No contents to copy from [${source}]\"\n    fi\n}\n\n# move source to destination\n\
+    moveCmd () {\n    local source=\"$1\"\n    local target=\"$2\"\n    local status=\n\
+    \    \n    mv -f \"${source}\" \"${target}\" && status=\"success\" || status=\"\
+    fail\"\n    [[ \"${status}\" == \"success\" ]] && logger \"Successfully moved\
+    \ directory [${source}] to [${target}]\"\n    [[ \"${status}\" == \"fail\" ]]\
+    \ && warn \"Failed to move directory [${source}] to [${target}]\"\n}\n\n# symlink\
+    \ target to source\nsymlinkCmd () {\n    local source=\"$1\"\n    local target=\"\
+    $2\"\n    local symlinkSubDir=\"$3\"\n    local check=false\n    \n    if [[ \"\
+    ${symlinkSubDir}\" == \"subDir\" ]]; then\n        ln -sf \"${source}\"/* \"${target}\"\
+    \ && check=true || check=false\n    else\n        ln -sf \"${source}\" \"${target}\"\
+    \   && check=true || check=false\n    fi\n    \n    [[ \"${check}\" == \"true\"\
+    \  ]] && logger \"Successfully symlinked directory [${target}] to old [${source}]\"\
+    \n    [[ \"${check}\" == \"false\" ]] && warn \"Symlink operation failed\"\n}\n\
+    # Check contents exist in source before symlinking\nsymlinkOnExist () {\n    local\
+    \ source=\"$1\"\n    local target=\"$2\"\n    local symlinkSubDir=\"$3\"\n\n \
+    \   if [[ \"$(checkContentExists \"${source}\")\" == \"true\" ]]; then\n     \
+    \   if [[ \"${symlinkSubDir}\" == \"subDir\" ]]; then\n            symlinkCmd\
+    \ \"${source}\" \"${target}\" \"subDir\"\n        else\n            symlinkCmd\
+    \ \"${source}\" \"${target}\"\n        fi\n    else\n        logger \"No contents\
+    \ to symlink from [${source}]\"\n    fi\n}\n\nprependDir () {\n    local absolutePath=\"\
+    $1\"\n    local fullPath=\"$2\"\n    local sourcePath=\n\n    if [[ \"${absolutePath}\"\
+    \ = \\/* ]]; then\n        sourcePath=\"${absolutePath}\"\n    else\n        sourcePath=\"\
+    ${fullPath}\"\n    fi\n    echo \"${sourcePath}\"\n}\n\ngetFirstEntry (){\n  \
+    \  local entry=\"$1\"\n\n    [[ -z \"${entry}\" ]] && return\n    echo \"${entry}\"\
+    \ | awk -F\"=\" '{print $1}'\n}\n\ngetSecondEntry () {\n    local entry=\"$1\"\
+    \n\n    [[ -z \"${entry}\" ]] && return\n    echo \"${entry}\" | awk -F\"=\" '{print\
+    \ $2}'\n}\n# To get absolutePath\npathResolver () {\n    local directoryPath=\"\
+    $1\"\n    local dataDir=\n\n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\"\
+    \ ||  \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n        retrieveYamlValue\
+    \ \"migration.oldDataDir\" \"oldDataDir\" \"Warning\"\n        dataDir=\"${YAML_VALUE}\"\
+    \n        cd \"${dataDir}\"\n    else\n        cd \"${OLD_DATA_DIR}\"\n    fi\n\
+    \    absoluteDir=\"`cd \"${directoryPath}\";pwd`\"\n    echo \"${absoluteDir}\"\
+    \n}\n\ncheckPathResolver () {\n    local value=\"$1\"\n\n    if [[ \"${value}\"\
+    \ == \\/* ]]; then\n        value=\"${value}\"\n    else\n        value=\"$(pathResolver\
+    \ \"${value}\")\"\n    fi\n    echo \"${value}\"\n}\n\npropertyMigrate () {\n\
+    \    local entry=\"$1\"\n    local filePath=\"$2\"\n    local fileName=\"$3\"\n\
+    \    local check=false\n\n    local yamlPath=\"$(getFirstEntry \"${entry}\")\"\
+    \n    local property=\"$(getSecondEntry \"${entry}\")\"\n    if [[ -z \"${property}\"\
+    \ ]]; then\n        warn \"Property is empty in map [${entry}] in the file [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \n        return\n    fi\n    if [[ -z \"${yamlPath}\" ]]; then\n        warn\
+    \ \"yamlPath is empty for [${property}] in [${MIGRATION_SYSTEM_YAML_INFO}]\"\n\
+    \        return\n    fi\n    while IFS='=' read -r key value || [ -n \"${key}\"\
+    \ ];\n    do\n        [[ ! \"${key}\" =~ \\#.* && ! -z \"${key}\" && ! -z \"${value}\"\
+    \ ]]\n        key=\"$(io_trim \"${key}\")\"\n        if [[ \"${key}\" == \"${property}\"\
+    \ ]]; then\n            if [[ \"${PRODUCT}\" == \"artifactory\" ]]; then\n   \
+    \             value=\"$(migrateResolveDerbyPath \"${key}\" \"${value}\")\"\n \
+    \               value=\"$(migrateResolveHaDirPath \"${key}\" \"${value}\")\"\n\
+    \                value=\"$(updatePostgresUrlString_Hook \"${yamlPath}\" \"${value}\"\
+    )\"\n            fi\n            if [[ \"${key}\" == \"context.url\" ]]; then\n\
+    \                local ip=$(echo \"${value}\" | awk -F/ '{print $3}' | sed 's/:.*//')\n\
+    \                setSystemValue \"shared.node.ip\" \"${ip}\" \"${SYSTEM_YAML_PATH}\"\
+    \n                logger \"Setting [shared.node.ip] with [${ip}] in system.yaml\"\
+    \n            fi\n            setSystemValue \"${yamlPath}\" \"${value}\" \"${SYSTEM_YAML_PATH}\"\
+    \ && logger \"Setting [${yamlPath}] with value of the property [${property}] in\
+    \ system.yaml\" && check=true && break || check=false\n        fi\n    done <\
+    \ \"${NEW_DATA_DIR}/${filePath}/${fileName}\"\n    [[ \"${check}\" == \"false\"\
+    \ ]] && logger \"Property [${property}] not found in file [${fileName}]\"\n}\n\
+    \nsetHaEnabled_hook () {\n    echo \"\"\n}\n\nmigratePropertiesFiles () {\n  \
+    \  local fileList=\n    local filePath=\n    local fileName=\n    local map=\n\
+    \    \n    retrieveYamlValue \"migration.propertyFiles.files\" \"fileList\" \"\
+    Skip\"\n    fileList=\"${YAML_VALUE}\"\n    if [[ -z \"${fileList}\" ]]; then\n\
+    \        return\n    fi\n    bannerSection \"PROCESSING MIGRATION OF PROPERTY\
+    \ FILES\"\n    for file in ${fileList};\n    do\n        bannerSubSection \"Processing\
+    \ Migration of $file\"\n        retrieveYamlValue \"migration.propertyFiles.$file.filePath\"\
+    \ \"filePath\" \"Warning\"\n        filePath=\"${YAML_VALUE}\"\n        retrieveYamlValue\
+    \ \"migration.propertyFiles.$file.fileName\" \"fileName\" \"Warning\"\n      \
+    \  fileName=\"${YAML_VALUE}\"\n        [[ -z \"${filePath}\" && -z \"${fileName}\"\
+    \ ]] && continue\n        if [[ \"$(checkFileExists \"${NEW_DATA_DIR}/${filePath}/${fileName}\"\
+    )\" == \"true\" ]]; then\n            logger \"File [${fileName}] found in path\
+    \ [${NEW_DATA_DIR}/${filePath}]\"\n            # setting haEnabled with true only\
+    \ if ha-node.properties is present\n            setHaEnabled_hook \"${filePath}\"\
+    \n            retrieveYamlValue \"migration.propertyFiles.$file.map\" \"map\"\
+    \ \"Warning\"\n            map=\"${YAML_VALUE}\"\n            [[ -z \"${map}\"\
+    \ ]] && continue\n            for entry in $map;\n            do\n           \
+    \     if [[ \"$(checkMapEntry \"${entry}\")\" == \"true\" ]]; then\n         \
+    \           propertyMigrate \"${entry}\" \"${filePath}\" \"${fileName}\"\n   \
+    \             else\n                    warn \"map entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\
+    \ is not in correct format, correct format i.e yamlPath=property\"\n         \
+    \       fi\n            done\n        else\n            logger \"File [${fileName}]\
+    \ was not found in path [${NEW_DATA_DIR}/${filePath}] to migrate\"\n        fi\n\
+    \    done\n}\n\ncreateTargetDir () {\n    local mountDir=\"$1\"\n    local target=\"\
+    $2\"\n\n    logger \"Target directory not found [${mountDir}/${target}], creating\
+    \ it\"\n    createDirectoryRecursive \"${mountDir}\" \"${target}\" \"Warning\"\
+    \n}\n\ncreateDirectoryRecursive () {\n    local mountDir=\"$1\"\n    local target=\"\
+    $2\"\n    local output=\"$3\"\n    local check=false\n    local message=\"Could\
+    \ not create directory ${directory}, please check if the user ${USER} has permissions\
+    \ to perform this action\"\n    removeSoftLink \"${mountDir}/${target}\"\n   \
+    \ local directory=$(echo \"${target}\" | tr '/' ' ' )\n    local targetDir=\"\
+    ${mountDir}\"\n    for dir in ${directory}; \n    do\n        targetDir=\"${targetDir}/${dir}\"\
+    \n        mkdir -p \"${targetDir}\" && check=true || check=false\n        setOwnershipBasedOnInstaller\
+    \ \"${targetDir}\"\n    done\n    if [[ \"${check}\" == \"false\" ]]; then\n \
+    \       if [[ \"${output}\" == \"Warning\" ]]; then\n            warn \"${message}\"\
+    \n        else\n            errorExit \"${message}\"\n        fi\n    fi\n}\n\n\
+    copyOperation () {\n    local source=\"$1\"\n    local target=\"$2\"\n    local\
+    \ mode=\"$3\"\n    local check=false\n    local targetDataDir=\n    local targetLink=\n\
+    \    local date=\n\n    # prepend OLD_DATA_DIR only if source is relative path\n\
+    \    source=\"$(prependDir \"${source}\" \"${OLD_DATA_DIR}/${source}\")\"\n  \
+    \  if [[ \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n        targetDataDir=\"\
+    ${NEW_DATA_DIR}\"\n    else\n        targetDataDir=\"`cd \"${NEW_DATA_DIR}\"/../;pwd`\"\
+    \n    fi\n    copyLogMessage \"${mode}\"\n    #remove source if it is a symlink\n\
+    \    if [[ -L \"${source}\" ]]; then\n        targetLink=$(readlink -f \"${source}\"\
+    )\n        logger \"Removing the symlink [${source}] pointing to [${targetLink}]\"\
+    \n        rm -f \"${source}\"\n        source=${targetLink}\n    fi\n    if [[\
+    \ \"$(checkDirExists \"${source}\")\" != \"true\" ]]; then\n        logger \"\
+    Source [${source}] directory not found in path\"\n        return\n    fi\n   \
+    \ if [[ \"$(checkDirContents \"${source}\")\" != \"true\" ]]; then\n        logger\
+    \ \"No contents to copy from [${source}]\"\n        return\n    fi\n    if [[\
+    \ \"$(checkDirExists \"${targetDataDir}/${target}\")\" != \"true\" ]]; then\n\
+    \        createTargetDir \"${targetDataDir}\" \"${target}\"\n    fi\n    copyOnContentExist\
+    \ \"${source}\" \"${targetDataDir}/${target}\" \"${mode}\"\n}\n\ncopySpecificFiles\
+    \ () {\n    local source=\"$1\"\n    local target=\"$2\"\n    local mode=\"$3\"\
+    \n    \n    # prepend OLD_DATA_DIR only if source is relative path\n    source=\"\
+    $(prependDir \"${source}\" \"${OLD_DATA_DIR}/${source}\")\"\n    if [[ \"${INSTALLER}\"\
+    \ == \"${HELM_TYPE}\" ]]; then\n        targetDataDir=\"${NEW_DATA_DIR}\"\n  \
+    \  else\n        targetDataDir=\"`cd \"${NEW_DATA_DIR}\"/../;pwd`\"\n    fi\n\
+    \    copyLogMessage \"${mode}\"\n    if [[ \"$(checkFileExists \"${source}\")\"\
+    \ != \"true\" ]]; then\n        logger \"Source file [${source}] does not exist\
+    \ in path\"\n        return\n    fi\n    if [[ \"$(checkDirExists \"${targetDataDir}/${target}\"\
+    )\" != \"true\" ]]; then\n        createTargetDir \"${targetDataDir}\" \"${target}\"\
+    \n    fi\n    copyCmd \"${source}\" \"${targetDataDir}/${target}\" \"${mode}\"\
+    \n}\n\ncopyPatternMatchingFiles () {\n    local source=\"$1\"\n    local target=\"\
+    $2\"\n    local mode=\"$3\"\n    local sourcePath=\"${4}\"\n\n    # prepend OLD_DATA_DIR\
+    \ only if source is relative path\n    sourcePath=\"$(prependDir \"${sourcePath}\"\
+    \ \"${OLD_DATA_DIR}/${sourcePath}\")\"\n    if [[ \"${INSTALLER}\" == \"${HELM_TYPE}\"\
+    \ ]]; then\n        targetDataDir=\"${NEW_DATA_DIR}\"\n    else\n        targetDataDir=\"\
+    `cd \"${NEW_DATA_DIR}\"/../;pwd`\"\n    fi\n    copyLogMessage \"${mode}\"\n \
+    \   if [[ \"$(checkDirExists \"${sourcePath}\")\" != \"true\" ]]; then\n     \
+    \   logger \"Source [${sourcePath}] directory not found in path\"\n        return\n\
+    \    fi\n    if ls \"${sourcePath}/${source}\"* 1> /dev/null 2>&1; then\n    \
+    \    if [[ \"$(checkDirExists \"${targetDataDir}/${target}\")\" != \"true\" ]];\
+    \ then\n            createTargetDir \"${targetDataDir}\" \"${target}\"\n     \
+    \   fi\n        copyCmd \"${sourcePath}/${source}\" \"${targetDataDir}/${target}\"\
+    \ \"${mode}\"\n    else\n        logger \"Source file [${sourcePath}/${source}*]\
+    \ does not exist in path\"\n    fi\n}\n\ncopyLogMessage () {\n    local mode=\"\
+    $1\"\n    case $mode in\n        specific)\n            logger \"Copy file [${source}]\
+    \ to target [${targetDataDir}/${target}]\"\n        ;;\n        patternFiles)\n\
+    \            logger \"Copy files matching [${sourcePath}/${source}*] to target\
+    \ [${targetDataDir}/${target}]\"\n        ;;\n        full)\n            logger\
+    \ \"Copy directory contents from source [${source}] to target [${targetDataDir}/${target}]\"\
+    \n        ;;\n        unique)\n            logger \"Copy directory contents from\
+    \ source [${source}] to target [${targetDataDir}/${target}]\"\n        ;;\n  \
+    \  esac\n}\n\ncopyBannerMessages () {\n    local mode=\"$1\"\n    local textMode=\"\
+    $2\"\n    case $mode in\n        specific)\n            bannerSection \"COPY ${textMode}\
+    \ FILES\"\n        ;;\n        patternFiles)\n            bannerSection \"COPY\
+    \ MATCHING ${textMode}\"\n        ;;\n        full)\n            bannerSection\
+    \ \"COPY ${textMode} DIRECTORIES CONTENTS\"\n        ;;\n        unique)\n   \
+    \         bannerSection \"COPY ${textMode} DIRECTORIES CONTENTS\"\n        ;;\n\
+    \    esac\n}\n\ninvokeCopyFunctions () {\n    local mode=\"$1\"\n    local source=\"\
+    $2\"\n    local target=\"$3\"\n\n    case $mode in\n        specific)\n      \
+    \      copySpecificFiles \"${source}\" \"${target}\" \"${mode}\"\n        ;;\n\
+    \        patternFiles)\n            retrieveYamlValue \"migration.${copyFormat}.sourcePath\"\
+    \ \"map\" \"Warning\"\n            local sourcePath=\"${YAML_VALUE}\"\n      \
+    \      copyPatternMatchingFiles \"${source}\" \"${target}\" \"${mode}\" \"${sourcePath}\"\
+    \n        ;;\n        full)\n            copyOperation \"${source}\" \"${target}\"\
+    \ \"${mode}\"\n        ;;\n        unique)\n            copyOperation \"${source}\"\
+    \ \"${target}\" \"${mode}\"\n        ;;\n    esac\n}\n# Copies contents from source\
+    \ directory and target directory\ncopyDataDirectories () {\n    local copyFormat=\"\
+    $1\"\n    local mode=\"$2\"\n    local map=\n    local source=\n    local target=\n\
+    \    local textMode=\n    local targetDataDir=\n    local copyFormatValue=\n\n\
+    \    retrieveYamlValue \"migration.${copyFormat}\" \"${copyFormat}\" \"Skip\"\n\
+    \    copyFormatValue=\"${YAML_VALUE}\"\n    if [[ -z \"${copyFormatValue}\" ]];\
+    \ then\n        return\n    fi\n    textMode=$(echo \"${mode}\" | tr '[:lower:]'\
+    \ '[:upper:]' 2>/dev/null)\n    copyBannerMessages \"${mode}\" \"${textMode}\"\
+    \n    retrieveYamlValue \"migration.${copyFormat}.map\" \"map\" \"Warning\"\n\
+    \    map=\"${YAML_VALUE}\"\n    if [[ \"${INSTALLER}\" == \"${HELM_TYPE}\" ]];\
+    \ then\n        targetDataDir=\"${NEW_DATA_DIR}\"\n    else\n        targetDataDir=\"\
+    `cd \"${NEW_DATA_DIR}\"/../;pwd`\"\n    fi\n    for entry in $map;\n    do\n \
+    \       if [[ \"$(checkMapEntry \"${entry}\")\" == \"true\" ]]; then\n       \
+    \     source=\"$(getSecondEntry \"${entry}\")\"\n            target=\"$(getFirstEntry\
+    \ \"${entry}\")\"\n            [[ -z \"${source}\" ]] && warn \"source value is\
+    \ empty for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n    \
+    \        [[ -z \"${target}\" ]] && warn \"target value is empty for [${entry}]\
+    \ in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n            invokeCopyFunctions\
+    \ \"${mode}\" \"${source}\" \"${target}\"\n        else\n            warn \"map\
+    \ entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}] is not in correct format,\
+    \ correct format i.e target=source\"\n        fi\n        echo \"\";\n    done\n\
+    }\n\ninvokeMoveFunctions () {\n    local source=\"$1\"\n    local target=\"$2\"\
+    \n    local sourceDataDir=\n    local targetBasename=\n    # prepend OLD_DATA_DIR\
+    \ only if source is relative path\n    sourceDataDir=$(prependDir \"${source}\"\
+    \ \"${OLD_DATA_DIR}/${source}\")\n    targetBasename=$(dirname \"${target}\")\n\
+    \    logger \"Moving directory source [${sourceDataDir}] to target [${NEW_DATA_DIR}/${target}]\"\
+    \n    if [[ \"$(checkDirExists \"${sourceDataDir}\")\" != \"true\" ]]; then\n\
+    \        logger \"Directory [${sourceDataDir}] not found in path to move\"\n \
+    \       return\n    fi\n    if [[ \"$(checkDirExists \"${NEW_DATA_DIR}/${targetBasename}\"\
+    )\" != \"true\" ]]; then\n        createTargetDir \"${NEW_DATA_DIR}\" \"${targetBasename}\"\
+    \n        moveCmd \"${sourceDataDir}\" \"${NEW_DATA_DIR}/${target}\"\n    else\n\
+    \        moveCmd \"${sourceDataDir}\" \"${NEW_DATA_DIR}/tempDir\"\n        moveCmd\
+    \ \"${NEW_DATA_DIR}/tempDir\" \"${NEW_DATA_DIR}/${target}\"\n    fi\n}\n\n# Move\
+    \ source directory and target directory\nmoveDirectories () {\n    local moveDataDirectories=\n\
+    \    local map=\n    local source=\n    local target=\n\n    retrieveYamlValue\
+    \ \"migration.moveDirectories\" \"moveDirectories\" \"Skip\"\n    moveDirectories=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${moveDirectories}\" ]]; then\n        return\n\
+    \    fi\n    bannerSection \"MOVE DIRECTORIES\"\n    retrieveYamlValue \"migration.moveDirectories.map\"\
+    \ \"map\" \"Warning\"\n    map=\"${YAML_VALUE}\"\n    for entry in $map;\n   \
+    \ do\n        if [[ \"$(checkMapEntry \"${entry}\")\" == \"true\" ]]; then\n \
+    \           source=\"$(getSecondEntry \"${entry}\")\"\n            target=\"$(getFirstEntry\
+    \ \"${entry}\")\"\n            [[ -z \"${source}\" ]] && warn \"source value is\
+    \ empty for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n    \
+    \        [[ -z \"${target}\" ]] && warn \"target value is empty for [${entry}]\
+    \ in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n            invokeMoveFunctions\
+    \ \"${source}\" \"${target}\"\n        else\n            warn \"map entry [${entry}]\
+    \ in [${MIGRATION_SYSTEM_YAML_INFO}] is not in correct format, correct format\
+    \ i.e target=source\"\n        fi\n    echo \"\";\n    done\n}\n\n# Trim masterKey\
+    \ if its generated using hex 32 \ntrimMasterKey () {\n    local masterKeyDir=/opt/jfrog/artifactory/var/etc/security\n\
+    \    local oldMasterKey=$(<${masterKeyDir}/master.key)\n    local oldMasterKey_Length=$(echo\
+    \ ${#oldMasterKey})\n    local newMasterKey=\n    if [[ ${oldMasterKey_Length}\
+    \ -gt 32 ]]; then\n        bannerSection \"TRIM MASTERKEY\"\n        newMasterKey=$(echo\
+    \ ${oldMasterKey:0:32})\n        cp ${masterKeyDir}/master.key ${masterKeyDir}/backup_master.key\n\
+    \        logger \"Original masterKey is backed up : ${masterKeyDir}/backup_master.key\"\
+    \n        rm -rf ${masterKeyDir}/master.key\n        echo ${newMasterKey} > ${masterKeyDir}/master.key\n\
+    \        logger \"masterKey is trimmed : ${masterKeyDir}/master.key\"\n    fi\n\
+    }\n\ncopyDirectories () {\n\n    copyDataDirectories \"copyFiles\" \"full\"\n\
+    \    copyDataDirectories \"copyUniqueFiles\" \"unique\"\n    copyDataDirectories\
+    \ \"copySpecificFiles\" \"specific\"\n    copyDataDirectories \"copyPatternMatchingFiles\"\
+    \ \"patternFiles\"\n}\n\nsymlinkDir () {\n    local source=\"$1\"\n    local target=\"\
+    $2\"\n    local targetDir=\n    local basename=\n    local targetParentDir=\n\
+    \    \n    targetDir=\"$(dirname \"${target}\")\"\n    if [[ \"${targetDir}\"\
+    \ == \"${source}\" ]]; then\n        # symlink the sub directories\n        createDirectory\
+    \ \"${NEW_DATA_DIR}/${target}\" \"Warning\"\n        if [[ \"$(checkDirExists\
+    \ \"${NEW_DATA_DIR}/${target}\")\" == \"true\" ]]; then\n            symlinkOnExist\
+    \ \"${OLD_DATA_DIR}/${source}\" \"${NEW_DATA_DIR}/${target}\" \"subDir\"\n   \
+    \         basename=\"$(basename \"${target}\")\"\n            cd \"${NEW_DATA_DIR}/${target}\"\
+    \ && rm -f \"${basename}\"\n        fi\n    else\n        targetParentDir=\"$(dirname\
+    \ \"${NEW_DATA_DIR}/${target}\")\"\n        createDirectory \"${targetParentDir}\"\
+    \ \"Warning\"\n        if [[ \"$(checkDirExists \"${targetParentDir}\")\" == \"\
+    true\" ]]; then\n            symlinkOnExist \"${OLD_DATA_DIR}/${source}\" \"${NEW_DATA_DIR}/${target}\"\
+    \n        fi\n    fi\n}\n\nsymlinkOperation () {\n    local source=\"$1\"\n  \
+    \  local target=\"$2\"\n    local check=false\n    local targetLink=\n    local\
+    \ date=\n    \n    #   Check if source is a link and do symlink\n    if [[ -L\
+    \ \"${OLD_DATA_DIR}/${source}\" ]]; then\n        targetLink=$(readlink -f \"\
+    ${OLD_DATA_DIR}/${source}\")\n        symlinkOnExist \"${targetLink}\" \"${NEW_DATA_DIR}/${target}\"\
+    \n    else\n        #  check if source is directory and do symlink\n        if\
+    \ [[ \"$(checkDirExists \"${OLD_DATA_DIR}/${source}\")\" != \"true\" ]]; then\n\
+    \            logger \"Source [${source}] directory not found in path to symlink\"\
+    \n            return\n        fi\n        if [[ \"$(checkDirContents \"${OLD_DATA_DIR}/${source}\"\
+    )\" != \"true\" ]]; then\n            logger \"No contents found in [${OLD_DATA_DIR}/${source}]\
+    \ to symlink\"\n            return\n        fi\n        if [[ \"$(checkDirExists\
+    \ \"${NEW_DATA_DIR}/${target}\")\" != \"true\" ]]; then\n            logger \"\
+    Target directory [${NEW_DATA_DIR}/${target}] does not exist to create symlink,\
+    \ creating it\"\n            symlinkDir \"${source}\" \"${target}\"\n        else\n\
+    \            rm -rf \"${NEW_DATA_DIR}/${target}\" && check=true || check=false\n\
+    \            [[ \"${check}\" == \"false\" ]] && warn \"Failed to remove contents\
+    \ in [${NEW_DATA_DIR}/${target}/]\"\n            symlinkDir \"${source}\" \"${target}\"\
+    \n        fi\n    fi\n}\n# Creates a symlink path - Source directory to which\
+    \ the symbolic link should point.\nsymlinkDirectories () {\n    local linkFiles=\n\
+    \    local map=\n    local source=\n    local target=\n\n    retrieveYamlValue\
+    \ \"migration.linkFiles\" \"linkFiles\" \"Skip\"\n    linkFiles=\"${YAML_VALUE}\"\
+    \n    if [[ -z \"${linkFiles}\" ]]; then\n        return\n    fi\n    bannerSection\
+    \ \"SYMLINK DIRECTORIES\"\n    retrieveYamlValue \"migration.linkFiles.map\" \"\
+    map\" \"Warning\"\n    map=\"${YAML_VALUE}\"\n    for entry in $map;\n    do\n\
+    \        if [[ \"$(checkMapEntry \"${entry}\")\" == \"true\" ]]; then\n      \
+    \      source=\"$(getSecondEntry \"${entry}\")\"\n            target=\"$(getFirstEntry\
+    \ \"${entry}\")\"\n            logger \"Symlink directory [${NEW_DATA_DIR}/${target}]\
+    \ to old [${OLD_DATA_DIR}/${source}]\"\n            [[ -z \"${source}\" ]] &&\
+    \ warn \"source value is empty for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \ && continue\n            [[ -z \"${target}\" ]] && warn \"target value is empty\
+    \ for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n          \
+    \  symlinkOperation \"${source}\" \"${target}\"\n        else\n            warn\
+    \ \"map entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}] is not in correct\
+    \ format, correct format i.e target=source\"\n        fi\n        echo \"\";\n\
+    \    done\n}\n\nupdateConnectionString () {\n    local yamlPath=\"$1\"\n    local\
+    \ value=\"$2\"\n    local mongoPath=\"shared.mongo.url\"\n    local rabbitmqPath=\"\
+    shared.rabbitMq.url\"\n    local postgresPath=\"shared.database.url\"\n    local\
+    \ redisPath=\"shared.redis.connectionString\"\n    local mongoConnectionString=\"\
+    mongo.connectionString\"\n    local sourceKey=\n    local hostIp=$(io_getPublicHostIP)\n\
+    \    local hostKey=\n    \n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" ||\
+    \ \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then \n    # Replace @postgres:,@mongodb:,@rabbitmq:,@redis:\
+    \ to @{hostIp}: (Compose Installer)\n        hostKey=\"@${hostIp}:\"\n       \
+    \ case $yamlPath in\n            ${postgresPath})\n                sourceKey=\"\
+    @postgres:\"\n                value=$(io_replaceString \"${value}\" \"${sourceKey}\"\
+    \ \"${hostKey}\")\n            ;;\n            ${mongoPath})\n               \
+    \ sourceKey=\"@mongodb:\"\n                value=$(io_replaceString \"${value}\"\
+    \ \"${sourceKey}\" \"${hostKey}\")\n            ;;\n            ${rabbitmqPath})\n\
+    \                sourceKey=\"@rabbitmq:\"\n                value=$(io_replaceString\
+    \ \"${value}\" \"${sourceKey}\" \"${hostKey}\")\n            ;;\n            ${redisPath})\n\
+    \                sourceKey=\"@redis:\"\n                value=$(io_replaceString\
+    \ \"${value}\" \"${sourceKey}\" \"${hostKey}\")\n            ;;\n            ${mongoConnectionString})\n\
+    \                sourceKey=\"@mongodb:\"\n                value=$(io_replaceString\
+    \ \"${value}\" \"${sourceKey}\" \"${hostKey}\")\n            ;;\n        esac\n\
+    \    fi\n    echo -n \"${value}\"\n}\n\nyamlMigrate () {\n    local entry=\"$1\"\
+    \n    local sourceFile=\"$2\"\n    local value=\n    local yamlPath=\n    local\
+    \ key=\n    yamlPath=\"$(getFirstEntry \"${entry}\")\"\n    key=\"$(getSecondEntry\
+    \ \"${entry}\")\"\n    if [[ -z \"${key}\" ]]; then\n        warn \"key is empty\
+    \ in map [${entry}] in the file [${MIGRATION_SYSTEM_YAML_INFO}]\"\n        return\n\
+    \    fi\n    if [[ -z \"${yamlPath}\" ]]; then\n        warn \"yamlPath is empty\
+    \ for [${key}] in [${MIGRATION_SYSTEM_YAML_INFO}]\"\n        return\n    fi\n\
+    \    getYamlValue \"${key}\" \"${sourceFile}\" \"false\"\n    value=\"${YAML_VALUE}\"\
+    \n    if [[ ! -z \"${value}\" ]]; then\n        value=$(updateConnectionString\
+    \ \"${yamlPath}\" \"${value}\")\n    fi\n    if [[ \"${PRODUCT}\" == \"artifactory\"\
+    \ ]]; then\n        replicatorProfiling\n    fi\n    if [[ -z \"${value}\" ]];\
+    \ then\n        logger \"No value for [${key}] in [${sourceFile}]\"\n    else\n\
+    \        setSystemValue \"${yamlPath}\" \"${value}\" \"${SYSTEM_YAML_PATH}\"\n\
+    \        logger \"Setting [${yamlPath}] with value of the key [${key}] in system.yaml\"\
+    \n    fi\n}\n\nmigrateYamlFile () {\n    local files=\n    local filePath=\n \
+    \   local fileName=\n    local sourceFile=\n    local map=\n    retrieveYamlValue\
+    \ \"migration.yaml.files\" \"files\" \"Skip\"\n    files=\"${YAML_VALUE}\"\n \
+    \   if [[ -z \"${files}\" ]]; then\n        return\n    fi\n    bannerSection\
+    \ \"MIGRATION OF YAML FILES\"\n    for file in $files;\n    do\n        bannerSubSection\
+    \ \"Processing Migration of $file\"\n        retrieveYamlValue \"migration.yaml.$file.filePath\"\
+    \ \"filePath\" \"Warning\"\n        filePath=\"${YAML_VALUE}\"\n        retrieveYamlValue\
+    \ \"migration.yaml.$file.fileName\" \"fileName\" \"Warning\"\n        fileName=\"\
+    ${YAML_VALUE}\"\n        [[ -z \"${filePath}\" && -z \"${fileName}\" ]] && continue\n\
+    \        sourceFile=\"${NEW_DATA_DIR}/${filePath}/${fileName}\"\n        if [[\
+    \ \"$(checkFileExists \"${sourceFile}\")\" == \"true\" ]]; then\n            logger\
+    \ \"File [${fileName}] found in path [${NEW_DATA_DIR}/${filePath}]\"\n       \
+    \     retrieveYamlValue \"migration.yaml.$file.map\" \"map\" \"Warning\"\n   \
+    \         map=\"${YAML_VALUE}\"\n            [[ -z \"${map}\" ]] && continue\n\
+    \            for entry in $map;\n            do\n                if [[ \"$(checkMapEntry\
+    \ \"${entry}\")\" == \"true\" ]]; then\n                    yamlMigrate \"${entry}\"\
+    \ \"${sourceFile}\"\n                else\n                    warn \"map entry\
+    \ [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}] is not in correct format, correct\
+    \ format i.e yamlPath=key\"\n                fi\n            done\n        else\n\
+    \            logger \"File [${fileName}] is not found in path [${NEW_DATA_DIR}/${filePath}]\
+    \ to migrate\"\n        fi\n    done\n}\n# updates the key and value in system.yaml\n\
+    updateYamlKeyValue () {\n    local entry=\"$1\"\n    local value=\n    local yamlPath=\n\
+    \    local key=\n\n    yamlPath=\"$(getFirstEntry \"${entry}\")\"\n    value=\"\
+    $(getSecondEntry \"${entry}\")\"\n    if [[ -z \"${value}\" ]]; then\n       \
+    \ warn \"value is empty in map [${entry}] in the file [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \n        return\n    fi\n    if [[ -z \"${yamlPath}\" ]]; then\n        warn\
+    \ \"yamlPath is empty for [${key}] in [${MIGRATION_SYSTEM_YAML_INFO}]\"\n    \
+    \    return\n    fi\n    setSystemValue \"${yamlPath}\" \"${value}\" \"${SYSTEM_YAML_PATH}\"\
+    \n    logger \"Setting [${yamlPath}] with value [${value}] in system.yaml\"\n\
+    }\n\nupdateSystemYamlFile () {\n    local updateYaml=\n    local map=\n\n    retrieveYamlValue\
+    \ \"migration.updateSystemYaml\" \"updateYaml\" \"Skip\"\n    updateSystemYaml=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${updateSystemYaml}\" ]]; then\n        return\n\
+    \    fi\n    bannerSection \"UPDATE SYSTEM YAML FILE WITH KEY AND VALUES\"\n \
+    \   retrieveYamlValue \"migration.updateSystemYaml.map\" \"map\" \"Warning\"\n\
+    \    map=\"${YAML_VALUE}\"\n    if [[ -z \"${map}\" ]]; then\n        return\n\
+    \    fi\n    for entry in $map;\n    do\n        if [[ \"$(checkMapEntry \"${entry}\"\
+    )\" == \"true\" ]]; then\n            updateYamlKeyValue \"${entry}\"\n      \
+    \  else\n            warn \"map entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\
+    \ is not in correct format, correct format i.e yamlPath=key\"\n        fi\n  \
+    \  done\n}\n\nbackupFiles_hook () {\n    logSilly \"Method ${FUNCNAME[0]}\"\n\
+    }\n\nbackupDirectory () {\n    local backupDir=\"$1\"\n    local dir=\"$2\"\n\
+    \    local targetDir=\"$3\"\n    local effectiveUser=\n    local effectiveGroup=\n\
+    \n    if [[ \"${dir}\" = \\/* ]]; then\n        dir=$(echo \"${dir/\\//}\")\n\
+    \    fi\n            \n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"\
+    ${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then \n        effectiveUser=\"${JF_USER}\"\
+    \n        effectiveGroup=\"${JF_USER}\"\n    elif [[ \"${INSTALLER}\" == \"${DEB_TYPE}\"\
+    \ || \"${INSTALLER}\" == \"${RPM_TYPE}\" ]]; then\n        effectiveUser=\"${USER_TO_CHECK}\"\
+    \ \n        effectiveGroup=\"${GROUP_TO_CHECK}\"\n    fi\n    \n    removeSoftLinkAndCreateDir\
+    \ \"${backupDir}\" \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n    local\
+    \ backupDirectory=\"${backupDir}/${PRODUCT}\"\n    removeSoftLinkAndCreateDir\
+    \ \"${backupDirectory}\" \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n\
+    \    removeSoftLinkAndCreateDir \"${backupDirectory}/${dir}\" \"${effectiveUser}\"\
+    \ \"${effectiveGroup}\" \"yes\"\n    local outputCheckDirExists=\"$(checkDirExists\
+    \ \"${backupDirectory}/${dir}\")\"\n    if [[ \"${outputCheckDirExists}\" == \"\
+    true\" ]]; then\n        copyOnContentExist \"${targetDir}\" \"${backupDirectory}/${dir}\"\
+    \ \"full\"\n    fi\n}\n\nremoveOldDirectory () {\n    local backupDir=\"$1\"\n\
+    \    local entry=\"$2\"\n    local check=false\n    \n    # prepend OLD_DATA_DIR\
+    \ only if entry is relative path\n    local targetDir=\"$(prependDir \"${entry}\"\
+    \ \"${OLD_DATA_DIR}/${entry}\")\"\n    local outputCheckDirExists=\"$(checkDirExists\
+    \ \"${targetDir}\")\"\n    if [[ \"${outputCheckDirExists}\" != \"true\" ]]; then\n\
+    \        logger \"No [${targetDir}] directory found to delete\"\n        echo\
+    \ \"\";\n        return\n    fi\n    backupDirectory \"${backupDir}\" \"${entry}\"\
+    \ \"${targetDir}\"\n    rm -rf  \"${targetDir}\" && check=true || check=false\n\
+    \    [[ \"${check}\" == \"true\"  ]] && logger \"Successfully removed directory\
+    \ [${targetDir}]\"\n    [[ \"${check}\" == \"false\" ]] && warn \"Failed to remove\
+    \ directory [${targetDir}]\"\n    echo \"\";\n}\n\ncleanUpOldDataDirectories ()\
+    \ {\n    local cleanUpOldDataDir=\n    local map=\n    local entry=\n\n    retrieveYamlValue\
+    \ \"migration.cleanUpOldDataDir\" \"cleanUpOldDataDir\" \"Skip\"\n    cleanUpOldDataDir=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${cleanUpOldDataDir}\" ]]; then\n        return\n\
+    \    fi\n    bannerSection \"CLEAN UP OLD DATA DIRECTORIES\"\n    retrieveYamlValue\
+    \ \"migration.cleanUpOldDataDir.map\" \"map\" \"Warning\"\n    map=\"${YAML_VALUE}\"\
+    \n    [[ -z \"${map}\" ]] && continue\n    date=\"$(date +%Y%m%d%H%M)\"\n    backupDir=\"\
+    ${NEW_DATA_DIR}/backup/backup-${date}\"\n    bannerImportant \"****** Old data\
+    \ configurations are backedup in [${backupDir}] directory ******\"\n    backupFiles_hook\
+    \ \"${backupDir}/${PRODUCT}\"\n    for entry in $map;\n    do\n        removeOldDirectory\
+    \ \"${backupDir}\" \"${entry}\"\n    done\n}\n\nbackupFiles () {\n    local backupDir=\"\
+    $1\"\n    local dir=\"$2\"\n    local targetDir=\"$3\"\n    local fileName=\"\
+    $4\"\n    local effectiveUser=\n    local effectiveGroup=\n\n    if [[ \"${dir}\"\
+    \ = \\/* ]]; then\n        dir=$(echo \"${dir/\\//}\")\n    fi\n            \n\
+    \    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" == \"${HELM_TYPE}\"\
+    \ ]]; then \n        effectiveUser=\"${JF_USER}\"\n        effectiveGroup=\"${JF_USER}\"\
+    \n    elif [[ \"${INSTALLER}\" == \"${DEB_TYPE}\" || \"${INSTALLER}\" == \"${RPM_TYPE}\"\
+    \ ]]; then\n        effectiveUser=\"${USER_TO_CHECK}\" \n        effectiveGroup=\"\
+    ${GROUP_TO_CHECK}\"\n    fi\n\n    removeSoftLinkAndCreateDir \"${backupDir}\"\
+    \ \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n    local backupDirectory=\"\
+    ${backupDir}/${PRODUCT}\"\n    removeSoftLinkAndCreateDir \"${backupDirectory}\"\
+    \ \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n    removeSoftLinkAndCreateDir\
+    \ \"${backupDirectory}/${dir}\" \"${effectiveUser}\" \"${effectiveGroup}\" \"\
+    yes\"\n    local outputCheckDirExists=\"$(checkDirExists \"${backupDirectory}/${dir}\"\
+    )\"\n    if [[ \"${outputCheckDirExists}\" == \"true\" ]]; then\n        copyCmd\
+    \ \"${targetDir}/${fileName}\" \"${backupDirectory}/${dir}\" \"specific\"\n  \
+    \  fi\n}\n\nremoveOldFiles () {\n    local backupDir=\"$1\"\n    local directoryName=\"\
+    $2\"\n    local fileName=\"$3\"\n    local check=false\n    \n    # prepend OLD_DATA_DIR\
+    \ only if entry is relative path\n    local targetDir=\"$(prependDir \"${directoryName}\"\
+    \ \"${OLD_DATA_DIR}/${directoryName}\")\"\n    local outputCheckFileExists=\"\
+    $(checkFileExists \"${targetDir}/${fileName}\")\"\n    if [[ \"${outputCheckFileExists}\"\
+    \ != \"true\" ]]; then\n        logger \"No [${targetDir}/${fileName}] file found\
+    \ to delete\"\n        return\n    fi\n    backupFiles \"${backupDir}\" \"${directoryName}\"\
+    \ \"${targetDir}\" \"${fileName}\"\n    rm -f  \"${targetDir}/${fileName}\" &&\
+    \ check=true || check=false\n    [[ \"${check}\" == \"true\"  ]] && logger \"\
+    Successfully removed file [${targetDir}/${fileName}]\"\n    [[ \"${check}\" ==\
+    \ \"false\" ]] && warn \"Failed to remove file [${targetDir}/${fileName}]\"\n\
+    \    echo \"\";\n}\n\ncleanUpOldFiles () {\n    local cleanUpFiles=\n    local\
+    \ map=\n    local entry=\n\n    retrieveYamlValue \"migration.cleanUpOldFiles\"\
+    \ \"cleanUpOldFiles\" \"Skip\"\n    cleanUpOldFiles=\"${YAML_VALUE}\"\n    if\
+    \ [[ -z \"${cleanUpOldFiles}\" ]]; then\n        return\n    fi\n    bannerSection\
+    \ \"CLEAN UP OLD FILES\"\n    retrieveYamlValue \"migration.cleanUpOldFiles.map\"\
+    \ \"map\" \"Warning\"\n    map=\"${YAML_VALUE}\"\n    [[ -z \"${map}\" ]] && continue\n\
+    \    date=\"$(date +%Y%m%d%H%M)\"\n    backupDir=\"${NEW_DATA_DIR}/backup/backup-${date}\"\
+    \n    bannerImportant \"****** Old files are backedup in [${backupDir}] directory\
+    \ ******\"\n    for entry in $map;\n    do  \n        local outputCheckMapEntry=\"\
+    $(checkMapEntry \"${entry}\")\"\n        if [[ \"${outputCheckMapEntry}\" != \"\
+    true\" ]]; then\n            warn \"map entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\
+    \ is not in correct format, correct format i.e directoryName=fileName\"\n    \
+    \    fi\n        local fileName=\"$(getSecondEntry \"${entry}\")\"\n        local\
+    \ directoryName=\"$(getFirstEntry \"${entry}\")\"\n        [[ -z \"${fileName}\"\
+    \ ]] && warn \"File name value is empty for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\"\
+    \ && continue\n        [[ -z \"${directoryName}\" ]] && warn \"Directory name\
+    \ value is empty for [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\" && continue\n\
+    \        removeOldFiles \"${backupDir}\" \"${directoryName}\" \"${fileName}\"\n\
+    \        echo \"\";\n    done \n}\n\nstartMigration () {\n    bannerSection \"\
+    STARTING MIGRATION\"\n}\n\nendMigration () {\n    bannerSection \"MIGRATION COMPLETED\
+    \ SUCCESSFULLY\"\n}\n\ninitialize () {\n    setAppDir\n    _pauseExecution \"\
+    setAppDir\"\n    initHelpers\n    _pauseExecution \"initHelpers\"\n    checkMigrationInfoYaml\n\
+    \    _pauseExecution \"checkMigrationInfoYaml\"\n    getProduct\n    _pauseExecution\
+    \ \"getProduct\"\n    getDataDir\n    _pauseExecution \"getDataDir\"\n}\n\nmain\
+    \ () {\n    case $PRODUCT in\n        artifactory)\n            migrateArtifactory\n\
+    \        ;;\n        distribution)\n            migrateDistribution\n        ;;\n\
+    \        xray)\n            migrationXray\n        ;;\n    esac\n    exit 0\n\
+    }\n\n# Ensures meta data is logged\nLOG_BEHAVIOR_ADD_META=\"$FLAG_Y\"\n\n\nmigrateResolveDerbyPath\
+    \ () {\n    local key=\"$1\"\n    local value=\"$2\"\n\n    if [[ \"${key}\" ==\
+    \ \"url\" && \"${value}\" == *\"db.home\"* ]]; then\n        if [[ \"${INSTALLER}\"\
+    \ == \"${COMPOSE_TYPE}\" ]]; then\n            derbyPath=\"/opt/jfrog/artifactory/var/data/artifactory/derby\"\
+    \n            value=$(echo \"${value}\" | sed \"s|{db.home}|$derbyPath|\")\n \
+    \       else\n            derbyPath=\"${NEW_DATA_DIR}/data/artifactory/derby\"\
+    \n            value=$(echo \"${value}\" | sed \"s|{db.home}|$derbyPath|\")\n \
+    \       fi\n    fi\n    echo \"${value}\"\n}\n\nmigrateResolveHaDirPath () {\n\
+    \    local key=\"$1\"\n    local value=\"$2\"\n\n    if [[ \"${INSTALLER}\" ==\
+    \ \"${RPM_TYPE}\" || \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\"\
+    \ == \"${HELM_TYPE}\" || \"${INSTALLER}\" == \"${DEB_TYPE}\" ]]; then\n      \
+    \  if [[ \"${key}\" == \"artifactory.ha.data.dir\" || \"${key}\" == \"artifactory.ha.backup.dir\"\
+    \ ]]; then\n            value=$(checkPathResolver \"${value}\")\n        fi\n\
+    \    fi\n    echo \"${value}\"\n}\nupdatePostgresUrlString_Hook () {\n    local\
+    \ yamlPath=\"$1\"\n    local value=\"$2\"\n    local hostIp=$(io_getPublicHostIP)\n\
+    \    local sourceKey=\"//postgresql:\"\n    if [[ \"${yamlPath}\" == \"shared.database.url\"\
+    \ ]]; then\n        value=$(io_replaceString \"${value}\" \"${sourceKey}\" \"\
+    //${hostIp}:\" \"#\")\n    fi\n    echo \"${value}\"\n}\n# Check Artifactory product\
+    \ version\ncheckArtifactoryVersion () {\n    local minProductVersion=\"6.0.0\"\
+    \n    local maxProductVersion=\"7.0.0\"\n    local propertyInDocker=\"ARTIFACTORY_VERSION\"\
+    \n    local property=\"artifactory.version\"\n    \n    if [[ \"${INSTALLER}\"\
+    \ ==  \"${COMPOSE_TYPE}\" ]]; then\n        local newfilePath=\"${APP_DIR}/../.env\"\
+    \n        local oldfilePath=\"${OLD_DATA_DIR}/etc/artifactory.properties\"\n \
+    \   elif [[ \"${INSTALLER}\" ==  \"${HELM_TYPE}\" ]]; then\n        local oldfilePath=\"\
+    ${OLD_DATA_DIR}/etc/artifactory.properties\"\n    elif [[ \"${INSTALLER}\" ==\
+    \  \"${ZIP_TYPE}\" ]]; then\n        local newfilePath=\"${NEW_DATA_DIR}/etc/artifactory/artifactory.properties\"\
+    \n        local oldfilePath=\"${OLD_DATA_DIR}/etc/artifactory.properties\"\n \
+    \   else\n        local newfilePath=\"${NEW_DATA_DIR}/etc/artifactory/artifactory.properties\"\
+    \n        local oldfilePath=\"/etc/opt/jfrog/artifactory/artifactory.properties\"\
+    \n    fi\n\n    getProductVersion \"${minProductVersion}\" \"${maxProductVersion}\"\
+    \ \"${newfilePath}\" \"${oldfilePath}\" \"${propertyInDocker}\" \"${property}\"\
+    \n}\n\ngetCustomDataDir_hook () {\n    retrieveYamlValue \"migration.oldDataDir\"\
+    \ \"oldDataDir\" \"Fail\"\n    OLD_DATA_DIR=\"${YAML_VALUE}\"\n}\n\n# Get protocol\
+    \ value of connector\ngetXmlConnectorProtocol () {\n    local i=\"$1\"\n    local\
+    \ filePath=\"$2\"\n    local fileName=\"$3\"\n    local protocolValue=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']/@protocol' ${filePath}/${fileName}\
+    \ 2>/dev/null |awk -F\"=\" '{print $2}' | tr -d '\"')\n    echo -e \"${protocolValue}\"\
+    \n}\n\n# Get all attributes of connector\ngetXmlConnectorAttributes () {\n   \
+    \ local i=\"$1\"\n    local filePath=\"$2\"\n    local fileName=\"$3\"\n    local\
+    \ connectorAttributes=$($LIBXML2_PATH --xpath '//Server/Service/Connector['$i']/@*'\
+    \ ${filePath}/${fileName} 2>/dev/null)\n    # strip leading and trailing spaces\n\
+    \    connectorAttributes=$(io_trim \"${connectorAttributes}\")\n    echo \"${connectorAttributes}\"\
+    \n}\n\n# Get port value of connector\ngetXmlConnectorPort () {\n    local i=\"\
+    $1\"\n    local filePath=\"$2\"\n    local fileName=\"$3\"\n    local portValue=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']/@port' ${filePath}/${fileName} 2>/dev/null\
+    \ | awk -F\"=\" '{print $2}' | tr -d '\"')\n    echo -e \"${portValue}\"\n}\n\n\
+    # Get maxThreads value of connector\ngetXmlConnectorMaxThreads () {\n    local\
+    \ i=\"$1\"\n    local filePath=\"$2\"\n    local fileName=\"$3\"\n    local maxThreadValue=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']/@maxThreads' ${filePath}/${fileName}\
+    \ 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n    echo -e \"${maxThreadValue}\"\
+    \n}\n# Get sendReasonPhrase value of connector\ngetXmlConnectorSendReasonPhrase\
+    \ () {\n    local i=\"$1\"\n    local filePath=\"$2\"\n    local fileName=\"$3\"\
+    \n    local sendReasonPhraseValue=$($LIBXML2_PATH --xpath '//Server/Service/Connector['$i']/@sendReasonPhrase'\
+    \ ${filePath}/${fileName} 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n\
+    \    echo -e \"${sendReasonPhraseValue}\"\n}\n# Get relaxedPathChars value of\
+    \ connector\ngetXmlConnectorRelaxedPathChars () {\n    local i=\"$1\"\n    local\
+    \ filePath=\"$2\"\n    local fileName=\"$3\"\n    local relaxedPathCharsValue=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']/@relaxedPathChars' ${filePath}/${fileName}\
+    \ 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n    # strip leading and\
+    \ trailing spaces\n    relaxedPathCharsValue=$(io_trim \"${relaxedPathCharsValue}\"\
+    )\n    echo -e \"${relaxedPathCharsValue}\"\n}\n# Get relaxedQueryChars value\
+    \ of connector\ngetXmlConnectorRelaxedQueryChars () {\n    local i=\"$1\"\n  \
+    \  local filePath=\"$2\"\n    local fileName=\"$3\"\n    local relaxedQueryCharsValue=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']/@relaxedQueryChars' ${filePath}/${fileName}\
+    \ 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n    # strip leading and\
+    \ trailing spaces\n    relaxedQueryCharsValue=$(io_trim \"${relaxedQueryCharsValue}\"\
+    )\n    echo -e \"${relaxedQueryCharsValue}\"\n}\n\n# Updating system.yaml with\
+    \ Connector port \nsetConnectorPort () {\n    local yamlPath=\"$1\"\n    local\
+    \ valuePort=\"$2\"\n    local portYamlPath=\n    if [[ -z \"${yamlPath}\" ]];\
+    \ then\n        return\n    fi\n    if [[ -z \"${valuePort}\" ]]; then\n     \
+    \   warn \"port value is empty, could not migrate to system.yaml\"\n        return\n\
+    \    fi\n    ## Getting port yaml path from migration info yaml\n    retrieveYamlValue\
+    \ \"${yamlPath}\" portYamlPath \"Warning\"\n    portYamlPath=\"${YAML_VALUE}\"\
+    \n    if [[ -z \"${portYamlPath}\" ]]; then\n        return\n    fi\n    setSystemValue\
+    \ \"${portYamlPath}\" \"${valuePort}\" \"${SYSTEM_YAML_PATH}\"\n    logger \"\
+    Setting [${portYamlPath}] with value [${valuePort}] in system.yaml\"\n}\n\n# Updating\
+    \ system.yaml with Connector maxThreads\nsetConnectorMaxThread () {\n    local\
+    \ yamlPath=\"$1\"\n    local threadValue=\"$2\"\n    local maxThreadYamlPath=\n\
+    \    if [[ -z \"${yamlPath}\" ]]; then\n        return\n    fi\n    if [[ -z \
+    \ \"${threadValue}\" ]]; then\n        return\n    fi\n    ## Getting max Threads\
+    \ yaml path from migration info yaml\n    retrieveYamlValue \"${yamlPath}\" maxThreadYamlPath\
+    \ \"Warning\"\n    maxThreadYamlPath=\"${YAML_VALUE}\"\n    if [[ -z \"${maxThreadYamlPath}\"\
+    \ ]]; then\n        return\n    fi\n    setSystemValue \"${maxThreadYamlPath}\"\
+    \ \"${threadValue}\" \"${SYSTEM_YAML_PATH}\"\n    logger \"Setting [${maxThreadYamlPath}]\
+    \ with value [${threadValue}] in system.yaml\"\n}\n\n# Updating system.yaml with\
+    \ Connector sendReasonPhrase\nsetConnectorSendReasonPhrase () {\n    local yamlPath=\"\
+    $1\"\n    local sendReasonPhraseValue=\"$2\"\n    local sendReasonPhraseYamlPath=\n\
+    \    if [[ -z \"${yamlPath}\" ]]; then\n        return\n    fi\n    if [[ -z \
+    \ \"${sendReasonPhraseValue}\" ]]; then\n        return\n    fi\n    ## Getting\
+    \ sendReasonPhrase yaml path from migration info yaml\n    retrieveYamlValue \"\
+    ${yamlPath}\" sendReasonPhraseYamlPath \"Warning\"\n    sendReasonPhraseYamlPath=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${sendReasonPhraseYamlPath}\" ]]; then\n     \
+    \   return\n    fi\n    setSystemValue \"${sendReasonPhraseYamlPath}\" \"${sendReasonPhraseValue}\"\
+    \ \"${SYSTEM_YAML_PATH}\"\n    logger \"Setting [${sendReasonPhraseYamlPath}]\
+    \ with value [${sendReasonPhraseValue}] in system.yaml\"\n}\n\n# Updating system.yaml\
+    \ with Connector relaxedPathChars\nsetConnectorRelaxedPathChars () {\n    local\
+    \ yamlPath=\"$1\"\n    local relaxedPathCharsValue=\"$2\"\n    local relaxedPathCharsYamlPath=\n\
+    \    if [[ -z \"${yamlPath}\" ]]; then\n        return\n    fi\n    if [[ -z \
+    \ \"${relaxedPathCharsValue}\" ]]; then\n        return\n    fi\n    ## Getting\
+    \ relaxedPathChars yaml path from migration info yaml\n    retrieveYamlValue \"\
+    ${yamlPath}\" relaxedPathCharsYamlPath \"Warning\"\n    relaxedPathCharsYamlPath=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${relaxedPathCharsYamlPath}\" ]]; then\n     \
+    \   return\n    fi\n    setSystemValue \"${relaxedPathCharsYamlPath}\" \"${relaxedPathCharsValue}\"\
+    \ \"${SYSTEM_YAML_PATH}\"\n    logger \"Setting [${relaxedPathCharsYamlPath}]\
+    \ with value [${relaxedPathCharsValue}] in system.yaml\"\n}\n\n# Updating system.yaml\
+    \ with Connector relaxedQueryChars\nsetConnectorRelaxedQueryChars () {\n    local\
+    \ yamlPath=\"$1\"\n    local relaxedQueryCharsValue=\"$2\"\n    local relaxedQueryCharsYamlPath=\n\
+    \    if [[ -z \"${yamlPath}\" ]]; then\n        return\n    fi\n    if [[ -z \
+    \ \"${relaxedQueryCharsValue}\" ]]; then\n        return\n    fi\n    ## Getting\
+    \ relaxedQueryChars yaml path from migration info yaml\n    retrieveYamlValue\
+    \ \"${yamlPath}\" relaxedQueryCharsYamlPath \"Warning\"\n    relaxedQueryCharsYamlPath=\"\
+    ${YAML_VALUE}\"\n    if [[ -z \"${relaxedQueryCharsYamlPath}\" ]]; then\n    \
+    \    return\n    fi\n    setSystemValue \"${relaxedQueryCharsYamlPath}\" \"${relaxedQueryCharsValue}\"\
+    \ \"${SYSTEM_YAML_PATH}\"\n    logger \"Setting [${relaxedQueryCharsYamlPath}]\
+    \ with value [${relaxedQueryCharsValue}] in system.yaml\"\n}\n\n# Updating system.yaml\
+    \ with Connectors configurations\nsetConnectorExtraConfig () {\n    local yamlPath=\"\
+    $1\"\n    local connectorAttributes=\"$2\"\n    local extraConfigPath=\n    if\
+    \ [[ -z \"${yamlPath}\" ]]; then\n        return\n    fi\n    if [[ -z \"${connectorAttributes}\"\
+    \ ]]; then\n        return\n    fi\n    ## Getting extraConfig yaml path from\
+    \ migration info yaml\n    retrieveYamlValue \"${yamlPath}\" extraConfig \"Warning\"\
+    \n    extraConfigPath=\"${YAML_VALUE}\"\n    if [[ -z \"${extraConfigPath}\" ]];\
+    \ then\n        return\n    fi\n    # strip leading and trailing spaces\n    connectorAttributes=$(io_trim\
+    \ \"${connectorAttributes}\")\n    setSystemValue \"${extraConfigPath}\" \"${connectorAttributes}\"\
+    \ \"${SYSTEM_YAML_PATH}\"\n    logger \"Setting [${extraConfigPath}] with connector\
+    \ attributes in system.yaml\"\n}\n\n# Updating system.yaml with extra Connectors\n\
+    setExtraConnector () {\n    local yamlPath=\"$1\"\n    local extraConnector=\"\
+    $2\"\n    local extraConnectorYamlPath=\n    if [[ -z \"${yamlPath}\" ]]; then\n\
+    \        return\n    fi\n    if [[ -z \"${extraConnector}\" ]]; then\n       \
+    \ return\n    fi\n    ## Getting extraConnecotr yaml path from migration info\
+    \ yaml\n    retrieveYamlValue \"${yamlPath}\" extraConnectorYamlPath \"Warning\"\
+    \n    extraConnectorYamlPath=\"${YAML_VALUE}\"\n    if [[ -z \"${extraConnectorYamlPath}\"\
+    \ ]]; then\n        return\n    fi\n    getYamlValue  \"${extraConnectorYamlPath}\"\
+    \  \"${SYSTEM_YAML_PATH}\"  \"false\"\n    local connectorExtra=\"${YAML_VALUE}\"\
+    \n    if [[ -z \"${connectorExtra}\" ]]; then\n        setSystemValue \"${extraConnectorYamlPath}\"\
+    \ \"${extraConnector}\" \"${SYSTEM_YAML_PATH}\"\n        logger \"Setting [${extraConnectorYamlPath}]\
+    \ with extra connectors in system.yaml\"\n    else    \n        setSystemValue\
+    \ \"${extraConnectorYamlPath}\" \"\\\"${connectorExtra} ${extraConnector}\\\"\"\
+    \ \"${SYSTEM_YAML_PATH}\"\n        logger \"Setting [${extraConnectorYamlPath}]\
+    \ with extra connectors in system.yaml\"\n    fi\n}\n\n# Migrate extra connectors\
+    \ to system.yaml\nmigrateExtraConnectors () {\n    local filePath=\"$1\"\n   \
+    \ local fileName=\"$2\"\n    local connectorCount=\"$3\"\n    local excludeDefaultPort=\"\
+    $4\"\n    local i=\"$5\"\n    local extraConfig= \n    local extraConnector=\n\
+    \    if [[ \"${excludeDefaultPort}\" == \"yes\" ]]; then\n        for ((i = 1\
+    \ ; i <= \"${connectorCount}\" ; i++));\n        do  \n            local portValue=$(getXmlConnectorPort\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n            [[ \"${portValue}\" !=\
+    \ \"${DEFAULT_ACCESS_PORT}\" && \"${portValue}\" != \"${DEFAULT_RT_PORT}\" ]]\
+    \ || continue\n            extraConnector=$($LIBXML2_PATH --xpath '//Server/Service/Connector['$i']'\
+    \ ${filePath}/${fileName} 2>/dev/null)\n            setExtraConnector \"${EXTRA_CONFIG_YAMLPATH}\"\
+    \ \"${extraConnector}\" \n        done\n    else\n        extraConnector=$($LIBXML2_PATH\
+    \ --xpath '//Server/Service/Connector['$i']' ${filePath}/${fileName} 2>/dev/null)\n\
+    \        setExtraConnector \"${EXTRA_CONFIG_YAMLPATH}\" \"${extraConnector}\"\n\
+    \    fi\n}\n\n# Migrate connector configurations\nmigrateConnectorConfig () {\n\
+    \    local i=\"$1\"\n    local protocolType=\"$2\"\n    local portValue=\"$3\"\
+    \n    local connectorPortYamlPath=\"$4\"\n    local connectorMaxThreadYamlPath=\"\
+    $5\"\n    local connectorAttributesYamlPath=\"$6\"\n    local filePath=\"$7\"\n\
+    \    local fileName=\"$8\"\n    local connectorSendReasonPhraseYamlPath=\"$9\"\
+    \n    local connectorRelaxedPathCharsYamlPath=\"${10}\"\n    local connectorRelaxedQueryCharsYamlPath=\"\
+    ${11}\"\n    \n    # migrate port\n    setConnectorPort \"${connectorPortYamlPath}\"\
+    \ \"${portValue}\"\n    \n    # migrate maxThreads\n    local maxThreadValue=$(getXmlConnectorMaxThreads\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    setConnectorMaxThread \"${connectorMaxThreadYamlPath}\"\
+    \ \"${maxThreadValue}\"\n\n    # migrate sendReasonPhrase\n    local sendReasonPhraseValue=$(getXmlConnectorSendReasonPhrase\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    setConnectorSendReasonPhrase \"\
+    ${connectorSendReasonPhraseYamlPath}\" \"${sendReasonPhraseValue}\"\n    \n  \
+    \  # migrate relaxedPathChars\n    local relaxedPathCharsValue=$(getXmlConnectorRelaxedPathChars\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    setConnectorRelaxedPathChars \"\
+    ${connectorRelaxedPathCharsYamlPath}\" \"\\\"${relaxedPathCharsValue}\\\"\"\n\
+    \    # migrate relaxedQueryChars\n    local relaxedQueryCharsValue=$(getXmlConnectorRelaxedQueryChars\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    setConnectorRelaxedQueryChars \"\
+    ${connectorRelaxedQueryCharsYamlPath}\" \"\\\"${relaxedQueryCharsValue}\\\"\"\n\
+    \n    # migrate all attributes to extra config except port , maxThread , sendReasonPhrase\
+    \ ,relaxedPathChars and relaxedQueryChars\n    local connectorAttributes=$(getXmlConnectorAttributes\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    connectorAttributes=$(echo \"${connectorAttributes}\"\
+    \ | sed 's/port=\"'${portValue}'\"//g' | sed 's/maxThreads=\"'${maxThreadValue}'\"\
+    //g' | sed 's/sendReasonPhrase=\"'${sendReasonPhraseValue}'\"//g' | sed 's/relaxedPathChars=\"\
+    \\'${relaxedPathCharsValue}'\\\"//g' | sed 's/relaxedQueryChars=\"\\'${relaxedQueryCharsValue}'\\\
+    \"//g')\n    # strip leading and trailing spaces\n    connectorAttributes=$(io_trim\
+    \ \"${connectorAttributes}\")\n    setConnectorExtraConfig \"${connectorAttributesYamlPath}\"\
+    \ \"${connectorAttributes}\"\n}\n\n# Check for default port 8040 and 8081 in connectors\
+    \ and migrate\nmigrateConnectorPort () {\n    local filePath=\"$1\"\n    local\
+    \ fileName=\"$2\"\n    local connectorCount=\"$3\"\n    local defaultPort=\"$4\"\
+    \n    local connectorPortYamlPath=\"$5\"\n    local connectorMaxThreadYamlPath=\"\
+    $6\"\n    local connectorAttributesYamlPath=\"$7\"\n    local connectorSendReasonPhraseYamlPath=\"\
+    $8\"\n    local connectorRelaxedPathCharsYamlPath=\"$9\"\n    local connectorRelaxedQueryCharsYamlPath=\"\
+    ${10}\"\n    local portYamlPath=\n    local maxThreadYamlPath=\n    local status=\n\
+    \    for ((i = 1 ; i <= \"${connectorCount}\" ; i++));\n    do  \n        local\
+    \ portValue=$(getXmlConnectorPort \"$i\" \"${filePath}\" \"${fileName}\")\n  \
+    \      local protocolType=$(getXmlConnectorProtocol \"$i\" \"${filePath}\" \"\
+    ${fileName}\")\n        [[ \"${protocolType}\" == *AJP* ]] && continue\n     \
+    \   [[ \"${portValue}\" != \"${defaultPort}\" ]] && continue\n        if [[ \"\
+    ${portValue}\" == \"${DEFAULT_RT_PORT}\" ]]; then\n            RT_DEFAULTPORT_STATUS=success\n\
+    \        else\n            AC_DEFAULTPORT_STATUS=success\n        fi\n       \
+    \ migrateConnectorConfig \"${i}\" \"${protocolType}\" \"${portValue}\" \"${connectorPortYamlPath}\"\
+    \ \"${connectorMaxThreadYamlPath}\" \"${connectorAttributesYamlPath}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${connectorSendReasonPhraseYamlPath}\" \"${connectorRelaxedPathCharsYamlPath}\"\
+    \ \"${connectorRelaxedQueryCharsYamlPath}\"\n    done\n}\n\n# migrate to extra,\
+    \ connector having default port and protocol is AJP\nmigrateDefaultPortIfAjp ()\
+    \ {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\n    local connectorCount=\"\
+    $3\"\n    local defaultPort=\"$4\"\n    \n    for ((i = 1 ; i <= \"${connectorCount}\"\
+    \ ; i++));\n    do  \n        local portValue=$(getXmlConnectorPort \"$i\" \"\
+    ${filePath}\" \"${fileName}\")\n        local protocolType=$(getXmlConnectorProtocol\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n        [[ \"${protocolType}\" != *AJP*\
+    \ ]] && continue\n        [[ \"${portValue}\" != \"${defaultPort}\" ]] && continue\n\
+    \        migrateExtraConnectors \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"no\" \"${i}\"\n    done\n\n}\n\n# Comparing max threads in connectors\ncompareMaxThreads\
+    \ () {\n    local firstConnectorMaxThread=\"$1\"\n    local firstConnectorNode=\"\
+    $2\"\n    local secondConnectorMaxThread=\"$3\"\n    local secondConnectorNode=\"\
+    $4\"\n    local filePath=\"$5\"\n    local fileName=\"$6\"\n\n    # choose higher\
+    \ maxThreads connector as Artifactory.\n    if [[ \"${firstConnectorMaxThread}\"\
+    \ -gt ${secondConnectorMaxThread} || \"${firstConnectorMaxThread}\" -eq ${secondConnectorMaxThread}\
+    \ ]]; then\n        # maxThread is higher in firstConnector,\n        # Taking\
+    \ firstConnector as Artifactory and SecondConnector as Access\n        # maxThread\
+    \ is equal in both connector,considering firstConnector as Artifactory and SecondConnector\
+    \ as Access\n        local rtPortValue=$(getXmlConnectorPort \"${firstConnectorNode}\"\
+    \ \"${filePath}\" \"${fileName}\")\n        migrateConnectorConfig \"${firstConnectorNode}\"\
+    \ \"${protocolType}\" \"${rtPortValue}\" \"${RT_PORT_YAMLPATH}\" \"${RT_MAXTHREADS_YAMLPATH}\"\
+    \ \"${RT_EXTRACONFIG_YAMLPATH}\" \"${filePath}\" \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\"\
+    \ \"${RT_RELAXEDPATHCHARS_YAMLPATH}\" \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n \
+    \       local acPortValue=$(getXmlConnectorPort \"${secondConnectorNode}\" \"\
+    ${filePath}\" \"${fileName}\")\n        migrateConnectorConfig \"${secondConnectorNode}\"\
+    \ \"${protocolType}\" \"${acPortValue}\" \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\"\
+    \ \"${AC_EXTRACONFIG_YAMLPATH}\" \"${filePath}\" \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\
+    \n    else\n        # maxThread is higher in SecondConnector, \n        # Taking\
+    \ SecondConnector as Artifactory and firstConnector as Access\n        local rtPortValue=$(getXmlConnectorPort\
+    \ \"${secondConnectorNode}\" \"${filePath}\" \"${fileName}\")\n        migrateConnectorConfig\
+    \ \"${secondConnectorNode}\" \"${protocolType}\" \"${rtPortValue}\" \"${RT_PORT_YAMLPATH}\"\
+    \ \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n        local acPortValue=$(getXmlConnectorPort\
+    \ \"${firstConnectorNode}\" \"${filePath}\" \"${fileName}\")\n        migrateConnectorConfig\
+    \ \"${firstConnectorNode}\" \"${protocolType}\" \"${acPortValue}\" \"${AC_PORT_YAMLPATH}\"\
+    \ \"${AC_MAXTHREADS_YAMLPATH}\" \"${AC_EXTRACONFIG_YAMLPATH}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\n    fi\n}\n\n# Check max\
+    \ threads exist to compare\nmaxThreadsExistToCompare () {\n    local filePath=\"\
+    $1\"\n    local fileName=\"$2\"\n    local connectorCount=\"$3\"\n    local firstConnectorMaxThread=\n\
+    \    local secondConnectorMaxThread=\n    local firstConnectorNode=\n    local\
+    \ secondConnectorNode=\n    local status=success\n    local firstnode=fail\n\n\
+    \    for ((i = 1 ; i <= \"${connectorCount}\" ; i++));\n        do \n        local\
+    \ protocolType=$(getXmlConnectorProtocol \"$i\" \"${filePath}\" \"${fileName}\"\
+    )\n        if [[ ${protocolType} == *AJP* ]]; then\n            # Migrate Connectors\n\
+    \            migrateExtraConnectors \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"no\" \"${i}\"\n            continue\n        fi\n        # store maxthreads\
+    \ value of each connector\n        if [[ ${firstnode} == \"fail\" ]]; then\n \
+    \           firstConnectorMaxThread=$(getXmlConnectorMaxThreads \"${i}\" \"${filePath}\"\
+    \ \"${fileName}\")\n            firstConnectorNode=\"${i}\"\n            firstnode=success\n\
+    \        else\n            secondConnectorMaxThread=$(getXmlConnectorMaxThreads\
+    \ \"${i}\" \"${filePath}\" \"${fileName}\")\n            secondConnectorNode=\"\
+    ${i}\"\n        fi\n    done\n    [[ -z \"${firstConnectorMaxThread}\" ]] && status=fail\n\
+    \    [[ -z \"${secondConnectorMaxThread}\" ]] && status=fail\n    # maxThreads\
+    \ is set, now compare MaxThreads\n    if [[ \"${status}\" == \"success\" ]]; then\n\
+    \        compareMaxThreads \"${firstConnectorMaxThread}\" \"${firstConnectorNode}\"\
+    \ \"${secondConnectorMaxThread}\" \"${secondConnectorNode}\" \"${filePath}\" \"\
+    ${fileName}\"\n    else \n        # Assume first connector is RT, maxThreads is\
+    \ not set in both connectors\n        local rtPortValue=$(getXmlConnectorPort\
+    \ \"${firstConnectorNode}\" \"${filePath}\" \"${fileName}\")\n        migrateConnectorConfig\
+    \ \"${firstConnectorNode}\" \"${protocolType}\" \"${rtPortValue}\" \"${RT_PORT_YAMLPATH}\"\
+    \ \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n        local acPortValue=$(getXmlConnectorPort\
+    \ \"${secondConnectorNode}\" \"${filePath}\" \"${fileName}\")\n        migrateConnectorConfig\
+    \ \"${secondConnectorNode}\" \"${protocolType}\" \"${acPortValue}\" \"${AC_PORT_YAMLPATH}\"\
+    \ \"${AC_MAXTHREADS_YAMLPATH}\" \"${AC_EXTRACONFIG_YAMLPATH}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\n    fi\n}\n\nmigrateExtraBasedOnNonAjpCount\
+    \ () {\n    local nonAjpCount=\"$1\"\n    local filePath=\"$2\"\n    local fileName=\"\
+    $3\"\n    local connectorCount=\"$4\"\n    local i=\"$5\"\n\n    local protocolType=$(getXmlConnectorProtocol\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n    if [[ \"${protocolType}\" == *AJP*\
+    \ ]]; then\n        if [[ \"${nonAjpCount}\" -eq 1  ]]; then\n            # migrateExtraConnectors\n\
+    \            migrateExtraConnectors \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"no\" \"${i}\"\n            continue\n        else\n            # migrateExtraConnectors\n\
+    \            migrateExtraConnectors \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"yes\"\n            continue\n        fi\n    fi\n}\n\n# find RT and AC Connector\n\
+    findRtAndAcConnector () {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\
+    \n    local connectorCount=\"$3\"\n    local initialAjpCount=0\n    local nonAjpCount=0\n\
+    \n    # get the count of non AJP\n    for ((i = 1 ; i <= \"${connectorCount}\"\
+    \ ; i++));\n    do  \n        local portValue=$(getXmlConnectorPort \"$i\" \"\
+    ${filePath}\" \"${fileName}\")\n        local protocolType=$(getXmlConnectorProtocol\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n        [[ \"${protocolType}\" != *AJP*\
+    \ ]]  || continue\n        nonAjpCount=$((initialAjpCount+1))\n        initialAjpCount=\"\
+    ${nonAjpCount}\"\n    done\n    if [[ \"${nonAjpCount}\" -eq 1 ]]; then  \n  \
+    \      # Add the connector found as access and artifactory connectors\n      \
+    \  # Mark port as 8040 for access\n        for ((i = 1 ; i <= \"${connectorCount}\"\
+    \ ; i++))\n        do  \n            migrateExtraBasedOnNonAjpCount \"${nonAjpCount}\"\
+    \ \"${filePath}\" \"${fileName}\" \"${connectorCount}\"  \"$i\"\n            local\
+    \ portValue=$(getXmlConnectorPort \"$i\" \"${filePath}\" \"${fileName}\")\n  \
+    \          migrateConnectorConfig \"$i\" \"${protocolType}\" \"${portValue}\"\
+    \ \"${RT_PORT_YAMLPATH}\" \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\"\
+    \ \"${filePath}\" \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n            migrateConnectorConfig \"\
+    $i\" \"${protocolType}\" \"${portValue}\" \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\"\
+    \ \"${AC_EXTRACONFIG_YAMLPATH}\" \"${filePath}\" \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\
+    \n            setConnectorPort \"${AC_PORT_YAMLPATH}\" \"${DEFAULT_ACCESS_PORT}\"\
+    \n        done\n    elif [[ \"${nonAjpCount}\" -eq 2 ]]; then\n        # compare\
+    \ maxThreads in both connectors\n        maxThreadsExistToCompare \"${filePath}\"\
+    \ \"${fileName}\" \"${connectorCount}\"\n    elif [[ \"${nonAjpCount}\" -gt 2\
+    \ ]]; then\n        # migrateExtraConnectors\n        migrateExtraConnectors \"\
+    ${filePath}\" \"${fileName}\" \"${connectorCount}\" \"yes\"\n    elif [[ \"${nonAjpCount}\"\
+    \ -eq 0 ]]; then\n        # setting with default port in system.yaml\n       \
+    \ setConnectorPort \"${RT_PORT_YAMLPATH}\" \"${DEFAULT_RT_PORT}\"\n        setConnectorPort\
+    \ \"${AC_PORT_YAMLPATH}\" \"${DEFAULT_ACCESS_PORT}\"\n        # migrateExtraConnectors\n\
+    \        migrateExtraConnectors \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"yes\"\n    fi\n}\n\n# get the count of non AJP\ngetCountOfNonAjp () {\n  \
+    \  local port=\"$1\"\n    local connectorCount=\"$2\"\n    local filePath=$3\n\
+    \    local fileName=$4\n    local initialNonAjpCount=0\n\n    for ((i = 1 ; i\
+    \ <= \"${connectorCount}\" ; i++));\n    do  \n        local portValue=$(getXmlConnectorPort\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n        local protocolType=$(getXmlConnectorProtocol\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n        [[ \"${portValue}\" != \"${port}\"\
+    \ ]] || continue\n        [[ \"${protocolType}\" != *AJP* ]]  || continue\n  \
+    \      local nonAjpCount=$((initialNonAjpCount+1))\n        initialNonAjpCount=\"\
+    ${nonAjpCount}\"\n    done\n    echo -e \"${nonAjpCount}\"\n}\n\n# Find for access\
+    \ connector\nfindAcConnector () {\n    local filePath=\"$1\"\n    local fileName=\"\
+    $2\"\n    local connectorCount=\"$3\"\n    \n    # get the count of non AJP \n\
+    \    local nonAjpCount=$(getCountOfNonAjp \"${DEFAULT_RT_PORT}\" \"${connectorCount}\"\
+    \ \"${filePath}\" \"${fileName}\")\n    if [[ \"${nonAjpCount}\" -eq 1 ]]; then\n\
+    \        # Add the connector found as access connector and mark port as that of\
+    \ connector\n        for ((i = 1 ; i <= \"${connectorCount}\" ; i++))\n      \
+    \  do  \n            migrateExtraBasedOnNonAjpCount \"${nonAjpCount}\" \"${filePath}\"\
+    \ \"${fileName}\" \"${connectorCount}\" \"$i\"\n            local portValue=$(getXmlConnectorPort\
+    \ \"$i\" \"${filePath}\" \"${fileName}\")\n            if [[ \"${portValue}\"\
+    \ != \"${DEFAULT_RT_PORT}\" ]]; then\n                migrateConnectorConfig \"\
+    $i\" \"${protocolType}\" \"${portValue}\" \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\"\
+    \ \"${AC_EXTRACONFIG_YAMLPATH}\" \"${filePath}\" \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\
+    \n            fi   \n        done\n    elif [[ \"${nonAjpCount}\" -gt 1 ]]; then\n\
+    \        # Take RT properties into access with 8040\n        for ((i = 1 ; i <=\
+    \ \"${connectorCount}\" ; i++))\n        do  \n            migrateExtraBasedOnNonAjpCount\
+    \ \"${nonAjpCount}\" \"${filePath}\" \"${fileName}\" \"${connectorCount}\" \"\
+    $i\"\n            local portValue=$(getXmlConnectorPort \"$i\" \"${filePath}\"\
+    \ \"${fileName}\")\n            if [[ \"${portValue}\" == \"${DEFAULT_RT_PORT}\"\
+    \ ]]; then\n                migrateConnectorConfig \"$i\" \"${protocolType}\"\
+    \ \"${portValue}\" \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\" \"${AC_EXTRACONFIG_YAMLPATH}\"\
+    \ \"${filePath}\" \"${fileName}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\n      \
+    \          setConnectorPort \"${AC_PORT_YAMLPATH}\" \"${DEFAULT_ACCESS_PORT}\"\
+    \n            fi\n        done\n    elif [[ \"${nonAjpCount}\" -eq 0 ]]; then\
+    \ \n        # Add RT connector details as access connector and mark port as 8040\
+    \  \n        migrateConnectorPort \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"${DEFAULT_RT_PORT}\" \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\"\
+    \ \"${AC_EXTRACONFIG_YAMLPATH}\" \"${AC_SENDREASONPHRASE_YAMLPATH}\"\n       \
+    \ setConnectorPort \"${AC_PORT_YAMLPATH}\" \"${DEFAULT_ACCESS_PORT}\"\n      \
+    \  # migrateExtraConnectors\n        migrateExtraConnectors \"${filePath}\" \"\
+    ${fileName}\" \"${connectorCount}\" \"yes\"\n    fi\n}\n\n# Find for artifactory\
+    \ connector\nfindRtConnector () {\n    local filePath=\"$1\"\n    local fileName=\"\
+    $2\"\n    local connectorCount=\"$3\"\n    \n    # get the count of non AJP \n\
+    \    local nonAjpCount=$(getCountOfNonAjp \"${DEFAULT_ACCESS_PORT}\" \"${connectorCount}\"\
+    \ \"${filePath}\" \"${fileName}\")\n    if [[ \"${nonAjpCount}\" -eq 1 ]]; then\n\
+    \        # Add the connector found as RT connector\n        for ((i = 1 ; i <=\
+    \ \"${connectorCount}\" ; i++))\n        do  \n            migrateExtraBasedOnNonAjpCount\
+    \ \"${nonAjpCount}\" \"${filePath}\" \"${fileName}\" \"${connectorCount}\" \"\
+    $i\"\n            local portValue=$(getXmlConnectorPort \"$i\" \"${filePath}\"\
+    \ \"${fileName}\")\n            if [[ \"${portValue}\" != \"${DEFAULT_ACCESS_PORT}\"\
+    \ ]]; then\n                migrateConnectorConfig \"$i\" \"${protocolType}\"\
+    \ \"${portValue}\" \"${RT_PORT_YAMLPATH}\" \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\"\
+    \ \"${filePath}\" \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n            fi\n        done\n    elif\
+    \ [[ \"${nonAjpCount}\" -gt 1 ]]; then\n        # Take access properties into\
+    \ artifactory with 8081\n        for ((i = 1 ; i <= \"${connectorCount}\" ; i++))\n\
+    \        do  \n            migrateExtraBasedOnNonAjpCount \"${nonAjpCount}\" \"\
+    ${filePath}\" \"${fileName}\" \"${connectorCount}\" \"$i\"\n            local\
+    \ portValue=$(getXmlConnectorPort \"$i\" \"${filePath}\" \"${fileName}\")\n  \
+    \          if [[ \"${portValue}\" == \"${DEFAULT_ACCESS_PORT}\" ]]; then\n   \
+    \             migrateConnectorConfig \"$i\" \"${protocolType}\" \"${portValue}\"\
+    \ \"${RT_PORT_YAMLPATH}\" \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\"\
+    \ \"${filePath}\" \"${fileName}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n                setConnectorPort \"${RT_PORT_YAMLPATH}\"\
+    \ \"${DEFAULT_RT_PORT}\"\n            fi\n        done\n    elif [[ \"${nonAjpCount}\"\
+    \ -eq 0 ]]; then   \n        # Add access connector details as RT connector and\
+    \ mark as ${DEFAULT_RT_PORT}\n        migrateConnectorPort \"${filePath}\" \"\
+    ${fileName}\" \"${connectorCount}\" \"${DEFAULT_ACCESS_PORT}\" \"${RT_PORT_YAMLPATH}\"\
+    \ \"${RT_MAXTHREADS_YAMLPATH}\" \"${RT_EXTRACONFIG_YAMLPATH}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\"\
+    \ \"${RT_RELAXEDPATHCHARS_YAMLPATH}\" \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n \
+    \       setConnectorPort \"${RT_PORT_YAMLPATH}\" \"${DEFAULT_RT_PORT}\"\n    \
+    \    # migrateExtraConnectors\n        migrateExtraConnectors \"${filePath}\"\
+    \ \"${fileName}\" \"${connectorCount}\" \"yes\"\n    fi\n}\n\ncheckForTlsConnector\
+    \ () {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\n    local connectorCount=\"\
+    $3\"\n    for ((i = 1 ; i <= \"${connectorCount}\" ; i++))\n    do\n        local\
+    \ sslProtocolValue=$($LIBXML2_PATH --xpath '//Server/Service/Connector['$i']/@sslProtocol'\
+    \ ${filePath}/${fileName} 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n\
+    \        if [[ \"${sslProtocolValue}\" == \"TLS\" ]]; then\n            bannerImportant\
+    \ \"NOTE: Ignoring TLS connector during migration, modify the system yaml to enable\
+    \ TLS. Original server.xml is saved in path [${filePath}/${fileName}]\"\n    \
+    \        TLS_CONNECTOR_EXISTS=${FLAG_Y}\n            continue\n        fi\n  \
+    \  done\n}\n\n# set custom tomcat server Listeners to system.yaml\nsetListenerConnector\
+    \ () {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\n    local listenerCount=\"\
+    $3\"\n    for ((i = 1 ; i <= \"${listenerCount}\" ; i++))\n    do \n        local\
+    \ listenerConnector=$($LIBXML2_PATH --xpath '//Server/Listener['$i']' ${filePath}/${fileName}\
+    \ 2>/dev/null)\n        local listenerClassName=$($LIBXML2_PATH --xpath '//Server/Listener['$i']/@className'\
+    \ ${filePath}/${fileName} 2>/dev/null | awk -F\"=\" '{print $2}' | tr -d '\"')\n\
+    \        if [[ \"${listenerClassName}\" == *Apr* ]]; then\n            setExtraConnector\
+    \ \"${EXTRA_LISTENER_CONFIG_YAMLPATH}\" \"${listenerConnector}\"\n        fi\n\
+    \    done\n}\n# add custom tomcat server Listeners\naddTomcatServerListeners ()\
+    \ {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\n    local listenerCount=\"\
+    $3\"\n    if [[ \"${listenerCount}\" == \"0\" ]]; then\n        logger \"No listener\
+    \ connectors found in the [${filePath}/${fileName}],skipping migration of listener\
+    \ connectors\"\n    else\n        setListenerConnector \"${filePath}\" \"${fileName}\"\
+    \ \"${listenerCount}\"\n        setSystemValue \"${RT_TOMCAT_HTTPSCONNECTOR_ENABLED}\"\
+    \ \"true\" \"${SYSTEM_YAML_PATH}\"\n        logger \"Setting [${RT_TOMCAT_HTTPSCONNECTOR_ENABLED}]\
+    \ with value [true] in system.yaml\"\n    fi\n}\n\n# server.xml migration operations\n\
+    xmlMigrateOperation () {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\
+    \n    local connectorCount=\"$3\"\n    local listenerCount=\"$4\"\n    RT_DEFAULTPORT_STATUS=fail\n\
+    \    AC_DEFAULTPORT_STATUS=fail\n    TLS_CONNECTOR_EXISTS=${FLAG_N}\n\n    # Check\
+    \ for connector with TLS , if found ignore migrating it\n    checkForTlsConnector\
+    \ \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\n    if [[ \"${TLS_CONNECTOR_EXISTS}\"\
+    \ == \"${FLAG_Y}\" ]]; then\n        return\n    fi\n    addTomcatServerListeners\
+    \ \"${filePath}\" \"${fileName}\" \"${listenerCount}\"\n    # Migrate RT default\
+    \ port from connectors \n    migrateConnectorPort \"${filePath}\" \"${fileName}\"\
+    \ \"${connectorCount}\" \"${DEFAULT_RT_PORT}\" \"${RT_PORT_YAMLPATH}\" \"${RT_MAXTHREADS_YAMLPATH}\"\
+    \ \"${RT_EXTRACONFIG_YAMLPATH}\" \"${RT_SENDREASONPHRASE_YAMLPATH}\" \"${RT_RELAXEDPATHCHARS_YAMLPATH}\"\
+    \ \"${RT_RELAXEDQUERYCHARS_YAMLPATH}\"\n    # Migrate to extra if RT default ports\
+    \ are AJP\n    migrateDefaultPortIfAjp \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"${DEFAULT_RT_PORT}\"\n    # Migrate AC default port from connectors\n    migrateConnectorPort\
+    \ \"${filePath}\" \"${fileName}\" \"${connectorCount}\" \"${DEFAULT_ACCESS_PORT}\"\
+    \ \"${AC_PORT_YAMLPATH}\" \"${AC_MAXTHREADS_YAMLPATH}\" \"${AC_EXTRACONFIG_YAMLPATH}\"\
+    \ \"${AC_SENDREASONPHRASE_YAMLPATH}\"\n    # Migrate to extra if access default\
+    \ ports are AJP\n    migrateDefaultPortIfAjp \"${filePath}\" \"${fileName}\" \"\
+    ${connectorCount}\" \"${DEFAULT_ACCESS_PORT}\"\n\n    if [[ \"${AC_DEFAULTPORT_STATUS}\"\
+    \ == \"success\" && \"${RT_DEFAULTPORT_STATUS}\" == \"success\" ]]; then\n   \
+    \     # RT and AC default port found\n        logger \"Artifactory 8081 and Access\
+    \ 8040 default port are found\"\n        migrateExtraConnectors \"${filePath}\"\
+    \ \"${fileName}\" \"${connectorCount}\" \"yes\"\n    elif [[ \"${AC_DEFAULTPORT_STATUS}\"\
+    \ == \"success\" && \"${RT_DEFAULTPORT_STATUS}\" == \"fail\" ]]; then\n      \
+    \  # Only AC default port found,find RT connector\n        logger \"Found Access\
+    \ default 8040 port\"\n        findRtConnector \"${filePath}\" \"${fileName}\"\
+    \ \"${connectorCount}\"\n    elif [[ \"${AC_DEFAULTPORT_STATUS}\" == \"fail\"\
+    \ && \"${RT_DEFAULTPORT_STATUS}\" == \"success\" ]]; then\n        # Only RT default\
+    \ port found,find AC connector\n        logger \"Found Artifactory default 8081\
+    \ port\"\n        findAcConnector \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \n    elif [[ \"${AC_DEFAULTPORT_STATUS}\" == \"fail\" && \"${RT_DEFAULTPORT_STATUS}\"\
+    \ == \"fail\" ]]; then    \n        # RT and AC default port not found, find connector\n\
+    \        logger \"Artifactory 8081 and Access 8040 default port are not found\"\
+    \n        findRtAndAcConnector \"${filePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \n    fi\n}\n\n# get count of connectors\ngetXmlConnectorCount () {\n    local\
+    \ filePath=\"$1\"\n    local fileName=\"$2\"\n    local count=$($LIBXML2_PATH\
+    \ --xpath 'count(/Server/Service/Connector)' ${filePath}/${fileName})\n    echo\
+    \ -e \"${count}\"\n}\n\n# get count of listener connectors\ngetTomcatServerListenersCount\
+    \ () {\n    local filePath=\"$1\"\n    local fileName=\"$2\"\n    local count=$($LIBXML2_PATH\
+    \ --xpath 'count(/Server/Listener)' ${filePath}/${fileName})\n    echo -e \"${count}\"\
+    \n}\n\n# Migrate server.xml configuration to system.yaml\nmigrateXmlFile () {\n\
+    \    local xmlFiles=\n    local fileName=\n    local filePath=\n    local sourceFilePath=\n\
+    \    DEFAULT_ACCESS_PORT=\"8040\"\n    DEFAULT_RT_PORT=\"8081\"\n    AC_PORT_YAMLPATH=\"\
+    migration.xmlFiles.serverXml.access.port\"\n    AC_MAXTHREADS_YAMLPATH=\"migration.xmlFiles.serverXml.access.maxThreads\"\
+    \n    AC_SENDREASONPHRASE_YAMLPATH=\"migration.xmlFiles.serverXml.access.sendReasonPhrase\"\
+    \n    AC_EXTRACONFIG_YAMLPATH=\"migration.xmlFiles.serverXml.access.extraConfig\"\
+    \n    RT_PORT_YAMLPATH=\"migration.xmlFiles.serverXml.artifactory.port\"\n   \
+    \ RT_MAXTHREADS_YAMLPATH=\"migration.xmlFiles.serverXml.artifactory.maxThreads\"\
+    \n    RT_SENDREASONPHRASE_YAMLPATH='migration.xmlFiles.serverXml.artifactory.sendReasonPhrase'\n\
+    \    RT_RELAXEDPATHCHARS_YAMLPATH='migration.xmlFiles.serverXml.artifactory.relaxedPathChars'\n\
+    \    RT_RELAXEDQUERYCHARS_YAMLPATH='migration.xmlFiles.serverXml.artifactory.relaxedQueryChars'\n\
+    \    RT_EXTRACONFIG_YAMLPATH=\"migration.xmlFiles.serverXml.artifactory.extraConfig\"\
+    \n    ROUTER_PORT_YAMLPATH=\"migration.xmlFiles.serverXml.router.port\"\n    EXTRA_CONFIG_YAMLPATH=\"\
+    migration.xmlFiles.serverXml.extra.config\"\n    EXTRA_LISTENER_CONFIG_YAMLPATH=\"\
+    migration.xmlFiles.serverXml.extra.listener\"\n    RT_TOMCAT_HTTPSCONNECTOR_ENABLED=\"\
+    artifactory.tomcat.httpsConnector.enabled\"\n\n    retrieveYamlValue \"migration.xmlFiles\"\
+    \ \"xmlFiles\" \"Skip\"\n    xmlFiles=\"${YAML_VALUE}\"\n    if [[ -z \"${xmlFiles}\"\
+    \ ]]; then\n        return\n    fi\n    bannerSection \"PROCESSING MIGRATION OF\
+    \ XML FILES\"\n    retrieveYamlValue \"migration.xmlFiles.serverXml.fileName\"\
+    \ \"fileName\" \"Warning\"\n    fileName=\"${YAML_VALUE}\"\n    if [[ -z \"${fileName}\"\
+    \ ]]; then\n        return\n    fi\n    bannerSubSection \"Processing Migration\
+    \ of $fileName\"\n    retrieveYamlValue \"migration.xmlFiles.serverXml.filePath\"\
+    \ \"filePath\" \"Warning\"\n    filePath=\"${YAML_VALUE}\"\n    if [[ -z \"${filePath}\"\
+    \ ]]; then\n        return\n    fi\n    # prepend NEW_DATA_DIR only if filePath\
+    \ is relative path\n    sourceFilePath=$(prependDir \"${filePath}\" \"${NEW_DATA_DIR}/${filePath}\"\
+    )\n    if [[ \"$(checkFileExists \"${sourceFilePath}/${fileName}\")\" == \"true\"\
+    \ ]]; then\n        logger \"File [${fileName}] is found in path [${sourceFilePath}]\"\
+    \n        local connectorCount=$(getXmlConnectorCount \"${sourceFilePath}\" \"\
+    ${fileName}\")\n        if [[ \"${connectorCount}\" == \"0\" ]]; then\n      \
+    \      logger \"No connectors found in the [${filePath}/${fileName}],skipping\
+    \ migration of xml configuration\"\n            return\n        fi\n        local\
+    \ listenerCount=$(getTomcatServerListenersCount \"${sourceFilePath}\" \"${fileName}\"\
+    )\n        xmlMigrateOperation \"${sourceFilePath}\" \"${fileName}\" \"${connectorCount}\"\
+    \ \"${listenerCount}\"\n    else\n        logger \"File [${fileName}] is not found\
+    \ in path [${sourceFilePath}] to migrate\"\n    fi   \n}\n\ncompareArtifactoryUser\
+    \ () {\n    local property=\"$1\"\n    local oldPropertyValue=\"$2\"\n    local\
+    \ newPropertyValue=\"$3\"\n    local yamlPath=\"$4\"\n    local sourceFile=\"\
+    $5\"\n\n    if [[ \"${oldPropertyValue}\" != \"${newPropertyValue}\" ]]; then\n\
+    \        setSystemValue \"${yamlPath}\" \"${oldPropertyValue}\" \"${SYSTEM_YAML_PATH}\"\
+    \n        logger \"Setting [${yamlPath}] with value of the property [${property}]\
+    \ in system.yaml\"\n    else\n        logger \"No change in property [${property}]\
+    \ value in [${sourceFile}] to migrate\"\n    fi\n}\n\nmigrateReplicator () {\n\
+    \    local property=\"$1\"\n    local oldPropertyValue=\"$2\"\n    local yamlPath=\"\
+    $3\"\n\n    setSystemValue \"${yamlPath}\" \"${oldPropertyValue}\" \"${SYSTEM_YAML_PATH}\"\
+    \n    logger \"Setting [${yamlPath}] with value of the property [${property}]\
+    \ in system.yaml\"\n}\n\ncompareJavaOptions () {\n    local property=\"$1\"\n\
+    \    local oldPropertyValue=\"$2\"\n    local newPropertyValue=\"$3\"\n    local\
+    \ yamlPath=\"$4\"\n    local sourceFile=\"$5\"\n    local oldJavaOption=\n   \
+    \ local newJavaOption=\n    local extraJavaOption=\n    local check=false\n  \
+    \  local success=true\n    local status=true\n\n    oldJavaOption=$(echo \"${oldPropertyValue}\"\
+    \ | awk 'BEGIN{FS=OFS=\"\\\"\"}{for(i=2;i<NF;i+=2)gsub(/ /,\"@\",$i)}1')\n   \
+    \ newJavaOption=$(echo \"${newPropertyValue}\" | awk 'BEGIN{FS=OFS=\"\\\"\"}{for(i=2;i<NF;i+=2)gsub(/\
+    \ /,\"@\",$i)}1')\n    for oldJavaOption in $oldPropertyValue;\n    do\n     \
+    \   for newJavaOption in $newPropertyValue;\n        do\n            if [[ \"\
+    ${oldJavaOption}\" == \"${newJavaOption}\" ]]; then\n                check=true\n\
+    \                break\n            else\n                check=false\n      \
+    \      fi\n        done\n        if [[ \"${check}\" == \"false\" ]]; then\n  \
+    \          oldJavaOption=$(echo \"${oldJavaOption}\" | tr -s \"@\" \" \")\n  \
+    \          getYamlValue \"${yamlPath}\" \"${SYSTEM_YAML_PATH}\" \"false\"\n  \
+    \          extraJavaOption=\"${YAML_VALUE}\"\n            success=false\n    \
+    \        if [[ -z \"${extraJavaOption}\" ]]; then\n                setSystemValue\
+    \ \"${yamlPath}\" \"\\\"${oldJavaOption}\\\"\" \"${SYSTEM_YAML_PATH}\" && status=false\n\
+    \            else\n                [[ \"${extraJavaOption}\" != *\"${oldJavaOption}\"\
+    * ]] && setSystemValue \"${yamlPath}\" \"\\\"${extraJavaOption} ${oldJavaOption}\\\
+    \"\" \"${SYSTEM_YAML_PATH}\" || status=false\n            fi\n        fi\n   \
+    \ done\n    if [[ \"${status}\" == \"false\" ]]; then\n        getYamlValue \"\
+    ${yamlPath}\" \"${SYSTEM_YAML_PATH}\" \"false\"\n        local extraOpts=\"${YAML_VALUE}\"\
+    \n        logger \"Setting [${yamlPath}] with value of the property [${property}]\
+    \ in system.yaml\"\n    fi\n    [[ \"${success}\" == \"true\" && \"${check}\"\
+    \ == \"true\" ]] && logger \"No change in property [JAVA_OPTIONS] value in [${sourceFile}]\
+    \ to migrate\"\n}\n\ndefaultPropertyMigrate () {\n    local entry=\"$1\"\n   \
+    \ local sourceFile=\"$2\"\n    local targetFile=\"$3\"\n    local yamlPath=\n\
+    \    local property=\n    local oldPropertyValue=\n    local newPropertyValue=\n\
+    \    local check=false\n    \n    local targetDataDir=\n\n    local yamlPath=$(getFirstEntry\
+    \ \"${entry}\")\n    local property=$(getSecondEntry \"${entry}\")\n    if [[\
+    \ -z \"${property}\" ]]; then\n        warn \"Property is empty in map [${entry}]\
+    \ in the file [${MIGRATION_SYSTEM_YAML_INFO}]\"\n        return\n    fi\n    if\
+    \ [[ -z \"${yamlPath}\" ]]; then\n        warn \"yamlPath is empty for [${property}]\
+    \ in [${MIGRATION_SYSTEM_YAML_INFO}]\"\n        return\n    fi\n    unset ${property}\n\
+    \    source ${sourceFile}\n    oldPropertyValue=$(evalVariable \"oldPropertyValue\"\
+    \ \"${property}\")\n\n    unset ${property}\n    source ${targetFile}\n    if\
+    \ [[ \"${property}\" == \"JAVA_OPTIONS\" ]]; then\n        property=\"DEFAULT_JAVA_OPTIONS\"\
+    \n    fi\n    newPropertyValue=\"$(evalVariable \"newPropertyValue\" \"${property}\"\
+    )\"\n\n    [[ -z \"${oldPropertyValue}\" ]] && logger \"Property [${property}]\
+    \ not found in [${sourceFile}] to migrate\" || check=true\n    if [[ \"${check}\"\
+    \ == \"true\" ]]; then\n        # migrate ARTIFACTORY_USER\n        [[ \"${property}\"\
+    \ == \"ARTIFACTORY_USER\" ]] && compareArtifactoryUser \"${property}\" \"${oldPropertyValue}\"\
+    \ \"${newPropertyValue}\" \"${yamlPath}\" \"${sourceFile}\"\n        # migrate\
+    \ JAVA_OPTIONS\n        [[ \"${property}\" == *\"JAVA_OPTIONS\"* ]] && compareJavaOptions\
+    \ \"${property}\" \"${oldPropertyValue}\" \"${newPropertyValue}\" \"${yamlPath}\"\
+    \ \"${sourceFile}\"\n        # migrate START_LOCAL_REPLICATOR\n        [[ \"${property}\"\
+    \ == \"START_LOCAL_REPLICATOR\" ]] && migrateReplicator \"${property}\" \"${oldPropertyValue}\"\
+    \ \"${yamlPath}\"\n    fi\n}\n\nmigrateDefaultFile () {\n    local oldDefaultFilePath=\n\
+    \    local newDefaultFilePath=\n    local oldfileName=\n    local newFileName=\n\
+    \    local map=\n    local defaultFile=\n    local sourceFilePath=\n    local\
+    \ targetFilePath=\n    local sourceFile=\n    local targetFile=\n    \n    retrieveYamlValue\
+    \ \"migration.defaultFile\" \"defaultFile\" \"Skip\"\n    defaultFile=\"${YAML_VALUE}\"\
+    \n    if [[ -z \"${defaultFile}\" ]]; then\n        return\n    fi\n    bannerSection\
+    \ \"PROCESSING MIGRATION OF DEFAULTFILE\"\n    retrieveYamlValue \"migration.defaultFile.oldFile.defaultFilePath\"\
+    \ \"oldDefaultFilePath\" \"Warning\"\n    oldDefaultFilePath=\"${YAML_VALUE}\"\
+    \n    retrieveYamlValue \"migration.defaultFile.oldFile.fileName\" \"oldFileName\"\
+    \ \"Warning\"\n    oldFileName=\"${YAML_VALUE}\"\n    if [[ \"$(warnIfEmpty \"\
+    ${oldDefaultFilePath}\" \"migration.defaultFile.oldFile.defaultFilePath\")\" !=\
+    \ \"true\" ]]; then\n        return\n    fi\n    if [[ \"$(warnIfEmpty \"${oldFileName}\"\
+    \ \"migration.defaultFile.oldFile.fileName\")\" != \"true\" ]]; then\n       \
+    \ return\n    fi\n    retrieveYamlValue \"migration.defaultFile.newFile.defaultFilePath\"\
+    \ \"newDefaultFilePath\" \"Warning\"\n    newDefaultFilePath=\"${YAML_VALUE}\"\
+    \n    retrieveYamlValue \"migration.defaultFile.newFile.fileName\" \"newfileName\"\
+    \ \"Warning\"\n    newFileName=\"${YAML_VALUE}\"\n    if [[ \"$(warnIfEmpty \"\
+    ${newDefaultFilePath}\" \"migration.defaultFile.newFile.defaultFilePath\")\" !=\
+    \ \"true\" ]]; then\n        return\n    fi\n    if [[ \"$(warnIfEmpty \"${newFileName}\"\
+    \ \"migration.defaultFile.newFile.fileName\")\" != \"true\" ]]; then\n       \
+    \ return\n    fi\n    # prepend NEW_DATA_DIR only if oldDefaultFilePath is relative\
+    \ path\n    sourceFilePath=$(prependDir \"${oldDefaultFilePath}\" ${NEW_DATA_DIR}/${oldDefaultFilePath})\n\
+    \    sourceFile=\"${sourceFilePath}/${oldFileName}\"\n    if [[ \"$(checkFileExists\
+    \ \"${sourceFile}\")\" != \"true\" ]]; then\n        logger \"OldDefaultFile [${oldFileName}]\
+    \ not found in the path [${sourceFilePath}]\"\n        return\n    fi\n    # path\
+    \ newDefaultFilePath will change based installer\n    if [[ \"${INSTALLER}\" ==\
+    \ \"${ZIP_TYPE}\" ]]; then\n        targetFilePath=\"${APP_DIR}/../${newDefaultFilePath}\"\
+    \n    else\n        targetDataDir=\"`cd \"${NEW_DATA_DIR}\"/../;pwd`\"\n     \
+    \   targetFilePath=\"${targetDataDir}/${newDefaultFilePath}\"\n    fi\n    targetFile=\"\
+    ${targetFilePath}/${newFileName}\"\n    if [[ \"$(checkFileExists \"${targetFile}\"\
+    )\" != \"true\" ]]; then\n        logger \"NewDefaultFile [${newFileName}] not\
+    \ found in the path [${sourceFilePath}]\"\n        return\n    fi\n    logger\
+    \ \"OldDefaultFile [${oldFileName}] found in the path [${sourceFilePath}]\"\n\
+    \    logger \"NewDefaultFile [${newFileName}] found in the path [${targetFilePath}]\"\
+    \n    retrieveYamlValue \"migration.defaultFile.map\" \"map\" \"Warning\"\n  \
+    \  map=\"${YAML_VALUE}\"\n    [[ -z \"${map}\" ]] && continue\n    for entry in\
+    \ $map;\n    do\n        if [[ \"$(checkMapEntry \"${entry}\")\" == \"true\" ]];\
+    \ then\n            defaultPropertyMigrate \"${entry}\" \"${sourceFile}\" \"${targetFile}\"\
+    \n        else\n            warn \"map entry [${entry}] in [${MIGRATION_SYSTEM_YAML_INFO}]\
+    \ is not in correct format, correct format i.e yamlPath=property\"\n        fi\n\
+    \    done\n}\n\n# comment node.id in system.yaml\n# Add a commented Line above\
+    \ the node.id in system.yaml\ncommentNodeId () {\n    local filePath=\n    local\
+    \ fileName=\n    local idKey=\n\n    retrieveYamlValue \"migration.propertyFiles.haNodeProperty.filePath\"\
+    \ \"filePath\" \"Skip\"\n    filePath=\"${YAML_VALUE}\"\n    if [[ -z \"${filePath}\"\
+    \ ]]; then\n        return\n    fi\n    retrieveYamlValue \"migration.propertyFiles.haNodeProperty.fileName\"\
+    \ \"fileName\" \"Skip\"\n    fileName=\"${YAML_VALUE}\"\n    if [[ -z \"${fileName}\"\
+    \ ]]; then\n        return\n    fi\n    if [[ \"$(checkFileExists \"${NEW_DATA_DIR}/${filePath}/${fileName}\"\
+    )\" == \"true\" ]]; then\n        getYamlValue \"shared.node\" \"${SYSTEM_YAML_PATH}\"\
+    \ \"false\"\n        idKey=$(echo \"${YAML_VALUE}\" | grep \"^id:\")\n       \
+    \ local regexString=\"${idKey}\"\n        local replaceText=\"#&\"\n        replaceText_migration_hook\
+    \ \"${regexString}\" \"${replaceText}\" \"${SYSTEM_YAML_PATH}\"\n        local\
+    \ text=\"# NOTE: node.id can be automatically determined based on the current\
+    \ hostname or be set using the SHARED_NODE_ID environment variable. There is no\
+    \ need to explicitly specify it here.\"\n        prependText \"${regexString}\"\
+    \ \"${text}\" \"${SYSTEM_YAML_PATH}\"\n    fi\n}\n\nartifactoryInfoMessage ()\
+    \ {\n\n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" ==\
+    \ \"${HELM_TYPE}\" ]]; then\n        addText \"# yamlFile was generated from db.properties,replicator.yaml\
+    \ and ha-node.properties config files.\" \"${SYSTEM_YAML_PATH}\"\n    else\n \
+    \       addText \"# yamlFile was generated from default file,replicator.yaml,db.properties\
+    \ and ha-node.properties config files.\" \"${SYSTEM_YAML_PATH}\"\n    fi\n\n}\n\
+    \nreplicatorProfiling () {\n\n    if [[ \"${key}\" == \"profilingDisabled\" ]];\
+    \ then\n        if [[ ! -z \"${value}\" ]]; then\n            if [[ \"${value}\"\
+    \ == \"false\" ]]; then\n                value=\"true\"\n            else\n  \
+    \              value=\"false\"\n            fi\n        fi\n    fi\n}\n\nsetHaEnabled_hook\
+    \ () {\n    local filePath=\"$1\"\n    if [[ \"$(checkFileExists \"${NEW_DATA_DIR}/${filePath}/ha-node.properties\"\
+    )\" == \"true\" ]]; then\n        setSystemValue \"shared.node.haEnabled\" \"\
+    true\" \"${SYSTEM_YAML_PATH}\"\n        logger \"Setting [shared.node.haEnabled]\
+    \ with [true] in system.yaml\"\n    fi\n}\n\nremoveFileOperation () {\n    local\
+    \ backupDir=\"$1\"\n    local file=\"$2\"\n    if [[ \"$(checkFileExists \"${file}\"\
+    )\" == \"true\" ]]; then\n        cp -pf \"${file}\" \"${backupDir}\" || warn\
+    \ \"Failed to copy file [${file}] to ${backupDir}\"\n        rm -f \"${file}\"\
+    \ || warn \"Failed to remove file [${file}]\"\n    else\n        logger \"Source\
+    \ file [${file}] does not exist in path to backup and remove\"\n    fi\n}\n\n\
+    _createBackupOfLogBackDir () {\n    local backupDir=\"$1\"\n    local accessLogbackFile=\"\
+    ${NEW_DATA_DIR}/etc/access/logback.xml\"\n    local artiLogbackFile=\"${NEW_DATA_DIR}/etc/artifactory/logback.xml\"\
+    \n    local effectiveUser=\n    local effectiveGroup=\n    if [[ \"${INSTALLER}\"\
+    \ == \"${COMPOSE_TYPE}\" || \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n  \
+    \      effectiveUser=\"${JF_USER}\"\n        effectiveGroup=\"${JF_USER}\"\n \
+    \   elif [[ \"${INSTALLER}\" == \"${DEB_TYPE}\" || \"${INSTALLER}\" == \"${RPM_TYPE}\"\
+    \ ]]; then\n        effectiveUser=\"${USER_TO_CHECK}\" \n        effectiveGroup=\"\
+    ${GROUP_TO_CHECK}\"\n    fi\n    removeSoftLinkAndCreateDir \"${backupDir}/logbackXmlFiles\"\
+    \ \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n    removeSoftLinkAndCreateDir\
+    \ \"${backupDir}/logbackXmlFiles/access\" \"${effectiveUser}\" \"${effectiveGroup}\"\
+    \ \"yes\" \n    removeSoftLinkAndCreateDir \"${backupDir}/logbackXmlFiles/artifactory\"\
+    \ \"${effectiveUser}\" \"${effectiveGroup}\" \"yes\"\n    removeFileOperation\
+    \ \"${backupDir}/logbackXmlFiles/access\" \"${accessLogbackFile}\"\n    removeFileOperation\
+    \ \"${backupDir}/logbackXmlFiles/artifactory\" \"${artiLogbackFile}\"\n}\n\n\n\
+    _createBackupOfReplicatorRtYaml () {\n    local backupDir=\"$1\"\n    local replicatorRtYamlFile=\"\
+    ${NEW_DATA_DIR}/etc/replicator/replicator.artifactory.yaml\"\n    local effectiveUser=\n\
+    \    local effectiveGroup=\n    if [[ \"${INSTALLER}\" == \"${COMPOSE_TYPE}\"\
+    \ || \"${INSTALLER}\" == \"${HELM_TYPE}\" ]]; then\n        effectiveUser=\"${JF_USER}\"\
+    \n        effectiveGroup=\"${JF_USER}\"\n    elif [[ \"${INSTALLER}\" == \"${DEB_TYPE}\"\
+    \ || \"${INSTALLER}\" == \"${RPM_TYPE}\" ]]; then\n        effectiveUser=\"${USER_TO_CHECK}\"\
+    \ \n        effectiveGroup=\"${GROUP_TO_CHECK}\"\n    fi\n    removeSoftLinkAndCreateDir\
+    \ \"${backupDir}/replicatorYamlFile\" \"${effectiveUser}\" \"${effectiveGroup}\"\
+    \ \"yes\"\n    removeFileOperation \"${backupDir}/replicatorYamlFile\" \"${replicatorRtYamlFile}\"\
+    \n}\n\nbackupFiles_hook () {\n    local backupDirectory=\"$1\" \n    _createBackupOfLogBackDir\
+    \ \"${backupDirectory}\"\n    _createBackupOfReplicatorRtYaml \"${backupDirectory}\"\
+    \n}\n\nmigrateArtifactory () {\n    creationMigrateLog\n    _pauseExecution \"\
+    creationMigrateLog\"\n    checkArtifactoryVersion\n    _pauseExecution \"checkArtifactoryVersion\"\
+    \n    startMigration\n    _pauseExecution \"startMigration\"\n    setSystemYamlPath\n\
+    \    _pauseExecution \"setSystemYamlPath\"\n    createRequiredDirs\n    _pauseExecution\
+    \ \"createRequiredDirs\"\n    symlinkDirectories\n    _pauseExecution \"symlinkDirectories\"\
+    \n    copyDirectories\n    _pauseExecution \"copyDirectories\"\n    moveDirectories\n\
+    \    _pauseExecution \"moveDirectories\"\n    trimMasterKey\n    _pauseExecution\
+    \ \"trimMasterKey\"\n    migratePropertiesFiles\n    _pauseExecution \"migratePropertiesFiles\"\
+    \n    migrateXmlFile\n    _pauseExecution \"migrateXmlFile\"\n    migrateDefaultFile\n\
+    \    _pauseExecution \"migrateDefaultFile\"\n    migrateYamlFile\n    _pauseExecution\
+    \ \"migrateYamlFile\"\n    updateSystemYamlFile\n    _pauseExecution \"updateSystemYamlFile\"\
+    \n    cleanUpOldDataDirectories\n    _pauseExecution \"cleanUpOldDataDirectories\"\
+    \n    cleanUpOldFiles\n    _pauseExecution \"cleanUpOldFiles\"\n    commentNodeId\n\
+    \    _pauseExecution \"commentNodeId\"\n    artifactoryInfoMessage\n    _pauseExecution\
+    \ \"artifactoryInfoMessage\"\n    endMigration\n    _pauseExecution \"endMigration\"\
+    \n}\n\ninitialize\nmain\n"
+  migrationHelmInfo.yaml: "migration:\n  product: ARTIFACTORY\n  oldDataDir: /var/opt/jfrog/artifactory\n\
+    \  moveDirectories:\n    map:\n    # Note : $JF_ROOT_DATA_DIR will be prepended\
+    \ to the sourceDirectoryPath value only if relative path and $JF_ROOT_DATA_DIR/var\
+    \ will be prepended to the targetDirectoryPath value\n    # map should be in format\
+    \ example: targetDirectoryPath=sourceDirectoryPath\n      backup/access=access/backup\n\
+    \      etc/access=access/etc\n      data/access=access/data\n      work/access=access/tmp\n\
+    \      log/archived/access=access/logs\n      log/archived/artifactory=logs\n\
+    \      etc/replicator=replicator/etc\n      backup/replicator=replicator/backup\n\
+    \      data/replicator=replicator/data\n      log/archived/replicator=replicator/logs\n\
+    \  linkFiles:\n    map:\n    # Note : $JF_ROOT_DATA_DIR will be prepended to the\
+    \ sourceDirectoryPath value only if relative path and $JF_ROOT_DATA_DIR will be\
+    \ prepended to the targetDirectoryPath value\n    # map should be in format example:\
+    \ targetDirectoryPath=sourceDirectoryPath\n      etc/artifactory=etc\n      backup/artifactory=backup\n\
+    \      data/artifactory=data\n      support/artifactory=support\n  cleanUpOldDataDir:\n\
+    \    # Note $JF_ROOT_DATA_DIR will be prepended to the map entry\n    map:\n \
+    \     access\n      replicator\n      metadata\n      logs\n"
+  migrationStatus.sh: "#!/bin/bash\n\nstatusCheck(){\nlocal retries=0\n# Max Timeout\
+    \ in seconds  default ~3600\nlocal maxTimeOutInSeconds=$1\nMaxRetries=$(( maxTimeOutInSeconds/10\
+    \ ))\n# Wait for DB to start \nsleep 30\nuntil [ \"`curl -s -o /dev/null -w \"\
+    %{http_code}\" http://127.0.0.1:8082/router/api/v1/system/health`\" == \"200\"\
+    \ ];\ndo\n  echo Waiting for Artifactory to start --- sleeping for 10 seconds\n\
+    \  if [[ ${retries} -eq ${MaxRetries} ]]\n  then \n    echo Failed to start.\n\
+    \    exit 1\n  fi\n  retries=$(( retries+1 ))\n  sleep 10\ndone\n\nsleep 20\n\
+    echo \"Artifactory started sucessfully...in Init Container\"\necho \"Stopping\
+    \ artifactory in Init Container...\"\n${scriptsPath}/artifactory.sh stop\necho\
+    \ \"Exiting Init Container...\"\n\n}\n\nscriptsPath=\"/opt/jfrog/artifactory/app/bin\"\
+    \nmaxTimeOut=$2\nbash ${scriptsPath}/migrate.sh $1\nstatus=$?\nif [[ ${status}\
+    \ -eq 1 && -f /tmp/error ]]; then\n  echo \"Migration is not supported ...Exiting\
+    \ Init Container\"\n  exit 1\nelif [[ ${status} -eq 0 ]]; then\n  echo \"Waiting\
+    \ for Artifactory to start in Init Container\"\n  /entrypoint-artifactory.sh &\n\
+    \  statusCheck ${maxTimeOut}\nelse\n  echo \"Migration not necessary...Exiting\
+    \ Init Container\"\n  exit 0\nfi"
+kind: ConfigMap
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    heritage: Tiller
+    release: null
+  name: -artifactory-migration-scripts

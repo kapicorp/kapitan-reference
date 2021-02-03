@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    component: nginx
+    heritage: Tiller
+    release: null
+  name: -artifactory-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artifactory
+      component: nginx
+      release: null
+  template:
+    metadata:
+      annotations:
+        checksum/nginx-artifactory-conf: 5b75ab376aa69ae65d8ee2b56f979404bf3d43f02fd2c8989606a0e74f8fc748
+        checksum/nginx-conf: bf8a87e3bccdbfbe24b92a47cc0fe2adc81a6ed5334404da48341df14049f389
+      labels:
+        app: artifactory
+        chart: artifactory-11.7.6
+        component: nginx
+        heritage: Tiller
+        release: null
+    spec:
+      containers:
+        - command:
+            - nginx
+            - -g
+            - daemon off;
+          image: docker.bintray.io/jfrog/nginx-artifactory-pro:7.12.6
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /router/api/v1/system/health
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: nginx
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /router/api/v1/system/health
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: 250m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 250Mi
+          volumeMounts:
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-conf
+              subPath: nginx.conf
+            - mountPath: /var/opt/jfrog/nginx/conf.d/
+              name: nginx-artifactory-conf
+            - mountPath: /var/opt/jfrog/nginx
+              name: nginx-volume
+            - mountPath: /var/opt/jfrog/nginx/ssl
+              name: ssl-certificates
+      initContainers:
+        - command:
+            - /bin/sh
+            - -c
+            - 'rm -rfv /var/opt/jfrog/nginx/lost+found; mkdir -p /var/opt/jfrog/nginx/logs;
+
+              '
+          image: docker.bintray.io/alpine:3.12.1
+          imagePullPolicy: IfNotPresent
+          name: setup
+          volumeMounts:
+            - mountPath: /var/opt/jfrog/nginx
+              name: nginx-volume
+      securityContext:
+        fsGroup: 107
+        runAsUser: 104
+      serviceAccountName: -artifactory
+      volumes:
+        - configMap:
+            name: -artifactory-nginx-conf
+          name: nginx-conf
+        - configMap:
+            name: -artifactory-nginx-artifactory-conf
+          name: nginx-artifactory-conf
+        - emptyDir: {}
+          name: nginx-volume
+        - name: ssl-certificates
+          secret:
+            secretName: -artifactory-nginx-certificate

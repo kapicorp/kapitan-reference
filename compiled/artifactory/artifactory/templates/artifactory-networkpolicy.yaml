@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    heritage: Tiller
+    release: null
+  name: -artifactory-artifactory-networkpolicy
+spec:
+  egress:
+    - {}
+  ingress:
+    - {}
+  podSelector:
+    matchLabels:
+      app: artifactory
+  policyTypes:
+    - Ingress
+    - Egress
+--- null
+...

@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: artifactory
+    chart: artifactory-11.7.6
+    component: artifactory
+    heritage: Tiller
+    release: null
+  name: -artifactory
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: -artifactory
+subjects:
+  - kind: ServiceAccount
+    name: -artifactory
