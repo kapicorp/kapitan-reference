@@ -1,0 +1,47 @@
+# Sources:
+# https://github.com/kapicorp/kapitan/blob/master/docs/compile.md#helm
+# https://artifacthub.io/packages/helm/jfrog/artifactory
+
+parameters:
+  artifactory:
+    chart_name: artifactory
+    chart_version: 11.7.6
+    namespace: ${namespace}
+    helm_values:
+      name: artifactory
+      artifactory:
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 4Gi
+        javaOpts:
+          xms: 1g
+          xmx: 4g
+      nginx:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 250Mi
+          limits:
+            cpu: 250m
+            memory: 500Mi
+
+  kapitan:
+    dependencies:
+    - type: https
+      output_path: components/charts/
+      source: https://charts.jfrog.io/artifactory/helm/artifactory-${artifactory:chart_version}.tgz
+      unpack: True
+
+    compile:
+    - input_type: helm
+      input_paths:
+        - components/charts/artifactory
+      output_path: .
+      helm_params:
+        namespace: ${artifactory:namespace}
+        release_name: ${artifactory:chart_name}
+      helm_values: ${artifactory:helm_values}

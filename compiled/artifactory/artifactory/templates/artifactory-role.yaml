@@ -6,8 +6,8 @@ metadata:
     chart: artifactory-11.7.6
     component: artifactory
     heritage: Tiller
-    release: null
-  name: -artifactory
+    release: artifactory
+  name: artifactory-artifactory
 rules:
   - apiGroups:
       - ''

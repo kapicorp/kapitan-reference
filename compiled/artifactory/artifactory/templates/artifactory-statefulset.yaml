@@ -6,30 +6,30 @@ metadata:
     chart: artifactory-11.7.6
     component: artifactory
     heritage: Tiller
-    release: null
-  name: -artifactory
+    release: artifactory
+  name: artifactory-artifactory
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: artifactory
-      release: null
+      release: artifactory
       role: artifactory
   serviceName: artifactory
   template:
     metadata:
       annotations:
-        checksum/access-config: f857ae53ffbe857b605382150fa645bd7b4604ac1d67034a1b5aafe2a6634e45
+        checksum/access-config: 82a7ca6405fb5a4b75b0f63db487df3d0985cfc66daed569ef032fd46edcd159
         checksum/admin-creds: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
-        checksum/binarystore: d1b7d2fec4e95298afed19ba07b7665bf8f242f01876eb1e7de9964295094342
+        checksum/binarystore: ec0ca9e04c7c2cc59ea2248b7c733a3fe2edbb5da56c2ac5b9e6f9cd8bc9b8cd
         checksum/database-secrets: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
-        checksum/systemyaml: ea5a4a48de85fe5b36a4316201fc81d902a99d21da3fb53f590aaf65ed748316
+        checksum/systemyaml: cd85c2314a14da9395e88de9599fa47754305d739f8c479bfe03da3093cbea91
       labels:
         app: artifactory
         chart: artifactory-11.7.6
         component: artifactory
         heritage: Tiller
-        release: null
+        release: artifactory
         role: artifactory
     spec:
       containers:
@@ -45,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: postgresql-password
-                  name: -postgresql
+                  name: artifactory-postgresql
           image: docker.bintray.io/jfrog/artifactory-pro:7.12.6
           imagePullPolicy: IfNotPresent
           livenessProbe:
@@ -143,8 +143,8 @@ spec:
         - command:
             - sh
             - -c
-            - "until nc -z -w 2 -postgresql 5432 && echo database ok; do\n  sleep\
-              \ 2;\ndone;\n"
+            - "until nc -z -w 2 artifactory-postgresql 5432 && echo database ok; do\n\
+              \  sleep 2;\ndone;\n"
           image: docker.bintray.io/alpine:3.12.1
           name: wait-for-db
           resources: {}
@@ -165,7 +165,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: postgresql-password
-                  name: -postgresql
+                  name: artifactory-postgresql
           image: docker.bintray.io/jfrog/artifactory-pro:7.12.6
           imagePullPolicy: IfNotPresent
           name: migration-artifactory
@@ -189,24 +189,24 @@ spec:
       securityContext:
         fsGroup: 1030
         runAsUser: 1030
-      serviceAccountName: -artifactory
+      serviceAccountName: artifactory-artifactory
       terminationGracePeriodSeconds: 30
       volumes:
         - name: binarystore-xml
           secret:
-            secretName: -artifactory-binarystore
+            secretName: artifactory-artifactory-binarystore
         - configMap:
-            name: -artifactory-migration-scripts
+            name: artifactory-artifactory-migration-scripts
           name: migration-scripts
         - configMap:
-            name: -artifactory-installer-info
+            name: artifactory-artifactory-installer-info
           name: installer-info
         - name: systemyaml
           secret:
-            secretName: -artifactory-systemyaml
+            secretName: artifactory-artifactory-systemyaml
         - name: access-config
           secret:
-            secretName: -artifactory-access-config
+            secretName: artifactory-artifactory-access-config
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:

@@ -5,8 +5,8 @@ metadata:
     app: artifactory
     chart: artifactory-11.7.6
     heritage: Tiller
-    release: null
-  name: -artifactory-access-config
+    release: artifactory
+  name: artifactory-artifactory-access-config
 stringData:
   access.config.patch.yml: "security:\n  tls: false\n"
 type: Opaque

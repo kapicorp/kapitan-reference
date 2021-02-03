@@ -6,8 +6,8 @@ metadata:
     chart: artifactory-11.7.6
     component: nginx
     heritage: Tiller
-    release: null
-  name: -artifactory-nginx
+    release: artifactory
+  name: artifactory-artifactory-nginx
 spec:
   externalTrafficPolicy: Cluster
   ports:
@@ -22,5 +22,5 @@ spec:
   selector:
     app: artifactory
     component: nginx
-    release: null
+    release: artifactory
   type: LoadBalancer

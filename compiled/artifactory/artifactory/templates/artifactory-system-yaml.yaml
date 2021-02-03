@@ -5,12 +5,12 @@ metadata:
     app: artifactory
     chart: artifactory-11.7.6
     heritage: Tiller
-    release: null
-  name: -artifactory-systemyaml
+    release: artifactory
+  name: artifactory-artifactory-systemyaml
 stringData:
   system.yaml: "shared:\n  logging:\n    consoleLog:\n      enabled: false\n  extraJavaOpts:\
     \ >\n    -Dartifactory.access.client.max.connections=50\n    -Dartifactory.async.corePoolSize=8\n\
-    \    -Xms1g\n    -Xmx4g\n  database:\n    type: postgresql\n    url: \"jdbc:postgresql://-postgresql:5432/artifactory\"\
+    \    -Xms1g\n    -Xmx4g\n  database:\n    type: postgresql\n    url: \"jdbc:postgresql://artifactory-postgresql:5432/artifactory\"\
     \n    driver: org.postgresql.Driver\n    username: \"artifactory\"\nartifactory:\n\
     \  metrics:\n    enabled: false\n  database:\n    maxOpenConnections: 80\n  tomcat:\n\
     \    connector:\n      maxThreads: 200\n      extraConfig: acceptCount=\"100\"\

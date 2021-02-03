@@ -3,28 +3,28 @@ kind: StatefulSet
 metadata:
   annotations: null
   labels:
-    app.kubernetes.io/instance: null
+    app.kubernetes.io/instance: artifactory
     app.kubernetes.io/managed-by: Tiller
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-9.3.4
-  name: -postgresql
+  name: artifactory-postgresql
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/instance: null
+      app.kubernetes.io/instance: artifactory
       app.kubernetes.io/name: postgresql
       role: master
-  serviceName: -postgresql-headless
+  serviceName: artifactory-postgresql-headless
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: null
+        app.kubernetes.io/instance: artifactory
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/name: postgresql
         helm.sh/chart: postgresql-9.3.4
         role: master
-      name: -postgresql
+      name: artifactory-postgresql
     spec:
       containers:
         - env:
@@ -42,7 +42,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: postgresql-password
-                  name: -postgresql
+                  name: artifactory-postgresql
             - name: POSTGRES_DB
               value: artifactory
             - name: POSTGRESQL_ENABLE_LDAP
@@ -63,7 +63,7 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-          name: -postgresql
+          name: artifactory-postgresql
           ports:
             - containerPort: 5432
               name: tcp-postgresql
@@ -103,7 +103,7 @@ spec:
         fsGroup: 1001
       volumes:
         - configMap:
-            name: -postgresql-extended-configuration
+            name: artifactory-postgresql-extended-configuration
           name: postgresql-extended-config
         - emptyDir:
             medium: Memory

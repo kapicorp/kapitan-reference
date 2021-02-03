@@ -2073,5 +2073,5 @@ metadata:
     app: artifactory
     chart: artifactory-11.7.6
     heritage: Tiller
-    release: null
-  name: -artifactory-migration-scripts
+    release: artifactory
+  name: artifactory-artifactory-migration-scripts

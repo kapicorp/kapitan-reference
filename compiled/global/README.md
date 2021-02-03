@@ -1,5 +1,6 @@
 | *Target* |
 | -------- | 
+|[artifactory](../artifactory/docs/README.md)|
 |[dev-sockshop](../dev-sockshop/docs/README.md)|
 |[echo-server](../echo-server/docs/README.md)|
 |[examples](../examples/docs/README.md)|
