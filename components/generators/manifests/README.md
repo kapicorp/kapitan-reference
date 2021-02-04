@@ -4,24 +4,22 @@ The Kubernetes generator allows to quickly generate Kubernetes manifests.
 
 ## Getting started
 
-Create a new kapitan target file (For this tutorial, we will assume the target file to be `demo.yml`) in any subdirectory of the `inventory/targets` folder.
+Create a new kapitan target file in any subdirectory of the `inventory/targets` folder. That file will become your **target** file!
 
-That file will become your **target** file!
+For this tutorial, we will assume the target file to be `inventory/targets/demo.yml`
 > The target _name_ is the name of the file without the extentions (e.g `demo`).
 
+### Initial content of `inventory/targets/demo.yml`
 ```yaml
 classes:
 # boilerplate class to get you started
 - common
 ```
 
-After each step, run command:
-> `kapitan compile -t <target-name>` to compile your target
+To compile your target (`demo` in this tutorial):
 
-> e.g. `kapitan compile -t demo`
-
-or simply `kapitan compile` to compile everything!
-
+* `./kapitan compile -t demo  # to compile only the demo target`
+* `./kapitan compile          # to compile everything!`
 
 ## Create a deployment
 
@@ -272,7 +270,7 @@ Simply adding the above configuration, will immediately configure the component 
 +          name: config
 ```
 
-## Templated config
+## Use Jinja templates as configurations
 
 A more advanced way to create the configuration file, is to use an external `jinja` file as source:
 
@@ -291,7 +289,7 @@ with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.
 
 As expected, we can inject any value from the inventory into the the file.
 
-### Add files to config_maps
+### Add external files to ConfigMaps
 
 You can also use the `file` and the `directory` directives to copy a single file or a full directory to your ConfigMaps or Secrets.
 
