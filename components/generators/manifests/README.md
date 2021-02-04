@@ -25,11 +25,9 @@ or simply `kapitan compile` to compile everything!
 
 ## Create a deployment
 
-Let's start by creating a simple component, a `deployment` to be more precise. 
+Let's start by creating a simple component, a `deployment` to be more precise.
 
-> Note: You can use they `type` directive to create other types, like `statefulset` for StatefulSets and `job` for Jobs (other types will be added soon). 
-
->To create a *CronJob*, please simply add a `schedule` directive to a `job` type. 
+> Note: Also see the StatefulSet and Jobs sections!
 
 We will use the `jmalloc/echo-server` for this demo.
 
@@ -210,7 +208,6 @@ Which will create a service manifest with the same name as the component, and wi
 +  type: LoadBalancer
 ```
 
-
 ## Config Maps and Secrets
 
 Creating both `secrets` and `config maps` is very simple with Kapitan Generators, and the interface is very similar with minor differences between them.
@@ -227,7 +224,7 @@ Creating both `secrets` and `config maps` is very simple with Kapitan Generators
                 example: true
 ```
 
-A configMap manifest was created. The name is taken from the component.
+A ConfigMap manifest was created. The name is taken from the component.
 
 ```yaml
 cat compiled/demo/manifests/echo-server-config.yml
@@ -391,6 +388,35 @@ In summary, remember that you can summon the power of Google KMS (once setup) an
 ```
 
 which will generate an truly encrypted secret using Google KMS (other backends also available)
+
+## StatefulSet
+
+You can define a *StatefulSet* by using the `type` directive to `statefulset` (that normally defaults to `deployment`)
+
+The statefulset uses all (applicable) configurations available to the `deployment` type, but also includes.
+
+### Volume Mounts and Volume Claims
+
+```yaml
+      volume_mounts:
+        datadir:
+          mountPath: /var/lib/mysql
+
+      volume_claims:
+        datadir:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "standard"
+            resources:
+              requests: 
+                storage: 10Gi
+```
+
+## Jobs and CronJobs
+
+You can define a *Job* by using the `type` directive to `job` (that normally defaults to `deployment`)
+
+You can define a *CronJob* by setting the `schedule` type to a valid value.
 
 ## Additional containers (sidecars)
 
@@ -609,6 +635,7 @@ Sometimes, when defining many components, you and up repeating many repeating co
 With this generator, you can define defaults in 2 ways:
 
 ### Global Generator Defaults
+
 The [global defaults](../../../inventory/classes/kapitan/generators/manifests.yml) can be used to set defaults for every component being generated.
 
 As you can see, some defaults are already set:
