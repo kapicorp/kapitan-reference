@@ -50,6 +50,35 @@ parameters:
 
 Run `kapitan compile` and check the output in the `compiled/demo/manifests` folder.
 
+## Defining envs
+
+You can define env variables by nesting them under the `env` directive:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      env:
+        KAPITAN_ROCKS: 'YES!
+```
+
+You can also use `secretKeyRef` and `configMapKeyRef` provided you have defined your secrets/configmaps below.
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      env:
+        KAPITAN_SECRET: 
+          secretKeyRef: 
+            name: a_secret          *OPTIONAL*
+            key: 'kapitan_secret'
+```
+
+> *NOTE* that you do not need to specify the `name` directive, as the generator will attempt to work out where to get it from.
+
 ## Defining ports
 
 You can define the ports your component uses by adding them under the `ports` directive:
@@ -79,6 +108,59 @@ The above will produce the following effect:
 +              protocol: TCP
 
 ```
+
+### Liveness and Readiness checks
+
+You can also quickly add a `readiness`/`liveness` check:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      healthcheck:
+        readiness:
+          type: http
+          port: http
+          path: /health/readiness
+          timeout_seconds: 3
+        liveness:
+          type: http
+          port: http
+          path: /health/liveness
+          timeout_seconds: 3
+```
+
+which produces:
+
+```diff
+--- a/compiled/demo/manifests/echo-server-bundle.yml
++++ b/compiled/demo/manifests/echo-server-bundle.yml
+@@ -42,6 +42,15 @@ spec:
+             - containerPort: 8080
+               name: http
+               protocol: TCP
++          readinessProbe:
++            failureThreshold: 3
++            httpGet:
++              path: /health/readiness
++              port: http
++              scheme: HTTP
++            periodSeconds: 10
++            successThreshold: 1
++            timeoutSeconds: 3
++          livenessProbe:
++            failureThreshold: 3
++            httpGet:
++              path: /health/liveness
++              port: http
++              scheme: HTTP
++            periodSeconds: 10
++            successThreshold: 1
++            timeoutSeconds: 3
+```
+
+> Types `tcp` and `command` are also supported.
 
 ## Exposing a service
 
@@ -194,6 +276,7 @@ Simply adding the above configuration, will immediately configure the component 
 ```
 
 ## Templated config
+
 A more advanced way to create the configuration file, is to use an external `jinja` file as source:
 
 ```yaml
@@ -207,9 +290,22 @@ A more advanced way to create the configuration file, is to use an external `jin
                 example: true
 ```
 
-with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.conf.j2) being a jinja template file. 
+with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.conf.j2) being a jinja template file.
 
 As expected, we can inject any value from the inventory into the the file.
+
+### Add files to config_maps
+
+You can also use the `file` and the `directory` directives to copy a single file or a full directory to your ConfigMaps or Secrets.
+
+```yaml
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          data:
+            example.txt:
+              file: 'components/echo-server/example.txt'
+```
 
 ### Filtering files to mount
 
@@ -438,7 +534,7 @@ parameters:
 
 ```
 
-to produce 
+to produce:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -507,67 +603,7 @@ spec:
       name: tesoro
 ```
 
-
-
-Liveness and Readiness checks
-You can also quickly add a `readiness`/`liveness` check:
-
-```yaml
-parameters:
-  components:
-    echo-server:
-      <other config>
-      healthcheck:
-        readiness:
-          type: http
-          port: http
-          path: /health/readiness
-          timeout_seconds: 3
-        liveness:
-          type: http
-          port: http
-          path: /health/liveness
-          timeout_seconds: 3
-```
-
-which produces:
-```diff
---- a/compiled/demo/manifests/echo-server-bundle.yml
-+++ b/compiled/demo/manifests/echo-server-bundle.yml
-@@ -42,6 +42,15 @@ spec:
-             - containerPort: 8080
-               name: http
-               protocol: TCP
-+          readinessProbe:
-+            failureThreshold: 3
-+            httpGet:
-+              path: /health/readiness
-+              port: http
-+              scheme: HTTP
-+            periodSeconds: 10
-+            successThreshold: 1
-+            timeoutSeconds: 3
-+          livenessProbe:
-+            failureThreshold: 3
-+            httpGet:
-+              path: /health/liveness
-+              port: http
-+              scheme: HTTP
-+            periodSeconds: 10
-+            successThreshold: 1
-+            timeoutSeconds: 3
-```
-
-
-
-
-
-
-
-
-
-
-## Defining default values
+## Defining default values for multiple components
 
 Sometimes, when defining many components, you and up repeating many repeating configurations.
 With this generator, you can define defaults in 2 ways:
@@ -576,6 +612,7 @@ With this generator, you can define defaults in 2 ways:
 The [global defaults](../../../inventory/classes/kapitan/generators/manifests.yml) can be used to set defaults for every component being generated.
 
 As you can see, some defaults are already set:
+
 ```yaml
   generators:
     manifest:
@@ -602,6 +639,7 @@ For instance, when we enable the [`features.tesoro`](../../../inventory/classes/
 Which has the effect to add the `tesoro.kapicorp.com: enabled` label to every generated configMap resource.
 
 ### Application defaults
+
 You can also create application defaults, where an application is a class/profile that can be associated to multiple components.
 
 For instance, let's assume you have the following definition for an application class called `microservices`
@@ -664,6 +702,3 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ```
-
-
-
