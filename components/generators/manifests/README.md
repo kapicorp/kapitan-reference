@@ -4,22 +4,40 @@ The Kubernetes generator allows to quickly generate Kubernetes manifests.
 
 ## Getting started
 
-Create a new kapitan target file in any subdirectory of the `inventory/targets` folder. That file will become your **target** file!
+### Download the `kapitan-reference` repository
+
+```shell
+git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
+cd kapitan-templates
+```
+
+### Create a target file
+
+Create a new kapitan *target* file in any subdirectory of the `inventory/targets` folder.
 
 For this tutorial, we will assume the target file to be `inventory/targets/demo.yml`
 > The target _name_ is the name of the file without the extentions (e.g `demo`).
 
-### Initial content of `inventory/targets/demo.yml`
+#### Initial content of `inventory/targets/demo.yml`
+
 ```yaml
 classes:
 # boilerplate class to get you started
 - common
 ```
 
-To compile your target (`demo` in this tutorial):
+### EVERY CHANGE -> Compile your targets
 
-* `./kapitan compile -t demo  # to compile only the demo target`
-* `./kapitan compile          # to compile everything!`
+EVERY time you make a change, you will want to tell `kapitan` to compile your targets. 
+`kapitan` will create a folder for each target under the `compiled` folder
+
+#### To compile only the `demo` target
+
+`./kapitan compile -t demo`
+
+#### To compile all targets
+
+`./kapitan compile`
 
 ## Create a deployment
 
