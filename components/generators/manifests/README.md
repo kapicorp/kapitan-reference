@@ -1,123 +1,100 @@
-# Manifest Generator
+# Kubernetes Generator
 
-The manifest generator allows to quickly generate Kubernetes manifests.
+The Kubernetes generator allows to quickly generate Kubernetes manifests.
 
-## Basic usage
+## Getting started
+
+### Download the `kapitan-reference` repository
+
+```shell
+git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
+cd kapitan-templates
+```
+
+### Create a target file
+
+Create a new kapitan *target* file in any subdirectory of the `inventory/targets` folder.
+
+For this tutorial, we will assume the target file to be `inventory/targets/demo.yml`
+> The target _name_ is the name of the file without the extentions (e.g `demo`).
+
+#### Initial content of `inventory/targets/demo.yml`
+
+```yaml
+classes:
+# boilerplate class to get you started
+- common
+```
+
+### EVERY CHANGE -> Compile your targets
+
+EVERY time you make a change, you will want to tell `kapitan` to compile your targets. 
+`kapitan` will create a folder for each target under the `compiled` folder
+
+#### To compile only the `demo` target
+
+`./kapitan compile -t demo`
+
+#### To compile all targets
+
+`./kapitan compile`
+
+## Create a deployment
+
+Let's start by creating a simple component, a `deployment` to be more precise.
+
+> Note: Also see the StatefulSet and Jobs sections!
+
+We will use the `jmalloc/echo-server` for this demo.
 
 The generator is expecting components to be defined under the `parameters.components` path of the inventory.
 
 For instance, create a component `echo-server`, simply create the following section:
 
 ```yaml
+classes:
+# boilerplate class to get you started
+- common
+
 parameters:
   components:
     echo-server:
       image: jmalloc/echo-server
 ```
 
-Compiling, `kapitan` will generate a simple deployment with the above image.
+Run `kapitan compile` and check the output in the `compiled/demo/manifests` folder.
 
-## Defining default values
+## Defining envs
 
-Sometimes, when defining many components, you and up repeating many repeating configurations.
-With this generator, you can define defaults in 2 ways:
-
-### Global Generator Defaults
-The [global defaults](../../../inventory/classes/kapitan/generators/manifests.yml) can be used to set defaults for every component being generated.
-
-As you can see, some defaults are already set:
-```yaml
-  generators:
-    manifest:
-      default_config:
-        type: deployment
-        annotations:
-          "manifests.kapicorp.com/generated": true
-```
-
-You do not have to change that class directly, as long as you add to the same inventory structure for another class.
-
-For instance, when we enable the [`features.tesoro`](../../../inventory/classes/features/tesoro.yml) class, we can see that we are adding the following yaml fragment:
-
-```yaml
-  generators:
-    manifest:
-      default_config:
-        globals:
-          secrets:
-            labels: 
-              tesoro.kapicorp.com: enabled
-```
-
-Which has the effect to add the `tesoro.kapicorp.com: enabled` label to every generated configMap resource.
-
-### Application defaults
-You can also create application defaults, where an application is a class/profile that can be associated to multiple components.
-
-For instance, let's assume you have the following definition for an application class called `microservices`
-
-```yaml
-parameters:
-  applications:
-    microservices:
-      component_defaults:
-        replicas: 3
-        env:
-          KAPITAN_APPLICATION: microservices
-```
-
-Every component that belongs to that application class will receive the defaults for the application.
-To associate a component to an application, use the `application` directive.
+You can define env variables by nesting them under the `env` directive:
 
 ```yaml
 parameters:
   components:
     echo-server:
-      application: microservices
-      image: jmalloc/echo-server
+      <other config>
+      env:
+        KAPITAN_ROCKS: 'YES!
 ```
 
-Compiling, kapitan will generate a *deployment* with image `jmalloc/echo-server`, 3 replicas, an annotation and an env variable.
+You can also use `secretKeyRef` and `configMapKeyRef` provided you have defined your secrets/configmaps below.
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    manifests.kapicorp.com/generated: 'true'
-  labels:
-    app: echo-server
-  name: echo-server
-  namespace: tutorial
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: echo-server
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        app: echo-server
-    spec:
-      containers:
-        - env:
-            - name: KAPITAN_APPLICATION
-              value: microservices
-          image: jmalloc/echo-server
-          imagePullPolicy: IfNotPresent
-          name: echo-server
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 30
+parameters:
+  components:
+    echo-server:
+      <other config>
+      env:
+        KAPITAN_SECRET: 
+          secretKeyRef: 
+            name: a_secret          *OPTIONAL*
+            key: 'kapitan_secret'
 ```
 
-## Ports and Services
+> *NOTE* that you do not need to specify the `name` directive, as the generator will attempt to work out where to get it from.
 
-### Defining ports
+## Defining ports
+
 You can define the ports your component uses by adding them under the `ports` directive:
 
 ```yaml
@@ -133,8 +110,8 @@ parameters:
 The above will produce the following effect:
 
 ```diff
---- a/compiled/echo-server/manifests/echo-server-bundle.yml
-+++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+--- a/compiled/demo/manifests/echo-server-bundle.yml
++++ b/compiled/demo/manifests/echo-server-bundle.yml
 @@ -38,6 +38,10 @@ spec:
          - image: jmalloc/echo-server
            imagePullPolicy: IfNotPresent
@@ -146,51 +123,8 @@ The above will produce the following effect:
 
 ```
 
-### Exposing a service
-If you want to expose the service, add the `service` directive with the desired service `type`, and define the `service_port`:
-
-```yaml
-parameters:
-  components:
-    echo-server:
-      <other config>
-      ports:
-        http:
-          service_port: 80
-          container_port: 8080
-```
-
-Which will create a service manifest with the same name as the component, and will produce the following effect:
-```diff
---- a/compiled/echo-server/manifests/echo-server-bundle.yml
-+++ b/compiled/echo-server/manifests/echo-server-bundle.yml
-@@ -52,3 +52,21 @@ metadata:
-     name: echo-server
-   name: echo-server
-   namespace: echo-server
-+---
-+apiVersion: v1
-+kind: Service
-+metadata:
-+  labels:
-+    app: echo-server
-+  name: echo-server
-+  namespace: echo-server
-+spec:
-+  ports:
-+    - name: http
-+      port: 80
-+      protocol: TCP
-+      targetPort: http
-+  selector:
-+    app: echo-server
-+  sessionAffinity: None
-+  type: LoadBalancer
-```
-
-Omitting the `service_port` directive will tell the generator not to expose that port as a service.
-
 ### Liveness and Readiness checks
+
 You can also quickly add a `readiness`/`liveness` check:
 
 ```yaml
@@ -212,9 +146,10 @@ parameters:
 ```
 
 which produces:
+
 ```diff
---- a/compiled/echo-server/manifests/echo-server-bundle.yml
-+++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+--- a/compiled/demo/manifests/echo-server-bundle.yml
++++ b/compiled/demo/manifests/echo-server-bundle.yml
 @@ -42,6 +42,15 @@ spec:
              - containerPort: 8080
                name: http
@@ -239,7 +174,57 @@ which produces:
 +            timeoutSeconds: 3
 ```
 
-## Config Maps
+> Types `tcp` and `command` are also supported.
+
+## Exposing a service
+
+If you want to expose the service, add the `service` directive with the desired service `type`, and define the `service_port`:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: 80
+          container_port: 8080
+```
+
+> *Note*: if you want to prevent a port from being added to the service, omit the `<service_port>` directive
+
+Which will create a service manifest with the same name as the component, and will produce the following effect:
+
+```diff
+--- a/compiled/demo/manifests/echo-server-bundle.yml
++++ b/compiled/demo/manifests/echo-server-bundle.yml
+@@ -52,3 +52,21 @@ metadata:
+     name: echo-server
+   name: echo-server
+   namespace: demo
++---
++apiVersion: v1
++kind: Service
++metadata:
++  labels:
++    app: echo-server
++  name: echo-server
++  namespace: demo
++spec:
++  ports:
++    - name: http
++      port: 80
++      protocol: TCP
++      targetPort: http
++  selector:
++    app: echo-server
++  sessionAffinity: None
++  type: LoadBalancer
+```
+
+## Config Maps and Secrets
 
 Creating both `secrets` and `config maps` is very simple with Kapitan Generators, and the interface is very similar with minor differences between them.
 
@@ -255,10 +240,10 @@ Creating both `secrets` and `config maps` is very simple with Kapitan Generators
                 example: true
 ```
 
-A configMap manifest was created. The name is taken from the component.
+A ConfigMap manifest was created. The name is taken from the component.
 
 ```yaml
-cat compiled/tutorial/manifests/echo-server-config.yml
+cat compiled/demo/manifests/echo-server-config.yml
 apiVersion: v1
 data:
   echo-service.conf: '# A configuration file
@@ -269,10 +254,11 @@ metadata:
   labels:
     name: echo-server
   name: echo-server
-  namespace: tutorial
+  namespace: demo
 ```
 
-### Mounting a config map
+## Mounting a config map as a directory
+
 Note that in the previous example the config map is not mounted, because the `mount` directive is missing.
 
 ```yaml
@@ -302,7 +288,8 @@ Simply adding the above configuration, will immediately configure the component 
 +          name: config
 ```
 
-### Templated config
+## Use Jinja templates as configurations
+
 A more advanced way to create the configuration file, is to use an external `jinja` file as source:
 
 ```yaml
@@ -316,9 +303,22 @@ A more advanced way to create the configuration file, is to use an external `jin
                 example: true
 ```
 
-with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.conf.j2) being a jinja template file. 
+with the file [echo-server.conf.j2](../../../components/echo-server/echo-server.conf.j2) being a jinja template file.
 
 As expected, we can inject any value from the inventory into the the file.
+
+### Add external files to ConfigMaps
+
+You can also use the `file` and the `directory` directives to copy a single file or a full directory to your ConfigMaps or Secrets.
+
+```yaml
+      config_maps:
+        config:
+          mount: /opt/echo-service
+          data:
+            example.txt:
+              file: 'components/echo-server/example.txt'
+```
 
 ### Filtering files to mount
 
@@ -344,8 +344,8 @@ For instance, given the following setup, we can restrict the mount only to files
 the diff shows that the generator makes use of the items directive in the manifest:
 
 ```diff
---- a/compiled/echo-server/manifests/echo-server-config.yml
-+++ b/compiled/echo-server/manifests/echo-server-bundle.yml
+--- a/compiled/demo/manifests/echo-server-config.yml
++++ b/compiled/demo/manifests/echo-server-bundle.yml
 @@ -60,6 +60,9 @@ spec:
        volumes:
          - configMap:
@@ -356,14 +356,12 @@ the diff shows that the generator makes use of the items directive in the manife
              name: echo-server
 ```
 
-## Secrets
+### Secrets: auto base64 encode
 
-What discussed with Config Maps also applies to Secrets.
-However, in the case of secrets, we have a coupld of extra features:
+Secrets use the same configuations as config maps, but are nested under the `secrets` key.
 
-### Auto base64 encode
+In addition, secrets support automatic base64 encoding with the `b64_encode` directive:
 
-We can automatically base64 encode secrets that are not already encoded:
 ```yaml
       secrets:
         secret:
@@ -374,7 +372,7 @@ We can automatically base64 encode secrets that are not already encoded:
 ```
 
 ```yaml
-cat compiled/tutorial/manifests/echo-server-secret.yml
+cat compiled/demo/manifests/echo-server-secret.yml
 apiVersion: v1
 data:
   encoded_secret: bXlfc2VjcmV0    # ENCODED my_secret
@@ -383,11 +381,12 @@ metadata:
   labels:
     name: echo-server
   name: echo-server
-  namespace: tutorial
+  namespace: demo
 type: Opaque
 
 ```
-Note that, because the mount directive is missing, the secret will not be mounted automatically.
+
+> Note that, because in this example the `mount` directive is missing, the secret will not be mounted automatically.
 
 Please review the generic way of Kapitan to manage secrets at [https://kapitan.dev/secrets/](https://kapitan.dev/secrets/) and [Secrets management with Kapitan](https://medium.com/kapitan-blog/secrets-management-with-kapitan-47a0476bab10)
 
@@ -406,7 +405,36 @@ In summary, remember that you can summon the power of Google KMS (once setup) an
 
 which will generate an truly encrypted secret using Google KMS (other backends also available)
 
-## Additional containers
+## StatefulSet
+
+You can define a *StatefulSet* by using the `type` directive to `statefulset` (that normally defaults to `deployment`)
+
+The statefulset uses all (applicable) configurations available to the `deployment` type, but also includes.
+
+### Volume Mounts and Volume Claims
+
+```yaml
+      volume_mounts:
+        datadir:
+          mountPath: /var/lib/mysql
+
+      volume_claims:
+        datadir:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "standard"
+            resources:
+              requests: 
+                storage: 10Gi
+```
+
+## Jobs and CronJobs
+
+You can define a *Job* by using the `type` directive to `job` (that normally defaults to `deployment`)
+
+You can define a *CronJob* by setting the `schedule` type to a valid value.
+
+## Additional containers (sidecars)
 
 You can instruct the generator to add one or more additional containers to your definition:
 
@@ -427,6 +455,7 @@ parameters:
 You can access the same config_maps and secrets as the main container, but you can override mountpoints and subPaths
 
 For instance while this is defined in the outer "main" container scope, we can still mount the nginx config file:
+
 ```yaml
 parameters:
   components:
@@ -490,6 +519,7 @@ You can also generate Network Policies by simply adding them under the `network_
 ```
 
 Which will automatically generate the NetworkPolicy resource
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -520,6 +550,7 @@ Define PrometheusRules and ServiceMonitor alongside your application definitions
 For a working example, have a look at [`tesoro_monitoring.yaml`](../../../inventory/classes/components/kapicorp/tesoro_monitoring.yml)
 
 ### PrometheusRules
+
 Simply add your definitions:
 
 ```yaml
@@ -545,7 +576,7 @@ parameters:
 
 ```
 
-to produce 
+to produce:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -612,4 +643,105 @@ spec:
   selector:
     matchLabels:
       name: tesoro
+```
+
+## Defining default values for multiple components
+
+Sometimes, when defining many components, you and up repeating many repeating configurations.
+With this generator, you can define defaults in 2 ways:
+
+### Global Generator Defaults
+
+The [global defaults](../../../inventory/classes/kapitan/generators/manifests.yml) can be used to set defaults for every component being generated.
+
+As you can see, some defaults are already set:
+
+```yaml
+  generators:
+    manifest:
+      default_config:
+        type: deployment
+        annotations:
+          "manifests.kapicorp.com/generated": true
+```
+
+You do not have to change that class directly, as long as you add to the same inventory structure for another class.
+
+For instance, when we enable the [`features.tesoro`](../../../inventory/classes/features/tesoro.yml) class, we can see that we are adding the following yaml fragment:
+
+```yaml
+  generators:
+    manifest:
+      default_config:
+        globals:
+          secrets:
+            labels: 
+              tesoro.kapicorp.com: enabled
+```
+
+Which has the effect to add the `tesoro.kapicorp.com: enabled` label to every generated configMap resource.
+
+### Application defaults
+
+You can also create application defaults, where an application is a class/profile that can be associated to multiple components.
+
+For instance, let's assume you have the following definition for an application class called `microservices`
+
+```yaml
+parameters:
+  applications:
+    microservices:
+      component_defaults:
+        replicas: 3
+        env:
+          KAPITAN_APPLICATION: microservices
+```
+
+Every component that belongs to that application class will receive the defaults for the application.
+To associate a component to an application, use the `application` directive.
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      application: microservices
+      image: jmalloc/echo-server
+```
+
+Compiling, kapitan will generate a *deployment* with image `jmalloc/echo-server`, 3 replicas, an annotation and an env variable.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app: echo-server
+  name: echo-server
+  namespace: tutorial
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: echo-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      containers:
+        - env:
+            - name: KAPITAN_APPLICATION
+              value: microservices
+          image: jmalloc/echo-server
+          imagePullPolicy: IfNotPresent
+          name: echo-server
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
 ```
