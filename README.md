@@ -4,8 +4,6 @@ This repository is meant to be a way to bootstrap your [Kapitan](https://kapitan
 
 It is meant to help you make use of best practices and libraries that can make Kapitan the ultimate tool for all your configuration needs.
 
-[Manifest Generator Documentation](components/generators/manifests/README.md)
-
 ## Quickstart
 
 ```shell script
@@ -25,9 +23,11 @@ Compiled global (0.76s)
 Compiled examples (2.60s)
 Compiled pritunl (2.03s)
 Compiled sock-shop (4.36s)
-``` 
+```
 
 ## Slow walk-through
+
+[Manifest Generator Documentation](components/generators/manifests/README.md)
 
 ### Tools
 
