@@ -440,7 +440,7 @@ parameters:
     postgres-backup:
       type: job
       schedule: "0 */6 * * *"
-      image: ${postgres-backup:image}
+      image: moep1990/pgbackup:lates
       env:
         PGDATABASE: postgres
         PGHOST: postgres
