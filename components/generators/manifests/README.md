@@ -434,6 +434,61 @@ You can define a *Job* by using the `type` directive to `job` (that normally def
 
 You can define a *CronJob* by setting the `schedule` type to a valid value.
 
+```yaml
+parameters:
+  components:
+    postgres-backup:
+      type: job
+      schedule: "0 */6 * * *"
+      image: moep1990/pgbackup:lates
+      env:
+        PGDATABASE: postgres
+        PGHOST: postgres
+        PGPASSWORD: postgres
+        PGPORT: 5432
+        PGUSER: postgres
+```
+Which will automatically generate the CronJob resource
+```yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  labels:
+    name: postgres-backup
+  name: postgres-backup
+spec:
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      completions: 1
+      parallelism: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kapitan
+            app.kubernetes.io/part-of: gitea
+            name: postgres-backup
+        spec:
+          containers:
+            - env:
+                - name: PGDATABASE
+                  value: postgres
+                - name: PGHOST
+                  value: postgres
+                - name: PGPASSWORD
+                  value: postgres
+                - name: PGPORT
+                  value: '5432'
+                - name: PGUSER
+                  value: postgres
+              image: moep1990/pgbackup:latest
+              imagePullPolicy: Always
+              name: postgres-backup
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+  schedule: 0 */6 * * *
+```
+
 ## Additional containers (sidecars)
 
 You can instruct the generator to add one or more additional containers to your definition:
