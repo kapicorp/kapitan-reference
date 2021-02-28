@@ -49,39 +49,26 @@ class WorkloadCommon(BaseObj):
             merge({"metadata": {"name": key, "labels": {"name": key}}}, value)
             self.root.spec.volumeClaimTemplates += [value]
 
-    def add_volumes_from_config(self):
+    def add_volumes_for_objects(self, objects):
         component = self.kwargs.component
         component_name = self.kwargs.name
 
-        configs = component.config_maps.items()
-        secrets = component.secrets.items()
-
-        for name, spec in configs:
-            reference_name = name
-            if len(component.config_maps) == 1:
-                name = component_name
+        for object in objects.root:
+            object_name = object.name
+            rendered_name = object.root.metadata.name
+        
+            if type(object) == ConfigMap:
+                key = "configMap"
+                name_key = "name"
             else:
-                name = "{}-{}".format(component_name, name)
+                key= "secret"
+                name_key = "secretName"
             self.root.spec.template.spec.volumes += [{
-                "name": reference_name,
-                "configMap": {
-                    "defaultMode": spec.get('default_mode', 420),
-                    "name": name,
-                    "items": [{"key": value, "path": value} for value in spec.get('items', [])]
-                }
-            }]
-        for name, spec in secrets:
-            reference_name = name
-            if len(component.secrets) == 1:
-                name = component_name
-            else:
-                name = "{}-{}".format(component_name, name)
-            self.root.spec.template.spec.volumes += [{
-                "name": reference_name,
-                "secret": {
-                    "defaultMode": spec.get('default_mode', 420),
-                    "secretName": name,
-                    "items": [{"key": value, "path": value} for value in spec.get('items', [])]
+                "name": object_name,
+                key: {
+                    "defaultMode": object.root.spec.get('default_mode', 420),
+                    name_key: rendered_name,
+                    "items": [{"key": value, "path": value} for value in object.items]
                 }
             }]
 
@@ -138,6 +125,8 @@ class ConfigMap(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         config = self.kwargs.config
         component = self.kwargs.component
+
+        self.items = config["items"]
         if component.globals:
             self.add_labels(component.globals.config_maps.labels)
             self.add_annotations(component.globals.config_maps.annotations)
@@ -180,6 +169,9 @@ class Secret(k8s.Base):
         use_tesoro = inv.parameters.use_tesoro
         config = self.kwargs.config
         component = self.kwargs.component
+
+        self.items = config["items"]
+
         if component.globals:
             self.add_labels(component.globals.secrets.labels)
             self.add_annotations(component.globals.secrets.annotations)
@@ -481,7 +473,7 @@ class Container(BaseObj):
         self.process_envs(container)
 
 
-class Workload(BaseObj):
+class Workload(WorkloadCommon):
     def new(self):
         self.need("name")
         self.need("component")
@@ -516,7 +508,6 @@ class Workload(BaseObj):
                                  component.additional_containers.items()]
         workload.add_containers([container])
         workload.add_containers(additional_containers)
-        workload.add_volumes_from_config()
         workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
@@ -605,7 +596,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
             else:
                 name_format = f"{name}-{object_name}"
 
-            self.root += [generating_class(name=name_format,
+            self.root += [generating_class(name=object_name, rendered_name=name_format,
                                            config=object_config, component=component, workload=workload)]
 
 
@@ -819,10 +810,17 @@ def generate_manifests(input_params):
 
         bundle += [workload_spec]
 
-        obj.root[f"{name}-config"] = GenerateMultipleObjectsForClass(
-            name=name, component=component, generating_class=ConfigMap, objects=component.config_maps, workload=workload_spec).root
-        obj.root[f"{name}-secret"] = GenerateMultipleObjectsForClass(
-            name=name, component=component, generating_class=Secret, objects=component.secrets, workload=workload_spec).root
+        configs = GenerateMultipleObjectsForClass(
+            name=name, component=component, generating_class=ConfigMap, objects=component.config_maps, workload=workload_spec)
+
+        secrets = GenerateMultipleObjectsForClass(
+            name=name, component=component, generating_class=Secret, objects=component.secrets, workload=workload_spec)
+
+        workload.add_volumes_for_objects(configs)
+        workload.add_volumes_for_objects(secrets)
+
+        obj.root[f"{name}-config"] = configs.root
+        obj.root[f"{name}-secret"] = secrets.root
 
         if component.vpa and component.type != "job":
             vpa = VerticalPodAutoscaler(
