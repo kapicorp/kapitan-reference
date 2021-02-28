@@ -396,7 +396,7 @@ class Container(BaseObj):
             if "mount" in spec:
                 self.root.volumeMounts += [{
                     "mountPath": spec.mount,
-                    "readOnly": True,
+                    "readOnly": spec.readOnly,
                     "name": object_name,
                     "subPath": spec.subPath
                 }]
@@ -408,7 +408,7 @@ class Container(BaseObj):
             if "mount" in spec:
                 self.root.volumeMounts += [{
                     "mountPath": spec.mount,
-                    "readOnly": True,
+                    "readOnly": spec.readOnly,
                     "name": object_name,
                     "subPath": spec.subPath
                 }]
