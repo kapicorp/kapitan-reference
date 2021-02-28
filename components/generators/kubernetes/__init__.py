@@ -1,6 +1,8 @@
 import base64
 import copy
 import os
+import json
+import hashlib
 
 from kapitan.inputs.kadet import BaseObj, inventory, CompileError
 from kapitan.utils import render_jinja2_file
@@ -146,6 +148,12 @@ class ConfigMap(k8s.Base):
                 with open(f"{config.directory}/{filename}", "r") as f:
                     self.root.data[filename] = f.read()
 
+        if config.get("version", False):          
+            self.hash = hashlib.md5(json.dumps(self.root, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+            self.root.metadata.name += f"-{self.hash}"
+
+        
+
 
 class Secret(k8s.Base):
     def new(self):
@@ -190,6 +198,11 @@ class Secret(k8s.Base):
                     data[key] = spec.get('value')
             if "template" in spec:
                 data[key] = j2(spec.template, spec.get('values', {}))
+                
+        if config.get("version", False):          
+            self.hash = hashlib.md5(json.dumps(self.root, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+            self.root.metadata.name += f"-{self.hash}"
+
 
 
 class Service(k8s.Base):
@@ -592,11 +605,11 @@ class GenerateMultipleObjectsForClass(BaseObj):
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if len(objects.items()) == 1:
-                name_format = f"{name}"
+                rendered_name = f"{name}"
             else:
-                name_format = f"{name}-{object_name}"
+                rendered_name = f"{name}-{object_name}"
 
-            self.root += [generating_class(name=object_name, rendered_name=name_format,
+            self.root += [generating_class(name=object_name, rendered_name=rendered_name,
                                            config=object_config, component=component, workload=workload)]
 
 
