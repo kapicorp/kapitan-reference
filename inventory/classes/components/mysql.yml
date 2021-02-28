@@ -51,7 +51,7 @@ parameters:
 
       secrets:
         secrets:
-          version: true
+          versioned: true
           data:
             mysql-root-password: 
               value: ?{plain:targets/${target_name}/mysql-root-password||randomstr:32|base64}
