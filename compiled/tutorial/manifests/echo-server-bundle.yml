@@ -86,7 +86,7 @@ spec:
       volumes:
         - configMap:
             defaultMode: 420
-            name: echo-server
+            name: echo-server-79541426
           name: config
         - name: secret
           secret:

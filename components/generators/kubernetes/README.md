@@ -405,6 +405,38 @@ In summary, remember that you can summon the power of Google KMS (once setup) an
 
 which will generate an truly encrypted secret using Google KMS (other backends also available)
 
+### Versioned ConfigMaps and Secrets
+
+The generator can automatically "version" you ConfigMap or Secrets so that the associated workload can automatically detect the change and handle it appropriately (rollout restart)
+
+In both secrets and config_maps, just define `version: true` (default: `false`)
+
+```yaml
+      config_maps:
+        config:
+          version: true
+          mount: /opt/echo-service
+          data:
+            example.txt:
+              file: 'components/echo-server/example.txt'
+```
+
+The generator will hash the content of the resource, and add it to the name of the rendered object:
+
+```
+kind: ConfigMap
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server-01f3716a
+  namespace: echo-server
+  [cut]
+```
+
+when the content of the object changes, the hash will be updated accordingly.
+
+**PLEASE NOTE:** `kapitan` is not responsible for garbage collecting unused secrets of config maps.
+
 ## StatefulSet
 
 You can define a *StatefulSet* by using the `type` directive to `statefulset` (that normally defaults to `deployment`)

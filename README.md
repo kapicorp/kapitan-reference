@@ -27,7 +27,7 @@ Compiled sock-shop (4.36s)
 
 ## Slow walk-through
 
-[Manifest Generator Documentation](components/generators/manifests/README.md)
+[Manifest Generator Documentation](components/generators/kubernetes/README.md)
 
 ### Tools
 
@@ -125,7 +125,7 @@ To help you get started, please look at the following examples:
 | ------ | ----------- | ------ |
 |[echo-server](inventory/classes/components/echo-server.yml)| Defining ingress paths using [echo-server](https://github.com/jmalloc/echo-server) | [manifests](compiled/echo-server/manifests)|
 
-[Documentation](components/generators/ingresses/README.md)
+[Documentation](components/generators/kubernetes/README.md)
 
 ### Request or submit your examples
 We have used this generator extensively, and we know it covers the majority of the use cases.

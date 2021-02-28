@@ -9,8 +9,9 @@ class Base(BaseObj):
     def body(self):
         self.root.apiVersion = self.kwargs.apiVersion
         self.root.kind = self.kwargs.kind
-        self.root.metadata.name = self.kwargs.name
-        self.add_label('name', self.kwargs.name)
+        self.name = self.kwargs.name
+        self.root.metadata.name = self.kwargs.get("rendered_name", self.name)
+        self.add_label('name', self.root.metadata.name)
 
     def add_labels(self, labels):
         for key, value in labels.items():
