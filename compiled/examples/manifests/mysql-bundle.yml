@@ -44,7 +44,6 @@ spec:
           volumeMounts:
             - mountPath: /etc/mysql/conf.d/
               name: config
-              readOnly: true
             - mountPath: /var/lib/mysql
               name: datadir
       restartPolicy: Always
@@ -57,7 +56,7 @@ spec:
         - name: secrets
           secret:
             defaultMode: 420
-            secretName: mysql-28b5dcb9
+            secretName: mysql-cbed2d4a
   updateStrategy:
     rollingUpdate:
       partition: 0

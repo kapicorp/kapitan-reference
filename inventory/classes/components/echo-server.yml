@@ -80,7 +80,7 @@ parameters:
         config:
           mount: /opt/echo-service/echo-service.conf
           subPath: echo-service.conf
-          version: true
+          versioned: true
           data:
             echo-service.conf:
               template: "components/echo-server/echo-server.conf.j2"

@@ -64,10 +64,8 @@ spec:
           volumeMounts:
             - mountPath: /usr/share/logstash/config/
               name: config
-              readOnly: true
             - mountPath: /usr/share/logstash/pipeline/
               name: pipelines
-              readOnly: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

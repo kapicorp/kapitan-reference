@@ -409,12 +409,12 @@ which will generate an truly encrypted secret using Google KMS (other backends a
 
 The generator can automatically "version" you ConfigMap or Secrets so that the associated workload can automatically detect the change and handle it appropriately (rollout restart)
 
-In both secrets and config_maps, just define `version: true` (default: `false`)
+In both secrets and config_maps, just define `versioned: true` (default: `false`)
 
 ```yaml
       config_maps:
         config:
-          version: true
+          versioned: true
           mount: /opt/echo-service
           data:
             example.txt:

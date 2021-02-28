@@ -64,7 +64,6 @@ spec:
           volumeMounts:
             - mountPath: /opt/echo-service/echo-service.conf
               name: config
-              readOnly: true
               subPath: echo-service.conf
         - image: nginx
           imagePullPolicy: IfNotPresent
@@ -76,14 +75,13 @@ spec:
           volumeMounts:
             - mountPath: /etc/nginx/conf.d/nginx.conf
               name: config
-              readOnly: true
               subPath: nginx.conf
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
         - configMap:
             defaultMode: 420
-            name: echo-server-01f3716a
+            name: echo-server-d4da5ebe
           name: config
         - name: secret
           secret:

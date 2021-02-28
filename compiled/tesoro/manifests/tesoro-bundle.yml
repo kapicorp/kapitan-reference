@@ -47,7 +47,6 @@ spec:
           volumeMounts:
             - mountPath: /certs
               name: secrets
-              readOnly: true
       restartPolicy: Always
       serviceAccountName: tesoro
       terminationGracePeriodSeconds: 30
