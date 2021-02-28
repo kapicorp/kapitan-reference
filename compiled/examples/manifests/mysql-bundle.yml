@@ -44,7 +44,6 @@ spec:
           volumeMounts:
             - mountPath: /etc/mysql/conf.d/
               name: config
-              readOnly: true
             - mountPath: /var/lib/mysql
               name: datadir
       restartPolicy: Always

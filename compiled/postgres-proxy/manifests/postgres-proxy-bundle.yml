@@ -58,7 +58,6 @@ spec:
           volumeMounts:
             - mountPath: /opt/secrets
               name: secrets
-              readOnly: true
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
