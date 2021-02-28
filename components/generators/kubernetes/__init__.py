@@ -148,8 +148,8 @@ class ConfigMap(k8s.Base):
                 with open(f"{config.directory}/{filename}", "r") as f:
                     self.root.data[filename] = f.read()
 
-        if config.get("versioned", False):          
-            self.hash = hashlib.md5(json.dumps(self.root, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+        if config.get("versioned", False):
+            self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f"-{self.hash}"
 
         
@@ -200,7 +200,7 @@ class Secret(k8s.Base):
                 data[key] = j2(spec.template, spec.get('values', {}))
                 
         if config.get("versioned", False):          
-            self.hash = hashlib.md5(json.dumps(self.root, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+            self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f"-{self.hash}"
 
 
