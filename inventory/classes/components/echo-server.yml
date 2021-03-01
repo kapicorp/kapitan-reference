@@ -10,6 +10,12 @@ parameters:
       image: jmalloc/echo-server
       pull_policy: Always
 
+      init_containers:
+        busybox:
+          image: docker pull busybox
+          command:
+            - echo "test"
+
       env:
         NODENAME:
           fieldRef:

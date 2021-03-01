@@ -83,6 +83,12 @@ spec:
             - mountPath: /etc/nginx/conf.d/nginx.conf
               name: config
               subPath: nginx.conf
+      initContainers:
+        - command:
+            - echo "test"
+          image: docker pull busybox
+          imagePullPolicy: IfNotPresent
+          name: busybox
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
