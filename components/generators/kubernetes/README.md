@@ -93,6 +93,19 @@ parameters:
 
 > *NOTE* that you do not need to specify the `name` directive, as the generator will attempt to work out where to get it from.
 
+Also `fieldRef` works as expected
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      env:
+        NODE_NAME:
+          fieldRef:
+            fieldPath: spec.nodeName
+```
+
 ## Defining ports
 
 You can define the ports your component uses by adding them under the `ports` directive:

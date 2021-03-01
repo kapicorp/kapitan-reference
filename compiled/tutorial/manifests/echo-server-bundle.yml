@@ -26,6 +26,10 @@ spec:
         - env:
             - name: KAPITAN_APPLICATION
               value: microservices
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           image: jmalloc/echo-server
           imagePullPolicy: Always
           livenessProbe:
