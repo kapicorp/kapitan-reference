@@ -598,6 +598,25 @@ parameters:
                 }
 ```
 
+## Init Containers
+
+You can instruct the generator to create initContainers by using the `init_containers` directive:
+
+```yaml
+parameters:
+  components:
+    echo-server:
+      <other config>
+      # Init containers
+      init_containers:
+        busybox:
+          image: busybox
+          commands:
+          - echo test
+```
+
+Just like the `additional_containers`, tou can access the same config_maps and secrets as the main container, but you can override mountpoints and subPaths.
+
 ## Network Policies
 
 You can also generate Network Policies by simply adding them under the `network_policies` structure.

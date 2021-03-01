@@ -41,6 +41,10 @@ class WorkloadCommon(BaseObj):
         self.root.spec.template.spec.containers += [
             container.root for container in containers]
 
+    def add_init_containers(self, containers):
+        self.root.spec.template.spec.initContainers += [
+            container.root for container in containers]
+
     def add_volumes(self, volumes):
         for key, value in volumes.items():
             merge({"name": key}, value)
@@ -521,6 +525,11 @@ class Workload(WorkloadCommon):
                                  component.additional_containers.items()]
         workload.add_containers([container])
         workload.add_containers(additional_containers)
+
+        init_containers = [Container(name=name, container=component) for name, component in
+                            component.init_containers.items()]
+
+        workload.add_init_containers(init_containers)
         workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
