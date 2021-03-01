@@ -23,7 +23,12 @@ spec:
         name: echo-server
     spec:
       containers:
-        - image: jmalloc/echo-server
+        - env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: jmalloc/echo-server
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3

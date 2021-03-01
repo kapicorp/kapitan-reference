@@ -10,6 +10,11 @@ parameters:
       image: jmalloc/echo-server
       pull_policy: Always
 
+      env:
+        NODENAME:
+          fieldRef:
+            fieldPath: spec.nodeName
+
       # Resource constraints
       resources:
         requests:

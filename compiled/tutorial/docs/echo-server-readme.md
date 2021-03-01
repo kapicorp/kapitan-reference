@@ -10,3 +10,4 @@
 | ENV | VALUE |
 | --- | -----  |
 |KAPITAN_APPLICATION | microservices|
+|NODENAME | UNMATCHED {'fieldRef': {'fieldPath': 'spec.nodeName'}}|
