@@ -50,8 +50,7 @@ This repo already packs some important libraries that you will want to have when
 | Name | Description | Inventory file |
 | ---- | ----------- | -------------- |
 | [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet) | bitnami-labs kube library | [kube.yml](inventory/classes/kapitan/kube.yml) |
-| [sponnet](https://github.com/spinnaker/sponnet) | Jsonnet library specifically for Spinnaker | [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml)|
-| [manifests-generator](components/generators/manifests) | [Synthace](www.synthace.com) manifests generator | [generators/manifests.yml](inventory/classes/kapitan/generators/manifests.yml)|
+| [kubernetes-generator](components/generators/kubernetes) | [Synthace](www.synthace.com) manifests generator | [generators/kubernetes.yml](inventory/classes/kapitan/generators/kubernetes.yml)|
 | [ingresses-generator](components/generators/ingresses) | [Synthace](www.synthace.com) ingresses generator | [generators/ingresses.yml](inventory/classes/kapitan/generators/ingresses.yml)|
 | [utils](lib/utils.libsonnet) | helpful utilites ||
 | [kap](lib/kap.libsonnet) | Kapitan boilerplate in one file ||
@@ -64,8 +63,6 @@ To update them, run:
 ```shell script
 ./kapitan compile --fetch
 Dependency lib/kube.libjsonnet : already exists. Ignoring
-Dependency lib/spinnaker-pipeline.libjsonnet : already exists. Ignoring
-Dependency lib/spinnaker-application.libjsonnet : already exists. Ignoring
 ./kapitan compiledd
 Compiled tesoro (1.70s)
 Compiled echo-server (1.64s)
