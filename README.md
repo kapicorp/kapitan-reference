@@ -61,20 +61,19 @@ For instance, in the  [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml) f
 To update them, run:
 
 ```shell script
-./kapitan compile --fetch
-Dependency lib/kube.libjsonnet : already exists. Ignoring
-./kapitan compiledd
-Compiled tesoro (1.70s)
-Compiled echo-server (1.64s)
-Compiled mysql (1.67s)
-Compiled gke-pvm-killer (1.17s)
-Compiled prod-sockshop (4.74s)
-Compiled dev-sockshop (4.74s)
-Compiled tutorial (1.68s)
-Compiled global (0.76s)
-Compiled examples (2.60s)
-Compiled pritunl (2.03s)
-Compiled sock-shop (4.36s)
+./kapitan compile
+Compiled examples/postgres-proxy (0.18s)
+Compiled kapicorp/tesoro (0.21s)
+Compiled examples/echo-server (0.04s)
+Compiled examples/mysql (0.03s)
+Compiled examples/gke-pvm-killer (0.03s)
+Compiled examples/tutorial (0.05s)
+Compiled examples/examples (0.05s)
+Compiled examples/global (0.01s)
+Compiled examples/pritunl (0.06s)
+Compiled kapicorp/dev-sockshop (0.37s)
+Compiled kapicorp/prod-sockshop (0.38s)
+Compiled examples/sock-shop (0.20s)
 ``` 
 
 ## Generators

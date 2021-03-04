@@ -207,7 +207,27 @@ class Secret(k8s.Base):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f"-{self.hash}"
 
+class TLSSecret(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "v1"
+        self.kwargs.kind = "Service"
+        super().new()
+        self.need("crt")
+        self.need("key")
 
+
+    def body(self):
+        super().body()
+        self.root.type = "kubernetes.io/tls"
+        crt = self.kwargs.crt
+        key = self.kwargs.key
+
+        if self.kwargs.get("encoded", True):
+            self.root.data['tls.crt'] = crt
+            self.root.data['tls.key'] = key
+        else:
+            self.root.stringData['tls.crt'] = crt
+            self.root.stringData['tls.key'] = key
 
 class Service(k8s.Base):
     def new(self):
@@ -746,6 +766,53 @@ class PodDisruptionBudget(k8s.Base):
         self.root.spec.minAvailable = component.pdb_min_available
         self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
 
+class Ingress(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "networking.k8s.io/v1"
+        self.kwargs.kind = "Ingress"
+        super().new()
+        self.need("ingress")
+        self.secrets = []
+
+    def body(self):
+        super().body()
+        ingress = self.kwargs.ingress
+
+        self.add_namespace(inv.parameters.namespace)
+        self.add_annotations(ingress.annotations)
+
+        self.root.spec.rules = []
+
+        if ingress.default_backend:
+            self.root.spec.defaultBackend = ingress.default_backend
+
+        if ingress.paths:
+            paths = ingress.paths
+            self.root.spec.rules += [{"http": { "paths": paths }}]
+
+        for name, spec in ingress.hosts.items():
+            host = {"host": spec.host, "http": {"paths": spec.paths}}
+            if spec.tls:
+                secret_name = spec.tls.get("secret", f"{name}-tls")
+                self.root.spec.tls += [{"hosts": spec.host, "secretName": secret_name }]
+                self.secrets += [TLSSecret(name=secret_name, crt=spec.tls.crt, key=spec.tls.key)]
+            self.root.spec.rules += [host]
+
+class GKEManagedCertificate(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = "networking.gke.io/v1beta1"
+        self.kwargs.kind = "ManagedCertificate"
+        super().new()
+        self.need("ingress")
+
+    def body(self):
+        super().body()
+        ingress = self.kwargs.ingress
+
+        self.add_namespace(inv.parameters.namespace)
+
+        self.root.spec.domains = ingress.domains
+
 
 class VerticalPodAutoscaler(k8s.Base):
     def new(self):
@@ -899,10 +966,28 @@ def generate_manifests(input_params):
             obj.root["{}-sa".format(name)] = sa
     return obj
 
+def generate_ingresses(input_params):
+    obj = BaseObj()
+    for name, spec in inv.parameters.ingresses.items():
+        ingress = Ingress(name=name, ingress=spec)
+        obj.root["{}-ingress".format(name)] = ingress
+
+        for secret in ingress.secrets:
+            obj.root["{}-secret".format(secret.name)] = secret.root
+
+        if spec.gke_managed_certificates:
+            obj.root["{}-managed-certificate".format(name)] = GKEManagedCertificate(name=spec.domains[0], ingress=spec)
+
+    return obj
+
 
 def main(input_params):
-    whitelisted_functions = ["generate_manifests",
-                             "generate_docs", "generate_pre_deploy"]
+    whitelisted_functions = [
+        "generate_manifests",
+        "generate_docs", 
+        "generate_pre_deploy",
+        "generate_ingresses"
+        ]
     function = input_params.get("function", "generate_manifests")
     if function in whitelisted_functions:
         return globals()[function](input_params)
