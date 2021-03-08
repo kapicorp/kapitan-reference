@@ -1,6 +1,7 @@
 parameters:
-  kapicorp:
-    terraform:
-      backend:
-        local:
-          path: "../../../state/terraform.tfstate"
+  resources:
+    tf:
+      terraform:
+        backend:
+          local:
+            path: "../../../state/terraform.tfstate"

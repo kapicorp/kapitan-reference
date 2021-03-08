@@ -4,6 +4,8 @@ parameters:
     - output_path: terraform
       input_type: kadet
       output_type: json
+      input_params:
+        generator_root: resources.tf
       input_paths:
         - components/generators/terraform
     - input_type: copy

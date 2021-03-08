@@ -5,12 +5,13 @@ classes:
   - terraform.gcp.gcs-bucket
 
 parameters:
-  kapicorp:
-    resource:
-      google_project_service:
-        enable_cloudresourcemanager_service:
-          service: cloudresourcemanager.googleapis.com
-          project: \${google_project.project.project_id}
-        enable_serviceusage_service:
-          service: serviceusage.googleapis.com
-          project: \${google_project.project.project_id}
+  resources:
+    tf:
+      resource:
+        google_project_service:
+          enable_cloudresourcemanager_service:
+            service: cloudresourcemanager.googleapis.com
+            project: \${google_project.project.project_id}
+          enable_serviceusage_service:
+            service: serviceusage.googleapis.com
+            project: \${google_project.project.project_id}

@@ -1,7 +1,8 @@
 parameters:
-  kapicorp:
-    terraform:
-      backend:
-        gcs:
-          bucket: ${state_bucket_name}
-          prefix: terraform/state/${target_name}
+  resources:
+    tf:
+      terraform:
+        backend:
+          gcs:
+            bucket: ${state_bucket_name}
+            prefix: terraform/state/${target_name}

@@ -5,3 +5,7 @@ parameters:
   state_bucket_name: state-kapicorp-terraform-admin
   scripts:
     - templates/scripts/terraform
+
+  kapitan:
+    labels:
+      type: terraform

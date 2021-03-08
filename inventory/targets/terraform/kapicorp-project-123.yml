@@ -1,11 +1,7 @@
 classes:
   - common
   - terraform.common
-  - terraform.gcp.billing
-  - terraform.gcp.services
-  - terraform.remote-state
-  - terraform.providers.gcp-impersonate
+  - terraform.project-type.generic
 
 parameters:
   name: Example Terraform Project
-
