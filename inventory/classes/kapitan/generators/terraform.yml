@@ -1,5 +1,11 @@
 parameters:
   kapitan:
+    dependencies:
+    - type: git
+      source: https://github.com/ademariag/kapitan-reference.git
+      ref: terraform-generator
+      subdir: components/generators/terraform
+      output_path: components/generators/terraform
     compile:
     - output_path: terraform
       input_type: kadet
