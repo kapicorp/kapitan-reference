@@ -10,7 +10,7 @@ parameters:
         google_service_account:
           default:
             account_id: "gke-sa"
-            display_name: Service Account for GKE"
+            display_name: Service Account for GKE
         
         google_container_cluster:
           primary:

@@ -1,0 +1,11 @@
+{
+  "resource": {
+    "google_storage_bucket": {
+      "terraform-state": {
+        "name": "state-kapicorp-terraform-admin",
+        "location": "EU",
+        "storage_class": "MULTI_REGIONAL"
+      }
+    }
+  }
+}
