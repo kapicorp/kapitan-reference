@@ -62,7 +62,7 @@ class WorkloadCommon(BaseObj):
         for object in objects.root:
             object_name = object.name
             rendered_name = object.root.metadata.name
-        
+
             if type(object) == ConfigMap:
                 key = "configMap"
                 name_key = "name"
@@ -156,7 +156,7 @@ class ConfigMap(k8s.Base):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f"-{self.hash}"
 
-        
+
 
 
 class Secret(k8s.Base):
@@ -202,8 +202,8 @@ class Secret(k8s.Base):
                     data[key] = spec.get('value')
             if "template" in spec:
                 data[key] = j2(spec.template, spec.get('values', {}))
-                
-        if config.get("versioned", False):          
+
+        if config.get("versioned", False):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f"-{self.hash}"
 
@@ -504,6 +504,8 @@ class Workload(WorkloadCommon):
             workload = StatefulSet(name=name, component=self.kwargs.component)
         elif component.type == "job":
             workload = Job(name=name, component=self.kwargs.component)
+        elif component.type == "serviceaccount":
+            workload = ServiceAccount(name=name, component=self.kwargs.component)
         else:
             raise ()
 
@@ -512,73 +514,75 @@ class Workload(WorkloadCommon):
         workload.root.spec.template.metadata.annotations = component.get(
             'pod_annotations', {})
         workload.add_labels(component.get('labels', {}))
-        workload.add_volumes(component.volumes)
-        workload.add_volume_claims(component.volume_claims)
-        workload.root.spec.template.spec.securityContext = component.workload_security_context
-        workload.root.spec.minReadySeconds = component.min_ready_seconds
-        if component.service_account.enabled:
-            workload.root.spec.template.spec.serviceAccountName = component.service_account.get(
-                "name", name)
 
-        container = Container(name=name, container=component)
-        additional_containers = [Container(name=name, container=component) for name, component in
-                                 component.additional_containers.items()]
-        workload.add_containers([container])
-        workload.add_containers(additional_containers)
+        if component_type != "serviceaccount":
+            workload.add_volumes(component.volumes)
+            workload.add_volume_claims(component.volume_claims)
+            workload.root.spec.template.spec.securityContext = component.workload_security_context
+            workload.root.spec.minReadySeconds = component.min_ready_seconds
+            if component.service_account.enabled:
+                workload.root.spec.template.spec.serviceAccountName = component.service_account.get(
+                    "name", name)
 
-        init_containers = [Container(name=name, container=component) for name, component in
-                            component.init_containers.items()]
+            container = Container(name=name, container=component)
+            additional_containers = [Container(name=name, container=component) for name, component in
+                                     component.additional_containers.items()]
+            workload.add_containers([container])
+            workload.add_containers(additional_containers)
 
-        workload.add_init_containers(init_containers)
-        workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
-        workload.root.spec.template.spec.dnsPolicy = component.dns_policy
-        workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
-            "grace_period", 30)
+            init_containers = [Container(name=name, container=component) for name, component in
+                                component.init_containers.items()]
 
-        if component.prefer_pods_in_node_with_expression:
-            workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                {
-                    "preference":
-                        {
+            workload.add_init_containers(init_containers)
+            workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
+            workload.root.spec.template.spec.dnsPolicy = component.dns_policy
+            workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
+                "grace_period", 30)
 
-                            "matchExpressions": [component.prefer_pods_in_node_with_expression]
-                        }, "weight": 1
-                }
-            ]
+            if component.prefer_pods_in_node_with_expression:
+                workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                    {
+                        "preference":
+                            {
 
-        if component.prefer_pods_in_different_nodes:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions":
-                                [{
-                                    "key": "app",
-                                    "operator": "In",
-                                    "values": [name]
-                                }]
+                                "matchExpressions": [component.prefer_pods_in_node_with_expression]
+                            }, "weight": 1
+                    }
+                ]
+
+            if component.prefer_pods_in_different_nodes:
+                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                    {
+                        "podAffinityTerm": {
+                            "labelSelector": {
+                                "matchExpressions":
+                                    [{
+                                        "key": "app",
+                                        "operator": "In",
+                                        "values": [name]
+                                    }]
+                            },
+                            "topologyKey": "kubernetes.io/hostname"
                         },
-                        "topologyKey": "kubernetes.io/hostname"
-                    },
-                    "weight": 1
-                }]
+                        "weight": 1
+                    }]
 
-        if component.prefer_pods_in_different_zones:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
-                {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions":
-                                [{
-                                    "key": "app",
-                                    "operator": "In",
-                                    "values": [name]
-                                }]
+            if component.prefer_pods_in_different_zones:
+                workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+                    {
+                        "podAffinityTerm": {
+                            "labelSelector": {
+                                "matchExpressions":
+                                    [{
+                                        "key": "app",
+                                        "operator": "In",
+                                        "values": [name]
+                                    }]
+                            },
+                            "topologyKey": "failure-domain.beta.kubernetes.io/zone"
                         },
-                        "topologyKey": "failure-domain.beta.kubernetes.io/zone"
-                    },
-                    "weight": 1
-                }]
+                        "weight": 1
+                    }]
 
         self.root = workload.root
 
@@ -891,7 +895,8 @@ def generate_manifests(input_params):
             backend_config = BackendConfig(name=name, component=component).root
             bundle += [backend_config]
 
-        obj.root["{}-bundle".format(name)] = bundle
+        if component.type != "serviceaccount":
+            obj.root["{}-bundle".format(name)] = bundle
 
         if component.service_account.get('create', False):
             sa_name = component.service_account.get('name', name)

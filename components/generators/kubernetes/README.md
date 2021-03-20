@@ -28,7 +28,7 @@ classes:
 
 ### EVERY CHANGE -> Compile your targets
 
-EVERY time you make a change, you will want to tell `kapitan` to compile your targets. 
+EVERY time you make a change, you will want to tell `kapitan` to compile your targets.
 `kapitan` will create a folder for each target under the `compiled` folder
 
 #### To compile only the `demo` target
@@ -85,8 +85,8 @@ parameters:
     echo-server:
       <other config>
       env:
-        KAPITAN_SECRET: 
-          secretKeyRef: 
+        KAPITAN_SECRET:
+          secretKeyRef:
             name: a_secret          *OPTIONAL*
             key: 'kapitan_secret'
 ```
@@ -247,7 +247,7 @@ Creating both `secrets` and `config maps` is very simple with Kapitan Generators
       config_maps:
         config:
           data:
-            echo-service.conf: 
+            echo-service.conf:
               value: |-
                 # A configuration file
                 example: true
@@ -279,7 +279,7 @@ Note that in the previous example the config map is not mounted, because the `mo
         config:
           mount: /opt/echo-service
           data:
-            echo-service.conf: 
+            echo-service.conf:
               value: |-
                 # A configuration file
                 example: true
@@ -469,7 +469,7 @@ The statefulset uses all (applicable) configurations available to the `deploymen
             accessModes: ["ReadWriteOnce"]
             storageClassName: "standard"
             resources:
-              requests: 
+              requests:
                 storage: 10Gi
 ```
 
@@ -548,7 +548,7 @@ parameters:
         nginx:
           image: nginx
           ports:
-            nginx: 
+            nginx:
               service_port: 80
 ```
 
@@ -566,7 +566,7 @@ parameters:
         nginx:
           image: nginx
           ports:
-            nginx: 
+            nginx:
               service_port: 80
           config_maps:
             config:
@@ -625,7 +625,7 @@ You can also generate Network Policies by simply adding them under the `network_
       # One or many network policies
       network_policies:
         default:
-          pod_selector: 
+          pod_selector:
             name: echo-server
           ingress:
             - from:
@@ -764,6 +764,35 @@ spec:
       name: tesoro
 ```
 
+### ServiceAccount
+The example is for a standalone `ServiceAccount`.
+
+```yaml
+parameters:
+  namespace: ci
+  components:
+    kapitan:
+      type: serviceaccount
+      service_account:
+        annotations:
+          eks.amazonaws.com/role-arn: arn:aws:iam::123:role/Kapitan
+        create: true
+```
+
+produces the following resource
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123:role/Kapitan
+  labels:
+    name: kapitan
+  name: kapitan
+  namespace: ci
+```
+
 ## Defining default values for multiple components
 
 Sometimes, when defining many components, you and up repeating many repeating configurations.
@@ -794,7 +823,7 @@ For instance, when we enable the [`features.tesoro`](../../../inventory/classes/
       default_config:
         globals:
           secrets:
-            labels: 
+            labels:
               tesoro.kapicorp.com: enabled
 ```
 
