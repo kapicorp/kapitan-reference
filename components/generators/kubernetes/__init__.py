@@ -330,7 +330,7 @@ class Job(k8s.Base, WorkloadCommon):
         self.root.spec.parallelism = component.get("parallelism", 1)
 
 
-class CronJob(k8s.Base):
+class CronJob(k8s.Base, WorkloadCommon):
     def new(self):
         self.kwargs.apiVersion = "batch/v1beta1"
         self.kwargs.kind = "CronJob"
