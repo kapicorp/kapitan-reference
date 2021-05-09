@@ -310,6 +310,29 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.serviceName = name
         self.set_replicas(component.get('replicas', 1))
 
+class DaemonSet(k8s.Base, WorkloadCommon):
+    def new(self):
+        self.kwargs.apiVersion = "apps/v1"
+        self.kwargs.kind = "DaemonSet"
+        super().new()
+        self.need("component")
+
+    def body(self):
+        default_strategy = {
+            "type": "RollingUpdate",
+            "rollingUpdate": {
+                "maxSurge": "25%",
+                "maxUnavailable": "25%"
+            }
+        }
+        super().body()
+        component = self.kwargs.component
+        self.root.spec.template.metadata.labels = self.root.metadata.labels
+        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.spec.restartPolicy = component.get(
+            "restart_policy", "Always")
+        self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
 
 class Job(k8s.Base, WorkloadCommon):
     def new(self):
@@ -502,6 +525,8 @@ class Workload(WorkloadCommon):
             workload = Deployment(name=name, component=self.kwargs.component)
         elif component.type == "statefulset":
             workload = StatefulSet(name=name, component=self.kwargs.component)
+        elif component.type == "daemonset":
+            workload = DaemonSet(name=name, component=self.kwargs.component)
         elif component.type == "job":
             workload = Job(name=name, component=self.kwargs.component)
         else:
