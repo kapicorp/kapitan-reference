@@ -781,6 +781,48 @@ class ClusterRole(k8s.Base):
 
     def body(self):
         super().body()
+        self.add_namespace(inv.parameters.namespace)
+        name = self.kwargs.name
+        component = self.kwargs.component
+        self.root.rules = component.role.rules
+
+
+class RoleBinding(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
+        self.kwargs.kind = 'ClusterRoleBinding'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        self.add_namespace(inv.parameters.namespace)
+        default_role_ref = {
+            'apiGroup': 'rbac.authorization.k8s.io',
+            'kind': 'ClusterRole',
+            'name': self.kwargs.component.name
+        }
+        default_subject = [{
+            'kind': 'ServiceAccount',
+            'name': self.kwargs.component.name,
+            'namespace': inv.parameters.namespace
+        }]
+        name = self.kwargs.name
+        component = self.kwargs.component
+        self.root.roleRef = component.get(
+            'roleRef', default_role_ref)
+        self.root.subjects = component.get(
+            'subject', default_subject)
+
+class ClusterRole(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1beta1'
+        self.kwargs.kind = 'ClusterRole'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
         name = self.kwargs.name
         component = self.kwargs.component
         self.root.rules = component.cluster_role.rules
@@ -788,7 +830,7 @@ class ClusterRole(k8s.Base):
 
 class ClusterRoleBinding(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1beta1'
         self.kwargs.kind = 'ClusterRoleBinding'
         super().new()
         self.need('component')
