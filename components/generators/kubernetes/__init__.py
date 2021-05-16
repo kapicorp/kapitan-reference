@@ -733,8 +733,8 @@ class MutatingWebhookConfiguration(k8s.Base):
 
 class Role(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "Role"
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
+        self.kwargs.kind = 'Role'
         super().new()
         self.need('component')
 
@@ -748,8 +748,8 @@ class Role(k8s.Base):
 
 class RoleBinding(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "RoleBinding"
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
+        self.kwargs.kind = 'RoleBinding'
         super().new()
         self.need('component')
 
@@ -758,13 +758,12 @@ class RoleBinding(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         default_role_ref = {
             'apiGroup': 'rbac.authorization.k8s.io',
-            'kind': 'ClusterRole',
+            'kind': 'Role',
             'name': self.kwargs.component.name
         }
         default_subject = [{
             'kind': 'ServiceAccount',
             'name': self.kwargs.component.name,
-            'namespace': inv.parameters.namespace
         }]
         name = self.kwargs.name
         component = self.kwargs.component
