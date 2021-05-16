@@ -755,10 +755,22 @@ class ClusterRoleBinding(k8s.Base):
 
     def body(self):
         super().body()
+        default_role_ref = {
+            "apiGroup": "rbac.authorization.k8s.io",
+            "kind": "ClusterRole",
+            "name": self.kwargs.component.name
+        }
+        default_subject = [{
+            "kind": "ServiceAccount",
+            "name": self.kwargs.component.name,
+            "namespace": self.kwargs.component.name
+        }]
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.roleRef = component.cluster_role.binding.roleRef
-        self.root.subjects = component.cluster_role.binding.subjects
+        self.root.roleRef = component.get(
+            "roleRef", default_role_ref)
+        self.root.subjects = component.get(
+            "subject", default_subject)
 
 
 class PodDisruptionBudget(k8s.Base):

@@ -64,6 +64,7 @@ spec:
               readOnly: true
       hostNetwork: true
       restartPolicy: Always
+      serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
       volumes:
         - hostPath:
@@ -80,3 +81,44 @@ spec:
             defaultMode: 420
             name: filebeat
           name: config
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+      - pods
+      - nodes
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - watch
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: filebeat
+subjects:
+  - kind: ServiceAccount
+    name: filebeat
+    namespace: filebeat

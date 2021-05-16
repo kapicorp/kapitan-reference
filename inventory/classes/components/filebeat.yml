@@ -11,6 +11,44 @@ parameters:
       type: daemonset
       image: ${filebeat:image}:${filebeat:version}
 
+      # ServiceAccount
+      service_account:
+        enabled: true
+        create: true
+      
+      # ROLE + Binding
+      cluster_role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              # name: tesoro
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            # name: tesoro
+        rules:
+          - apiGroups:
+            # "" indicates the core API group
+            - "" 
+            resources:
+            - namespaces
+            - pods
+            - nodes
+            verbs:
+            - get
+            - watch
+            - list
+          - apiGroups:
+            - apps
+            resources:
+            - replicasets
+            verbs:
+            - get
+            - watch
+            - list
+
+
       # Environment
       env:
         ELASTICSEARCH_HOST: elasticsearch
