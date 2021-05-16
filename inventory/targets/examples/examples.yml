@@ -2,6 +2,7 @@ classes:
   - common
   - components.mysql
   - components.logstash
+  - components.filebeat
 
 parameters:
   target_name: examples

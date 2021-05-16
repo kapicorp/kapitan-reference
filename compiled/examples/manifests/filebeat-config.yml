@@ -1,0 +1,18 @@
+apiVersion: v1
+data:
+  filebeat.yml: "filebeat.inputs:\n- type: container\n  paths:\n    - /var/log/containers/*.log\n\
+    \  processors:\n    - add_kubernetes_metadata:\n        host: ${NODE_NAME}\n \
+    \       matchers:\n        - logs_path:\n            logs_path: \"/var/log/containers/\"\
+    \n# To enable hints based autodiscover, remove `filebeat.inputs` configuration\
+    \ and uncomment this:\n#filebeat.autodiscover:\n#  providers:\n#    - type: kubernetes\n\
+    #      node: ${NODE_NAME}\n#      hints.enabled: true\n#      hints.default_config:\n\
+    #        type: container\n#        paths:\n#          - /var/log/containers/*${data.kubernetes.container.id}.log\n\
+    processors:\n  - add_cloud_metadata:\n  - add_host_metadata:\ncloud.id: ${ELASTIC_CLOUD_ID}\n\
+    cloud.auth: ${ELASTIC_CLOUD_AUTH}\noutput.elasticsearch:\n  hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']\n\
+    \  username: ${ELASTICSEARCH_USERNAME}\n  password: ${ELASTICSEARCH_PASSWORD}"
+kind: ConfigMap
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+  namespace: examples

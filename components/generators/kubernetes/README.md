@@ -450,6 +450,49 @@ when the content of the object changes, the hash will be updated accordingly.
 
 **PLEASE NOTE:** `kapitan` is not responsible for garbage collecting unused secrets of config maps.
 
+## Deployment
+
+You can define a *Deployment* by using the `type` directive to `deployment` (its also the default type)
+
+The deployment uses all (applicable) configurations available to the `deployment` type.
+
+### Volume Mounts and Volumes
+**PLEATE NOTE** PV,PVCs are not yet created automatically [Issue #68](https://github.com/kapicorp/kapitan-reference/issues/68)
+
+#### Volume from StorageClass
+```yaml
+      volume_mounts:
+        datadir:
+          mountPath: /var/lib/mysql
+
+      volumes:
+        datadir:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "myStorageClass"
+            resources:
+              requests: 
+                storage: 10Gi
+```
+#### HostPath
+```yaml
+      volume_mounts:
+        datadir:
+          mountPath: /var/lib/mysql
+
+      volumes:
+        datadir:
+          hostPath:
+            path: /mnt/mydisk/mysql
+            type: DirectoryOrCreate
+```
+
+## DaemonSet
+
+You can define a *DaemonSet* by using the `type` directive to `daemonset` (its also the default type)
+
+The deployment uses all (applicable) configurations available to the `daemonset` type.
+
 ## StatefulSet
 
 You can define a *StatefulSet* by using the `type` directive to `statefulset` (that normally defaults to `deployment`)

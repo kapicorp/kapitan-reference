@@ -1,0 +1,118 @@
+parameters:
+  filebeat:
+    image: docker.elastic.co/beats/filebeat
+    version: "7.12.1"
+    component: go
+
+  # Component/s
+  components:
+    filebeat:
+      name: filebeat
+      type: daemonset
+      image: ${filebeat:image}:${filebeat:version}
+
+      # ServiceAccount
+      service_account:
+        enabled: true
+        create: true
+      
+      # ROLE + Binding
+      cluster_role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              # name: tesoro
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            # name: tesoro
+        rules:
+          - apiGroups:
+            # "" indicates the core API group
+            - "" 
+            resources:
+            - namespaces
+            - pods
+            - nodes
+            verbs:
+            - get
+            - watch
+            - list
+          - apiGroups:
+            - apps
+            resources:
+            - replicasets
+            verbs:
+            - get
+            - watch
+            - list
+
+
+      # Environment
+      env:
+        ELASTICSEARCH_HOST: elasticsearch
+        ELASTICSEARCH_PORT: "9200"
+        ELASTICSEARCH_USERNAME: elastic
+        ELASTICSEARCH_PASSWORD: changeme
+        ELASTIC_CLOUD_ID: ''
+        ELASTIC_CLOUD_AUTH: ''
+        NODE_NAME:
+          fieldRef:
+            fieldPath: spec.nodeName
+
+      args: 
+        - -c
+        - /etc/filebeat.yml
+        - -e
+
+      # Network
+      host_network: true
+
+      # Security
+      security_context:
+        runAsUser: 0
+        # If using Red Hat OpenShift uncomment this:
+        #privileged: true
+
+      # Resources  
+      resources:
+        limits:
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+      # Volumes / Mounts
+      volume_mounts:
+        data:
+          mountPath: /usr/share/filebeat/data
+        varlibdockercontainers:
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        varlog:
+          mountPath: /var/log
+          readOnly: true
+
+      volumes:
+        varlibdockercontainers:
+          hostPath:
+            path: /var/lib/docker/containers
+        varlog:
+          hostPath:
+            path: /var/log
+        data:
+          hostPath:
+            path: /var/lib/filebeat-data
+            type: DirectoryOrCreate
+      
+      # ConfigMap Mounts
+      config_maps:
+        config:
+          mount: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+          data:
+            filebeat.yml:
+              template: components/filebeat/templates/filebeat.yml.j2
+              values: {}

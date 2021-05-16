@@ -276,6 +276,8 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.strategy = component.get(
             "update_strategy", default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
@@ -303,6 +305,8 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get(
@@ -310,6 +314,31 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.serviceName = name
         self.set_replicas(component.get('replicas', 1))
 
+class DaemonSet(k8s.Base, WorkloadCommon):
+    def new(self):
+        self.kwargs.apiVersion = "apps/v1"
+        self.kwargs.kind = "DaemonSet"
+        super().new()
+        self.need("component")
+
+    def body(self):
+        default_strategy = {
+            "type": "RollingUpdate",
+            "rollingUpdate": {
+                "maxSurge": "25%",
+                "maxUnavailable": "25%"
+            }
+        }
+        super().body()
+        component = self.kwargs.component
+        self.root.spec.template.metadata.labels = self.root.metadata.labels
+        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.spec.restartPolicy = component.get(
+            "restart_policy", "Always")
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
+        self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
 
 class Job(k8s.Base, WorkloadCommon):
     def new(self):
@@ -502,6 +531,8 @@ class Workload(WorkloadCommon):
             workload = Deployment(name=name, component=self.kwargs.component)
         elif component.type == "statefulset":
             workload = StatefulSet(name=name, component=self.kwargs.component)
+        elif component.type == "daemonset":
+            workload = DaemonSet(name=name, component=self.kwargs.component)
         elif component.type == "job":
             workload = Job(name=name, component=self.kwargs.component)
         else:
@@ -724,10 +755,22 @@ class ClusterRoleBinding(k8s.Base):
 
     def body(self):
         super().body()
+        default_role_ref = {
+            "apiGroup": "rbac.authorization.k8s.io",
+            "kind": "ClusterRole",
+            "name": self.kwargs.component.name
+        }
+        default_subject = [{
+            "kind": "ServiceAccount",
+            "name": self.kwargs.component.name,
+            "namespace": self.kwargs.component.name
+        }]
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.roleRef = component.cluster_role.binding.roleRef
-        self.root.subjects = component.cluster_role.binding.subjects
+        self.root.roleRef = component.get(
+            "roleRef", default_role_ref)
+        self.root.subjects = component.get(
+            "subject", default_subject)
 
 
 class PodDisruptionBudget(k8s.Base):
