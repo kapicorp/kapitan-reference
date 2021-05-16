@@ -733,7 +733,7 @@ class MutatingWebhookConfiguration(k8s.Base):
 
 class Role(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1beta1"
+        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
         self.kwargs.kind = "Role"
         super().new()
         self.need("component")
@@ -748,7 +748,7 @@ class Role(k8s.Base):
 
 class RoleBinding(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1beta1"
+        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
         self.kwargs.kind = "RoleBinding"
         super().new()
         self.need("component")
@@ -774,7 +774,7 @@ class RoleBinding(k8s.Base):
 
 class ClusterRole(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1beta1'
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'ClusterRole'
         super().new()
         self.need('component')
@@ -788,7 +788,7 @@ class ClusterRole(k8s.Base):
 
 class ClusterRoleBinding(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1beta1'
+        self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'ClusterRoleBinding'
         super().new()
         self.need('component')
