@@ -276,8 +276,8 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
-        self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", False)
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.strategy = component.get(
             "update_strategy", default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
@@ -305,8 +305,8 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
-        self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", False)
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get(
@@ -335,8 +335,8 @@ class DaemonSet(k8s.Base, WorkloadCommon):
         self.root.spec.selector.matchLabels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
-        self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", False)
+        if "host_network" in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
 
