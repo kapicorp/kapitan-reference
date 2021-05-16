@@ -277,7 +277,7 @@ class Deployment(k8s.Base, WorkloadCommon):
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
         self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", "false")
+            "host_network", False)
         self.root.spec.strategy = component.get(
             "update_strategy", default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
@@ -306,7 +306,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
         self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", "false")
+            "host_network", False)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get("strategy", default_strategy)
         self.root.spec.updateStrategy = component.get(
@@ -336,7 +336,7 @@ class DaemonSet(k8s.Base, WorkloadCommon):
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always")
         self.root.spec.template.spec.hostNetwork = component.get(
-            "host_network", "false")
+            "host_network", False)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
 

@@ -38,7 +38,7 @@ spec:
                 - SETUID
               drop:
                 - all
-      hostNetwork: 'false'
+      hostNetwork: false
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---

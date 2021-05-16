@@ -62,7 +62,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 10001
-      hostNetwork: 'false'
+      hostNetwork: false
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---

@@ -40,7 +40,7 @@ spec:
               protocol: TCP
           securityContext:
             readOnlyRootFilesystem: false
-      hostNetwork: 'false'
+      hostNetwork: false
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
