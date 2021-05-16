@@ -46,6 +46,7 @@ spec:
               name: config
             - mountPath: /var/lib/mysql
               name: datadir
+      hostNetwork: 'false'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

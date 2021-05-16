@@ -81,6 +81,7 @@ spec:
             - mountPath: /etc/nginx/conf.d/nginx.conf
               name: config
               subPath: nginx.conf
+      hostNetwork: 'false'
       initContainers:
         - command:
             - echo "test"

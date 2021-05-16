@@ -74,6 +74,7 @@ spec:
           volumeMounts:
             - mountPath: /bitnami/mongodb
               name: datadir
+      hostNetwork: 'false'
       restartPolicy: Always
       securityContext:
         fsGroup: 1001

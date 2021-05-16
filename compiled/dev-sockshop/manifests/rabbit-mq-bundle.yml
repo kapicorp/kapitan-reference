@@ -46,6 +46,7 @@ spec:
               drop:
                 - all
             readOnlyRootFilesystem: true
+      hostNetwork: 'false'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---

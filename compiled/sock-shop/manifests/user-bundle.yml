@@ -64,6 +64,7 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume
+      hostNetwork: 'false'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

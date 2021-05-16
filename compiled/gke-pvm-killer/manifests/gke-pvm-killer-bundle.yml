@@ -63,6 +63,7 @@ spec:
           volumeMounts:
             - mountPath: /opt/secrets
               name: secrets
+      hostNetwork: 'false'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

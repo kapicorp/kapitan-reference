@@ -28,8 +28,8 @@ parameters:
         - /etc/filebeat.yml
         - -e
 
-      # Not yet supported
-      # hostNetwork: true
+      # Network
+      host_network: true
 
       # Security
       security_context:
