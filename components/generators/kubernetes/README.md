@@ -807,6 +807,104 @@ spec:
       name: tesoro
 ```
 
+### Role, Role-Bindings and Cluster-Role, Cluster-Role-Bindings
+
+```yaml
+parameters:
+  components:
+    filebeat:
+      # ServiceAccount
+      service_account:
+        enabled: true
+        create: true
+
+      # ROLE + Binding
+      role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+        rules:
+          - apiGroups:
+            - ""
+            resources:
+            - secrets
+            verbs:
+            - create
+            - delete
+          - apiGroups:
+            - ""
+            resources:
+            - pods
+            - pods/log
+            verbs:
+            - get
+            - create
+            - delete
+            - list
+            - watch
+            - update
+```
+
+produces the following resource
+
+```yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+  namespace: filebeat
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+      - pods/log
+    verbs:
+      - get
+      - create
+      - delete
+      - list
+      - watch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+  namespace: filebeat
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: filebeat
+subjects:
+  - kind: ServiceAccount
+    name: filebeat
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    name: filebeat
+  name: filebeat
+  namespace: filebeat
+
+```
+
 ## Defining default values for multiple components
 
 Sometimes, when defining many components, you and up repeating many repeating configurations.
