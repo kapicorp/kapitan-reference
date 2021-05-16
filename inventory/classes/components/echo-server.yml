@@ -54,7 +54,7 @@ parameters:
         nginx:
           image: nginx
           ports:
-            nginx: 
+            nginx:
               service_port: 80
           config_maps:
             config:

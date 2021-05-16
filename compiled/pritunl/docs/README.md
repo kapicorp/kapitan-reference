@@ -1,4 +1,4 @@
-# pritunl 
+# pritunl
 
 |||
 | --- | --- |

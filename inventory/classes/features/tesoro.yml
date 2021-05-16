@@ -7,5 +7,5 @@ parameters:
       default_config:
         globals:
           secrets:
-            labels: 
+            labels:
               tesoro.kapicorp.com: enabled

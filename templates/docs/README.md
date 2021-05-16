@@ -1,5 +1,5 @@
 {% set p = inventory.parameters %}
-# {{p.target_name}} 
+# {{p.target_name}}
 
 |||
 | --- | --- |

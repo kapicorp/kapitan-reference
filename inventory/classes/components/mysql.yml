@@ -11,7 +11,7 @@ parameters:
   components:
     mysql:
       type: statefulset
-      image: mysql:5.7.28 
+      image: mysql:5.7.28
       ports:
         mysql:
           service_port: 3306
@@ -33,27 +33,27 @@ parameters:
             accessModes: ["ReadWriteOnce"]
             storageClassName: "standard"
             resources:
-              requests: 
+              requests:
                 storage: 10Gi
 
       config_maps:
         config:
           mount: /etc/mysql/conf.d/
           data:
-            mysql.cnf: 
+            mysql.cnf:
               value: |-
                 ignore-db-dir=lost+found
             mytemplate.cnf:
               template: components/mysql/mytemplate.cnf.j2
               values:
                 mysql: ${mysql:settings}
-                
+
 
       secrets:
         secrets:
           versioned: true
           data:
-            mysql-root-password: 
+            mysql-root-password:
               value: ?{plain:targets/${target_name}/mysql-root-password||randomstr:32|base64}
             mysql-password:
               value: ?{plain:targets/${target_name}/mysql-password||randomstr|base64}
