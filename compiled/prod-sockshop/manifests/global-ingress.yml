@@ -9,7 +9,7 @@ metadata:
   name: global
   namespace: prod-sockshop
 spec:
-  backend:
+  defaultBackend:
     service:
       name: frontend
       port:
