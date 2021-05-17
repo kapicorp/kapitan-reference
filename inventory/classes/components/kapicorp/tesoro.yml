@@ -45,7 +45,7 @@ parameters:
         secrets:
           mount: /certs
           data:
-            cert.pem: 
+            cert.pem:
               value: ${kapicorp:tesoro:ssl:certificate}
             cert.key:
               value: ${kapicorp:tesoro:ssl:private_key}

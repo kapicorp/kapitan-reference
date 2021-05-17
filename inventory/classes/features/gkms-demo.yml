@@ -1,4 +1,4 @@
-# This class allows you to test the gkms backend. 
+# This class allows you to test the gkms backend.
 # Once enabled, you should be able to use secrets like ?{gkms:my_secret_id||randomstr}
 
 #####################################################

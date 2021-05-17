@@ -15,7 +15,7 @@ parameters:
       service_account:
         enabled: true
         create: true
-      
+
       # ROLE + Binding
       cluster_role:
         binding:
@@ -30,7 +30,7 @@ parameters:
         rules:
           - apiGroups:
             # "" indicates the core API group
-            - "" 
+            - ""
             resources:
             - namespaces
             - pods
@@ -61,7 +61,7 @@ parameters:
           fieldRef:
             fieldPath: spec.nodeName
 
-      args: 
+      args:
         - -c
         - /etc/filebeat.yml
         - -e
@@ -75,7 +75,7 @@ parameters:
         # If using Red Hat OpenShift uncomment this:
         #privileged: true
 
-      # Resources  
+      # Resources
       resources:
         limits:
           memory: 200Mi
@@ -105,7 +105,7 @@ parameters:
           hostPath:
             path: /var/lib/filebeat-data
             type: DirectoryOrCreate
-      
+
       # ConfigMap Mounts
       config_maps:
         config:

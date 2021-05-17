@@ -6,7 +6,7 @@ classes:
 parameters:
   scripts: []
   docs:
-    - templates/docs/README.md 
+    - templates/docs/README.md
   manifests: []
   kapitan:
     compile:

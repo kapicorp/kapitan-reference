@@ -3,7 +3,7 @@
 
 [{{ section }}]
 
-{%- for key in mysql[section] %}     
+{%- for key in mysql[section] %}
 {{"%-30s" | format(key)}} = {{mysql[section][key]}}
 {%- endfor %}
 

@@ -75,11 +75,11 @@ Compiled global (0.76s)
 Compiled examples (2.60s)
 Compiled pritunl (2.03s)
 Compiled sock-shop (4.36s)
-``` 
+```
 
 ## Generators
 
-As explained in the blog post [Keep your ship together with Kapitan](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7). generators are a 
+As explained in the blog post [Keep your ship together with Kapitan](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7). generators are a
 powerful idea to simplify the management your setup.
 
 We will release initially generators for kubernetes manifests, terraform and spinnaker pipelines.
@@ -129,6 +129,3 @@ We have used this generator extensively, and we know it covers the majority of t
 If you want a specific example, please let us know (or submit your PR)
 
 By adding more example we will be able to stress test the library to make sure we really satisfy all the most common use cases.
-
-
-
