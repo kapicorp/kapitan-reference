@@ -829,6 +829,31 @@ class PodDisruptionBudget(k8s.Base):
         self.root.spec.minAvailable = component.pdb_min_available
         self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
 
+class PodSecurityPolicy(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'policy/v1beta1'
+        self.kwargs.kind = 'PodSecurityPolicy'
+        super().new()
+        self.need('component')
+        self.need('workload')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        self.add_namespace(inv.parameters.namespace)
+        # relativly RAW input here, there is not much to be automatically generated
+        self.root.spec = component.pod_security_policy.spec
+        # Merge Dicts into PSP Annotations
+        self.root.metadata.annotations = {
+            **component.get('annotations', {}),
+            **component.pod_security_policy.get('annotations', {}),
+        }
+        # Merge Dicts into PSP Labels
+        self.root.metadata.labels = {
+            **component.get('labels', {}),
+            **component.pod_security_policy.get('labels', {})
+        }
 
 class VerticalPodAutoscaler(k8s.Base):
     def new(self):
@@ -936,6 +961,11 @@ def generate_manifests(input_params):
             pdb = PodDisruptionBudget(
                 name=name, component=component, workload=workload_spec).root
             bundle += [pdb]
+
+        if component.pod_security_policy:
+            psp = PodSecurityPolicy(
+                name=name, component=component, workload=workload_spec).root
+            bundle += [psp]
 
         if component.service:
             service = Service(name=name, component=component,
