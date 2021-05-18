@@ -3,6 +3,7 @@ classes:
   - components.mysql
   - components.logstash
   - components.filebeat
+  - components.trivy
 
 parameters:
   target_name: examples
