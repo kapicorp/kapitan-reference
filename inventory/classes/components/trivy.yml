@@ -1,0 +1,115 @@
+parameters:
+  trivy:
+    image: docker.io/aquasec/trivy:0.18.1
+    version: "0.18.1"
+    component: go
+    service:
+      trivy:
+        http_port: 4954
+
+  persistence:
+    trivy:
+      data:
+        # storageclass: "${storageclass}"
+        # accessModes: ["ReadWriteOnce"]
+        # size: 100Gi
+        # only used if hostPath is enabled below
+        host_path: /tmp/trivy
+
+  components:
+    trivy:
+      type: deployment
+      image: ${trivy:image}
+      imagePullPolicy: Always
+
+      args:
+        - server
+
+      pod:
+        labels:
+          "app.kubernetes.io/running-on":
+            fieldRef:
+              fieldPath: spec.nodeName
+
+      labels:
+        app.kubernetes.io/version: ${trivy:version}
+        app.kubernetes.io/component: ${trivy:component}
+
+      env:
+        TRIVY_LISTEN: "0.0.0.0:4954"
+        TRIVY_CACHE_DIR: "/home/scanner/.cache/trivy"
+        TRIVY_DEBUG: false
+        TRIVY_SKIP_UPDATE: false
+        GITHUB_TOKEN:
+          secretKeyRef:
+            name: trivy
+            key: GITHUB_TOKEN
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        NO_PROXY: ""
+
+      resources:
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 512Mi
+
+      volume_mounts:
+        data:
+          mountPath: /home/scanner/.cache
+          readOnly: false
+        tmp-data:
+          mountPath: /tmp
+          readOnly: false
+
+      volumes:
+        data:
+          # accessModes: ${persistence:trivy:data:accessModes}
+          # storageClassName: ${persistence:trivy:data:storageclass}
+          # resources:
+          #   requests:
+          #     storage: ${persistence:trivy:data:size}
+          hostPath:
+            path: ${persistence:trivy:data:host_path}
+            type: DirectoryOrCreate
+        tmp-data:
+          emptyDir: {}
+
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: ${trivy:service:trivy:http_port}
+          container_port: ${trivy:service:trivy:http_port}
+
+      secrets:
+        trivy:
+          data:
+            GITHUB_TOKEN:
+              versioned: true
+              b64_encode: true
+              value: ""
+
+      service_account:
+        enabled: true
+        create: true
+
+      role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+        rules:
+        - apiGroups:
+          - policy
+          resources:
+          - podsecuritypolicies
+          verbs:
+          - use
+          resourceNames:
+            - trivy
