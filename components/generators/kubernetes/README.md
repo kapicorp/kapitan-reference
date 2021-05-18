@@ -905,6 +905,108 @@ metadata:
 
 ```
 
+## PodSecurityPolicy
+The `spec` is relatively raw here, since its too diverse to be automated enough.
+Annotations and labels are merged from global and PSP ones.
+
+```yaml
+parameters:
+  components:
+    drone:
+      pod_security_policy:
+        annotations:
+          xxx: yyy
+        labels:
+          yyy: zzz
+        spec:
+          privileged: false
+          # Required to prevent escalations to root.
+          allowPrivilegeEscalation: false
+          # This is redundant with non-root + disallow privilege escalation,
+          # but we can provide it for defense in depth.
+          requiredDropCapabilities:
+            - ALL
+          # Allow core volume types.
+          volumes:
+            - 'configMap'
+            - 'emptyDir'
+            - 'projected'
+            - 'secret'
+            - 'downwardAPI'
+            - 'persistentVolumeClaim'
+          hostNetwork: false
+          hostIPC: false
+          hostPID: false
+          runAsUser:
+            rule: 'MustRunAsNonRoot'
+          seLinux:
+
+            rule: 'RunAsAny'
+          supplementalGroups:
+            rule: 'MustRunAs'
+            ranges:
+              # Forbid adding the root group.
+              - min: 1
+                max: 65535
+          fsGroup:
+            rule: 'MustRunAs'
+            ranges:
+              # Forbid adding the root group.
+              - min: 1
+                max: 65535
+          readOnlyRootFilesystem: false
+```
+produces the following resource
+
+```yaml
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+    xxx: yyy
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/managed-by: kapitan
+    app.kubernetes.io/part-of: drone
+    app.kubernetes.io/version: '1'
+    yyy: zzz
+  name: drone
+  namespace: drone
+spec:
+  allowPrivilegeEscalation: false
+  fsGroup:
+    ranges:
+      - max: 65535
+        min: 1
+    rule: MustRunAs
+  hostIPC: false
+  hostNetwork: false
+  hostPID: false
+  privileged: false
+  readOnlyRootFilesystem: false
+  requiredDropCapabilities:
+    - ALL
+  runAsUser:
+    rule: MustRunAsNonRoot
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    ranges:
+      - max: 65535
+        min: 1
+    rule: MustRunAs
+  volumes:
+    - configMap
+    - emptyDir
+    - projected
+    - secret
+    - downwardAPI
+    - persistentVolumeClaim
+
+```
+
 ## Defining default values for multiple components
 
 Sometimes, when defining many components, you and up repeating many repeating configurations.
