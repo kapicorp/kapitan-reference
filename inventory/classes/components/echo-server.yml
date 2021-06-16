@@ -91,6 +91,7 @@ parameters:
         config:
           mount: /opt/echo-service/echo-service.conf
           subPath: echo-service.conf
+          default_mode: 550
           versioned: true
           data:
             echo-service.conf:
