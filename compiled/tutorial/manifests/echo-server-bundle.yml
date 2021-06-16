@@ -93,7 +93,7 @@ spec:
       terminationGracePeriodSeconds: 30
       volumes:
         - configMap:
-            defaultMode: 420
+            defaultMode: 550
             name: echo-server-b467a43a
           name: config
         - name: secret

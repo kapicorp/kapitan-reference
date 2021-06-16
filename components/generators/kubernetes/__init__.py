@@ -72,7 +72,7 @@ class WorkloadCommon(BaseObj):
             self.root.spec.template.spec.volumes += [{
                 'name': object_name,
                 key: {
-                    'defaultMode': object.root.spec.get('default_mode', 420),
+                    "defaultMode": object.config.get('default_mode', 420),
                     name_key: rendered_name,
                     'items': [{'key': value, 'path': value} for value in object.items]
                 }
@@ -129,17 +129,17 @@ class ConfigMap(k8s.Base):
     def body(self):
         super().body()
         self.add_namespace(inv.parameters.namespace)
-        config = self.kwargs.config
+        self.config = self.kwargs.config
         component = self.kwargs.component
 
-        self.items = config['items']
+        self.items = self.config["items"]
         if component.globals:
             self.add_labels(component.globals.config_maps.labels)
             self.add_annotations(component.globals.config_maps.annotations)
 
-        if 'data' in config:
-            for key, config_spec in config.data.items():
-                if 'value' in config_spec:
+        if "data" in self.config:
+            for key, config_spec in self.config.data.items():
+                if "value" in config_spec:
                     self.root.data[key] = config_spec.get('value')
                 if 'template' in config_spec:
                     self.root.data[key] = j2(
@@ -147,12 +147,12 @@ class ConfigMap(k8s.Base):
                 if 'file' in config_spec:
                     with open(config_spec.file, 'r') as f:
                         self.root.data[key] = f.read()
-        elif 'directory' in config:
-            for filename in os.listdir(config.directory):
-                with open(f'{config.directory}/{filename}', 'r') as f:
+        elif "directory" in self.config:
+            for filename in os.listdir(self.config.directory):
+                with open(f"{self.config.directory}/{filename}", "r") as f:
                     self.root.data[filename] = f.read()
 
-        if config.get('versioned', False):
+        if self.config.get("versioned", False):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
@@ -179,10 +179,10 @@ class Secret(k8s.Base):
         self.root.type = 'Opaque'
         self.add_namespace(inv.parameters.namespace)
         use_tesoro = inv.parameters.use_tesoro
-        config = self.kwargs.config
+        self.config = self.kwargs.config
         component = self.kwargs.component
 
-        self.items = config['items']
+        self.items = self.config["items"]
 
         if component.globals:
             self.add_labels(component.globals.secrets.labels)
@@ -193,8 +193,8 @@ class Secret(k8s.Base):
         else:
             data = self.root.data
 
-        for key, spec in config.data.items():
-            if 'value' in spec:
+        for key, spec in self.config.data.items():
+            if "value" in spec:
                 if spec.get('b64_encode', False):
                     data[key] = Secret.encode_string(
                         spec.get('value'), use_tesoro)
@@ -202,8 +202,8 @@ class Secret(k8s.Base):
                     data[key] = spec.get('value')
             if 'template' in spec:
                 data[key] = j2(spec.template, spec.get('values', {}))
-
-        if config.get('versioned', False):
+                
+        if self.config.get("versioned", False):          
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
