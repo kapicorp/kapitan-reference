@@ -63,6 +63,11 @@ parameters:
 
       # Healthchecks definitions
       healthcheck:
+        startup:
+          type: http
+          port: http
+          path: /_ready
+          timeout_seconds: 5
         liveness:
           type: http
           port: http

@@ -512,6 +512,8 @@ class Container(BaseObj):
                 'protocol': port.get('protocol', 'TCP')
             }]
 
+        self.root.startupProbe = self.create_probe(
+            container.healthcheck.startup)
         self.root.livenessProbe = self.create_probe(
             container.healthcheck.liveness)
         self.root.readinessProbe = self.create_probe(
