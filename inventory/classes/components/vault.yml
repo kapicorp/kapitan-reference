@@ -1,0 +1,309 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  vault:
+    image: vault:1.7.3
+    version: "1.7.3"
+    component: go
+    service:
+      vault:
+        http: 8200
+        https-internal: 8201
+        http-rep: 8202
+  
+  persistence:
+    data:
+      storageclass: "default"
+      accessModes: ["ReadWriteOnce"]
+      size: 10Gi
+
+  # -------------------------------------------------
+  # Component/s
+  # -------------------------------------------------
+  components:
+    vault:
+      type: statefulset
+      image: ${vault:image}
+      imagePullPolicy: Always
+      replicas: 3
+
+      # -------------------------------------------------
+      # Metadata
+      # -------------------------------------------------
+      pod:
+        labels:
+          "app.kubernetes.io/running-on":
+            fieldRef:
+              fieldPath: spec.nodeName
+      labels:
+        app.kubernetes.io/version: ${vault:version}
+        app.kubernetes.io/component: ${vault:component}
+
+      # -------------------------------------------------
+      # Scheduling
+      # -------------------------------------------------
+      prefer_pods_in_different_nodes: true
+
+      # -------------------------------------------------
+      # Environment
+      # -------------------------------------------------
+      env:
+        HOST_IP: 
+          fieldRef:
+            fieldPath: status.hostIP
+        POD_IP: 
+          fieldRef:
+            fieldPath: status.podIP
+        VAULT_K8S_POD_NAME: 
+          fieldRef:
+            fieldPath: metadata.name
+        VAULT_K8S_NAMESPACE: 
+          fieldRef:
+            fieldPath: metadata.namespace
+        VAULT_ADDR: "http://127.0.0.1:8200"
+        VAULT_API_ADDR: "http://$(POD_IP):8200"
+        SKIP_CHOWN: "true"
+        SKIP_SETCAP: "true"
+        HOSTNAME:
+          fieldRef:
+            fieldPath: metadata.name
+        VAULT_CLUSTER_ADDR: "https://$(HOSTNAME):8201"
+        HOME: "/home/vault"
+
+      # -------------------------------------------------
+      # Container Argument / Command
+      # -------------------------------------------------
+      args:
+        - |
+          cp /vault/config/extraconfig-from-values.hcl /tmp/storageconfig.hcl;
+          [ -n "\${HOST_IP}" ] && sed -Ei "s|HOST_IP|\${HOST_IP?}|g" /tmp/storageconfig.hcl;
+          [ -n "\${POD_IP}" ] && sed -Ei "s|POD_IP|\${POD_IP?}|g" /tmp/storageconfig.hcl;
+          [ -n "\${HOSTNAME}" ] && sed -Ei "s|HOSTNAME|\${HOSTNAME?}|g" /tmp/storageconfig.hcl;
+          [ -n "\${API_ADDR}" ] && sed -Ei "s|API_ADDR|\${API_ADDR?}|g" /tmp/storageconfig.hcl;
+          [ -n "\${TRANSIT_ADDR}" ] && sed -Ei "s|TRANSIT_ADDR|\${TRANSIT_ADDR?}|g" /tmp/storageconfig.hcl;
+          [ -n "\${RAFT_ADDR}" ] && sed -Ei "s|RAFT_ADDR|\${RAFT_ADDR?}|g" /tmp/storageconfig.hcl;
+          /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl
+
+      command:
+        - "/bin/sh"
+        - "-ec"
+
+      # -------------------------------------------------
+      # Security
+      # -------------------------------------------------
+      security_context:
+        allowPrivilegeEscalation: false
+        runAsUser: 100
+        runAsGroup: 1000
+        runAsNonRoot: true
+        # capabilities:
+        #     drop:
+        #     - ALL
+      workload_security_context:
+        fsGroup: 1000
+
+      # -------------------------------------------------
+      # Resources
+      # -------------------------------------------------
+      resources:
+        limits:
+          cpu: 1
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+      # -------------------------------------------------
+      # Volumes / Mounts / Persistence
+      # -------------------------------------------------
+      volume_mounts:
+        home:
+          mountPath: /home/vault
+        data:
+          mountPath: /vault/data
+          
+      volumes:
+        home:
+          emptyDir: 
+            {}
+      volume_claims:
+        data:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: ${persistence:data:storageclass}
+            resources:
+              requests:
+                storage: ${persistence:data:size}
+
+      # -------------------------------------------------
+      # Networking
+      # -------------------------------------------------
+      host_network: false
+      service:
+        type: ClusterIP
+      ports:
+        http:
+          service_port: ${vault:service:vault:http}
+          container_port: ${vault:service:vault:http}
+        https-internal:
+          service_port: ${vault:service:vault:https-internal}
+          container_port: ${vault:service:vault:https-internal}
+        http-rep:
+          service_port: ${vault:service:vault:http-rep}
+          container_port: ${vault:service:vault:http-rep}
+
+      # -------------------------------------------------
+      # Additional containers
+      # -------------------------------------------------
+      # init_containers:
+      #   configure-sysctl:
+      #     image: ${<INIT_CONTAINER_IMAGE>:image}
+      #     terminationGracePeriodSeconds: 120
+
+      #     # -------------------------------------------------
+      #     # Security
+      #     # -------------------------------------------------
+      #     security_context:
+      #       runAsUser: 0
+      #       privileged: true
+
+      #     # -------------------------------------------------
+      #     # Container Argument / Command
+      #     # -------------------------------------------------
+      #     command:
+      #     - sysctl
+      #     - -w
+      #     - vm.max_map_count=262144
+
+      # additional_containers:
+      #   nginx:
+      #     image: nginx
+      #     ports:
+      #       nginx:
+      #         service_port: 80
+      #     config_maps:
+      #       config:
+      #         mount: /etc/nginx/conf.d/nginx.conf
+      #         subPath: nginx.conf
+
+      # -------------------------------------------------
+      # Healthchecks / Readinessprobe / Lifecycle
+      # -------------------------------------------------
+      lifecycle:
+        preStop:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - sleep 5 && kill -SIGTERM $(pidof vault)
+      healthcheck:
+        liveness:
+          type: command
+          command:
+            - /bin/sh
+            - -ec
+            - vault status -tls-skip-verify
+          failure_threshold: 5
+          initial_delay_seconds: 0
+          period_seconds: 10
+          success_threshold: 1
+          timeout_seconds: 5
+        readiness:
+          type: command
+          command:
+            - /bin/sh
+            - -ec
+            - vault status -tls-skip-verify
+          failure_threshold: 2
+          initial_delay_seconds: 5
+          period_seconds: 5
+          success_threshold: 1
+          timeout_seconds: 3
+
+      # -------------------------------------------------
+      # ServiceAccount
+      # -------------------------------------------------
+      service_account:
+        enabled: true
+        create: true
+
+      # -------------------------------------------------
+      # ROLE + Binding
+      # -------------------------------------------------
+      cluster_role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+        rules:
+          - apiGroups:
+              - admissionregistration.k8s.io
+            resources:
+              - mutatingwebhookconfigurations
+            verbs:
+              - get
+              - list
+              - watch
+              - patch
+      role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              name: vault
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+        rules:
+          - apiGroups:
+            - ""
+            resources:
+              - pods
+            verbs:
+              - get
+              - watch
+              - list
+              - update
+              - patch
+
+
+      # -------------------------------------------------
+      # NetworkPolicies
+      # -------------------------------------------------
+      # network_policies:
+      #   default:
+      #     ingress:
+      #       - from:
+      #         - podSelector:
+      #             matchLabels:
+      #               role: frontend
+      #         ports:
+      #         - protocol: TCP
+      #           port: 6379
+
+      # -------------------------------------------------
+      # Secrets
+      # -------------------------------------------------
+      # secrets:
+      #   <SECRET_NAME>:
+      #     data:
+      #       <SECRET_DATA_KEY_NAME>:
+      #         versioned: true
+      #         b64_encode: true
+      #         value: <REFERENCE_TO_SECRET_VALUE>
+
+      # -------------------------------------------------
+      # ConfigMaps
+      # -------------------------------------------------
+      config_maps:
+        vault-config:
+          mount: /vault/config/extraconfig-from-values.hcl
+          subPath: extraconfig-from-values.hcl
+          data:
+            extraconfig-from-values.hcl:
+              template: components/vault/extraconfig-from-values.hcl.j2
+              values: {}

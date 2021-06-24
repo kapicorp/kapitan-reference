@@ -4,6 +4,7 @@ classes:
   - components.logstash
   - components.filebeat
   - components.trivy
+  - components.vault
 
 parameters:
   target_name: examples

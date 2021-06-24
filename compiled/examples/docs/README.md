@@ -14,5 +14,6 @@
 |[logstash.yml](../../inventory/classes/components/logstash.yml)| [logstash](logstash-readme.md)|
 |[mysql.yml](../../inventory/classes/components/mysql.yml)| [mysql](mysql-readme.md)|
 |[trivy.yml](../../inventory/classes/components/trivy.yml)| [trivy](trivy-readme.md)|
+|[vault.yml](../../inventory/classes/components/vault.yml)| [vault](vault-readme.md)|
 
 ## Deployments
