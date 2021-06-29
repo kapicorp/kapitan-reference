@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  extraconfig-from-values.hcl: "disable_mlock = true\nui = true\n\nlistener \"tcp\"\
+    \ {\n  tls_disable = 1\n  address = \"[::]:8200\"\n  cluster_address = \"[::]:8201\"\
+    \n}\n\nstorage \"raft\" {\n  path = \"/vault/data\"\n}\n\nretry_join {\n  leader_api_addr\
+    \ = \"http://vault-0.vault-internal.vault.svc.cluster.local:8200\"\n}\nretry_join\
+    \ {\n  leader_api_addr = \"http://vault-1.vault-internal.vault.svc.cluster.local:8200\"\
+    \n}\nretry_join {\n  leader_api_addr = \"http://vault-2.vault-internal.vault.svc.cluster.local:8200\"\
+    \n}\nservice_registration \"kubernetes\" {}"
+kind: ConfigMap
+metadata:
+  labels:
+    name: vault
+  name: vault
+  namespace: vault

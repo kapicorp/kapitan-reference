@@ -12,3 +12,4 @@
 |[sock-shop](../sock-shop/docs/README.md)|
 |[tesoro](../tesoro/docs/README.md)|
 |[tutorial](../tutorial/docs/README.md)|
+|[vault](../vault/docs/README.md)|
