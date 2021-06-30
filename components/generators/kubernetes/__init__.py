@@ -72,7 +72,7 @@ class WorkloadCommon(BaseObj):
             self.root.spec.template.spec.volumes += [{
                 'name': object_name,
                 key: {
-                    "defaultMode": object.config.get('default_mode', 420),
+                    'defaultMode': object.config.get('default_mode', 420),
                     name_key: rendered_name,
                     'items': [{'key': value, 'path': value} for value in object.items]
                 }
@@ -132,14 +132,14 @@ class ConfigMap(k8s.Base):
         self.config = self.kwargs.config
         component = self.kwargs.component
 
-        self.items = self.config["items"]
+        self.items = self.config['items']
         if component.globals:
             self.add_labels(component.globals.config_maps.labels)
             self.add_annotations(component.globals.config_maps.annotations)
 
-        if "data" in self.config:
+        if 'data' in self.config:
             for key, config_spec in self.config.data.items():
-                if "value" in config_spec:
+                if 'value' in config_spec:
                     self.root.data[key] = config_spec.get('value')
                 if 'template' in config_spec:
                     self.root.data[key] = j2(
@@ -147,12 +147,12 @@ class ConfigMap(k8s.Base):
                 if 'file' in config_spec:
                     with open(config_spec.file, 'r') as f:
                         self.root.data[key] = f.read()
-        elif "directory" in self.config:
+        elif 'directory' in self.config:
             for filename in os.listdir(self.config.directory):
-                with open(f"{self.config.directory}/{filename}", "r") as f:
+                with open(f'{self.config.directory}/{filename}', 'r') as f:
                     self.root.data[filename] = f.read()
 
-        if self.config.get("versioned", False):
+        if self.config.get('versioned', False):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
@@ -182,7 +182,7 @@ class Secret(k8s.Base):
         self.config = self.kwargs.config
         component = self.kwargs.component
 
-        self.items = self.config["items"]
+        self.items = self.config['items']
 
         if component.globals:
             self.add_labels(component.globals.secrets.labels)
@@ -194,7 +194,7 @@ class Secret(k8s.Base):
             data = self.root.data
 
         for key, spec in self.config.data.items():
-            if "value" in spec:
+            if 'value' in spec:
                 if spec.get('b64_encode', False):
                     data[key] = Secret.encode_string(
                         spec.get('value'), use_tesoro)
@@ -202,8 +202,8 @@ class Secret(k8s.Base):
                     data[key] = spec.get('value')
             if 'template' in spec:
                 data[key] = j2(spec.template, spec.get('values', {}))
-                
-        if self.config.get("versioned", False):          
+
+        if self.config.get('versioned', False):
             self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
@@ -223,7 +223,7 @@ class Service(k8s.Base):
         workload = self.kwargs.workload
         service_spec = self.kwargs.service_spec
 
-        self.kwargs.name = service_spec.get("service_name", self.kwargs.name)
+        self.kwargs.name = service_spec.get('service_name', self.kwargs.name)
         super().body()
         self.add_namespace(inv.parameters.namespace)
 
@@ -232,9 +232,9 @@ class Service(k8s.Base):
         self.root.spec.selector = workload.spec.template.metadata.labels
         self.root.spec.selector.update(service_spec.selectors)
         self.root.spec.type = service_spec.type
-        if service_spec.get("publish_not_ready_address", False):
+        if service_spec.get('publish_not_ready_address', False):
             self.root.spec.publishNotReadyAddresses = True
-        if service_spec.get("headless", False):
+        if service_spec.get('headless', False):
             self.root.spec.clusterIP = 'None'
         self.root.spec.clusterIP
         self.root.spec.sessionAffinity = service_spec.get(
@@ -242,7 +242,7 @@ class Service(k8s.Base):
         all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()
                                          if 'ports' in container]
 
-    
+
         if service_spec.expose_ports:
             exposed_ports = {port_name: port_spec for (port_name, port_spec) in sorted(all_ports.pop().items()) if port_name in service_spec.expose_ports }
 
@@ -329,7 +329,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.strategy = component.get('strategy', default_strategy)
         self.root.spec.updateStrategy = component.get(
             'update_strategy', update_strategy)
-        self.root.spec.serviceName = component.service.get("service_name", name)
+        self.root.spec.serviceName = component.service.get('service_name', name)
         self.set_replicas(component.get('replicas', 1))
 
 class DaemonSet(k8s.Base, WorkloadCommon):
