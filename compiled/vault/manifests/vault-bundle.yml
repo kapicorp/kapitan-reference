@@ -1,0 +1,334 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault
+  name: vault
+  namespace: vault
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: go
+      app.kubernetes.io/version: 1.7.3
+      name: vault
+  serviceName: vault-internal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: go
+        app.kubernetes.io/version: 1.7.3
+        name: vault
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - vault
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - args:
+            - 'cp /vault/config/extraconfig-from-values.hcl /tmp/storageconfig.hcl;
+
+              [ -n "${HOST_IP}" ] && sed -Ei "s|HOST_IP|${HOST_IP?}|g" /tmp/storageconfig.hcl;
+
+              [ -n "${POD_IP}" ] && sed -Ei "s|POD_IP|${POD_IP?}|g" /tmp/storageconfig.hcl;
+
+              [ -n "${HOSTNAME}" ] && sed -Ei "s|HOSTNAME|${HOSTNAME?}|g" /tmp/storageconfig.hcl;
+
+              [ -n "${API_ADDR}" ] && sed -Ei "s|API_ADDR|${API_ADDR?}|g" /tmp/storageconfig.hcl;
+
+              [ -n "${TRANSIT_ADDR}" ] && sed -Ei "s|TRANSIT_ADDR|${TRANSIT_ADDR?}|g"
+              /tmp/storageconfig.hcl;
+
+              [ -n "${RAFT_ADDR}" ] && sed -Ei "s|RAFT_ADDR|${RAFT_ADDR?}|g" /tmp/storageconfig.hcl;
+
+              /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl
+
+              '
+          command:
+            - /bin/sh
+            - -ec
+          env:
+            - name: HOME
+              value: /home/vault
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SKIP_CHOWN
+              value: 'true'
+            - name: SKIP_SETCAP
+              value: 'true'
+            - name: VAULT_ADDR
+              value: http://127.0.0.1:8200
+            - name: VAULT_API_ADDR
+              value: http://$(POD_IP):8200
+            - name: VAULT_CLUSTER_ADDR
+              value: https://$(HOSTNAME):8201
+            - name: VAULT_K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VAULT_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          image: vault:1.7.3
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 5 && kill -SIGTERM $(pidof vault)
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - vault status -tls-skip-verify
+            failureThreshold: 5
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: vault
+          ports:
+            - containerPort: 8200
+              name: http
+              protocol: TCP
+            - containerPort: 8202
+              name: http-rep
+              protocol: TCP
+            - containerPort: 8201
+              name: https-internal
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - vault status -tls-skip-verify
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 1
+              memory: 1024Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 100
+          volumeMounts:
+            - mountPath: /vault/config/extraconfig-from-values.hcl
+              name: vault-config
+              subPath: extraconfig-from-values.hcl
+            - mountPath: /home/vault
+              name: home
+            - mountPath: /vault/data
+              name: data
+      hostNetwork: false
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+      serviceAccountName: vault
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: home
+        - configMap:
+            defaultMode: 420
+            name: vault
+          name: vault-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        labels:
+          name: data
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault-internal
+  name: vault-internal
+  namespace: vault
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
+    - name: https-internal
+      port: 8201
+      protocol: TCP
+      targetPort: https-internal
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault-active
+  name: vault-active
+  namespace: vault
+spec:
+  ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
+    - name: https-internal
+      port: 8201
+      protocol: TCP
+      targetPort: https-internal
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault
+    vault-active: 'true'
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault-standby
+  name: vault-standby
+  namespace: vault
+spec:
+  ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
+    - name: https-internal
+      port: 8201
+      protocol: TCP
+      targetPort: https-internal
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 1.7.3
+    name: vault
+    vault-active: 'false'
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    name: vault
+  name: vault
+  namespace: vault
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - get
+      - watch
+      - list
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    name: vault
+  name: vault
+  namespace: vault
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vault
+subjects:
+  - kind: ServiceAccount
+    name: vault
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    name: vault
+  name: vault
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    name: vault
+  name: vault
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vault
+subjects:
+  - kind: ServiceAccount
+    name: vault
+    namespace: vault

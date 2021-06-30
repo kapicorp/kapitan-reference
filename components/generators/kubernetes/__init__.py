@@ -216,22 +216,40 @@ class Service(k8s.Base):
         super().new()
         self.need('component')
         self.need('workload')
+        self.need('service_spec')
 
     def body(self):
-        super().body()
-        self.add_namespace(inv.parameters.namespace)
         component = self.kwargs.component
         workload = self.kwargs.workload
+        service_spec = self.kwargs.service_spec
+
+        self.kwargs.name = service_spec.get("service_name", self.kwargs.name)
+        super().body()
+        self.add_namespace(inv.parameters.namespace)
+
         self.add_labels(component.get('labels', {}))
-        self.add_annotations(component.service.annotations)
+        self.add_annotations(service_spec.annotations)
         self.root.spec.selector = workload.spec.template.metadata.labels
-        self.root.spec.type = component.service.type
-        self.root.spec.sessionAffinity = component.service.get(
+        self.root.spec.selector.update(service_spec.selectors)
+        self.root.spec.type = service_spec.type
+        if service_spec.get("publish_not_ready_address", False):
+            self.root.spec.publishNotReadyAddresses = True
+        if service_spec.get("headless", False):
+            self.root.spec.clusterIP = 'None'
+        self.root.spec.clusterIP
+        self.root.spec.sessionAffinity = service_spec.get(
             'session_affinity', 'None')
         all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()
                                          if 'ports' in container]
 
-        for port_name, port_spec in sorted(all_ports.pop().items()):
+    
+        if service_spec.expose_ports:
+            exposed_ports = {port_name: port_spec for (port_name, port_spec) in sorted(all_ports.pop().items()) if port_name in service_spec.expose_ports }
+
+        else:
+            exposed_ports =  {port_name: port_spec for (port_name, port_spec) in sorted(all_ports.pop().items())}
+
+        for port_name, port_spec in exposed_ports.items():
             if 'service_port' in port_spec:
                 self.root.spec.ports += [{
                     'name': port_name,
@@ -311,7 +329,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.strategy = component.get('strategy', default_strategy)
         self.root.spec.updateStrategy = component.get(
             'update_strategy', update_strategy)
-        self.root.spec.serviceName = name
+        self.root.spec.serviceName = component.service.get("service_name", name)
         self.set_replicas(component.get('replicas', 1))
 
 class DaemonSet(k8s.Base, WorkloadCommon):
@@ -968,9 +986,13 @@ def generate_manifests(input_params):
             bundle += [psp]
 
         if component.service:
-            service = Service(name=name, component=component,
-                              workload=workload_spec).root
+            service = Service(name=name, component=component, workload=workload_spec, service_spec=component.service).root
             bundle += [service]
+
+        if component.additional_services:
+            for service_name, service_spec in component.additional_services.items():
+                service = Service(name=service_name, component=component, workload=workload_spec, service_spec=service_spec).root
+                bundle += [service]
 
         if component.network_policies:
 
