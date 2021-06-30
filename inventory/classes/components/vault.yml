@@ -11,7 +11,7 @@ parameters:
         http: 8200
         https-internal: 8201
         http-rep: 8202
-  
+
   persistence:
     data:
       storageclass: "default"
@@ -49,16 +49,16 @@ parameters:
       # Environment
       # -------------------------------------------------
       env:
-        HOST_IP: 
+        HOST_IP:
           fieldRef:
             fieldPath: status.hostIP
-        POD_IP: 
+        POD_IP:
           fieldRef:
             fieldPath: status.podIP
-        VAULT_K8S_POD_NAME: 
+        VAULT_K8S_POD_NAME:
           fieldRef:
             fieldPath: metadata.name
-        VAULT_K8S_NAMESPACE: 
+        VAULT_K8S_NAMESPACE:
           fieldRef:
             fieldPath: metadata.namespace
         VAULT_ADDR: "http://127.0.0.1:8200"
@@ -122,11 +122,10 @@ parameters:
           mountPath: /home/vault
         data:
           mountPath: /vault/data
-          
+
       volumes:
         home:
-          emptyDir: 
-            {}
+          emptyDir: {}
       volume_claims:
         data:
           spec:
@@ -141,13 +140,12 @@ parameters:
       # -------------------------------------------------
       host_network: false
 
-
       service:
         service_name: vault-internal
         type: ClusterIP
         publish_not_ready_address: True
         headless: True
-        
+
       additional_services:
         vault-active:
           type: ClusterIP
@@ -211,9 +209,9 @@ parameters:
         preStop:
           exec:
             command:
-            - /bin/sh
-            - -c
-            - sleep 5 && kill -SIGTERM $(pidof vault)
+              - /bin/sh
+              - -c
+              - sleep 5 && kill -SIGTERM $(pidof vault)
       healthcheck:
         liveness:
           type: command
@@ -277,7 +275,7 @@ parameters:
             kind: Role
         rules:
           - apiGroups:
-            - ""
+              - ""
             resources:
               - pods
             verbs:
@@ -286,7 +284,6 @@ parameters:
               - list
               - update
               - patch
-
 
       # -------------------------------------------------
       # NetworkPolicies
