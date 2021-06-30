@@ -219,11 +219,14 @@ class Service(k8s.Base):
         self.need('service_spec')
 
     def body(self):
-        super().body()
-        self.add_namespace(inv.parameters.namespace)
         component = self.kwargs.component
         workload = self.kwargs.workload
         service_spec = self.kwargs.service_spec
+
+        self.kwargs.name = service_spec.get("service_name", self.kwargs.name)
+        super().body()
+        self.add_namespace(inv.parameters.namespace)
+
         self.add_labels(component.get('labels', {}))
         self.add_annotations(service_spec.annotations)
         self.root.spec.selector = workload.spec.template.metadata.labels
@@ -326,7 +329,7 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.strategy = component.get('strategy', default_strategy)
         self.root.spec.updateStrategy = component.get(
             'update_strategy', update_strategy)
-        self.root.spec.serviceName = name
+        self.root.spec.serviceName = component.service.get("service_name", name)
         self.set_replicas(component.get('replicas', 1))
 
 class DaemonSet(k8s.Base, WorkloadCommon):

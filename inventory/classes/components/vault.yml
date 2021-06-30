@@ -152,10 +152,11 @@ parameters:
           publish_not_ready_address: True
           selectors:
             vault-active: "false"
-        vault-internal:
-          type: ClusterIP
-          publish_not_ready_address: True
-          headless: True
+      service:
+        service_name: vault-internal
+        type: ClusterIP
+        publish_not_ready_address: True
+        headless: True
 
 
       ports:
