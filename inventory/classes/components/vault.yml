@@ -141,6 +141,13 @@ parameters:
       # -------------------------------------------------
       host_network: false
 
+
+      service:
+        service_name: vault-internal
+        type: ClusterIP
+        publish_not_ready_address: True
+        headless: True
+        
       additional_services:
         vault-active:
           type: ClusterIP
@@ -152,12 +159,6 @@ parameters:
           publish_not_ready_address: True
           selectors:
             vault-active: "false"
-      service:
-        service_name: vault-internal
-        type: ClusterIP
-        publish_not_ready_address: True
-        headless: True
-
 
       ports:
         http:
