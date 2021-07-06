@@ -32,9 +32,9 @@ then
   done
 else
 
-  if [[ -f ${DIR}/../pre-deploy/01_namespace.yml ]]
+  if [[ -f ${DIR}/../manifests/dev-sockshop-namespace.yml ]]
   then
-    apply "${DIR}/../pre-deploy/01_namespace.yml"
+    apply "${DIR}/../manifests/dev-sockshop-namespace.yml"
   fi
 
   # Apply files in specific order

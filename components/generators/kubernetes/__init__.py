@@ -1,12 +1,10 @@
 import base64
-import copy
-import os
-import json
 import hashlib
+import os
 
-from kapitan.inputs.kadet import BaseObj, inventory, CompileError
-from kapitan.utils import render_jinja2_file
 from kapitan.cached import args
+from kapitan.inputs.kadet import BaseObj, CompileError, inventory
+from kapitan.utils import render_jinja2_file
 
 from . import k8s
 
@@ -56,20 +54,22 @@ class WorkloadCommon(BaseObj):
             self.root.spec.volumeClaimTemplates += [value]
 
     def add_volumes_for_objects(self, objects):
-        component = self.kwargs.component
-        component_name = self.kwargs.name
-
         for object in objects.root:
             object_name = object.name
             rendered_name = object.root.metadata.name
 
-            if type(object) == ConfigMap:
+            if type(object) == ComponentConfig:
                 key = 'configMap'
                 name_key = 'name'
             else:
-                key= 'secret'
+                key = 'secret'
                 name_key = 'secretName'
-            self.root.spec.template.spec.volumes += [{
+
+            template = self.root.spec.template
+            if isinstance(self, CronJob):
+                template = self.root.spec.jobTemplate.spec.template
+
+            template.spec.volumes += [{
                 'name': object_name,
                 key: {
                     'defaultMode': object.config.get('default_mode', 420),
@@ -118,45 +118,97 @@ class ServiceAccount(k8s.Base):
                 {'name': component.get('image_pull_secrets', inv.parameters.pull_secret.name)}]
 
 
-class ConfigMap(k8s.Base):
+class SharedConfig():
+    """Shared class to use for both Secrets and ConfigMaps classes.
+
+    containt anything needed by both classes, so that their behavious is basically the same.
+    Each subclass will then implement its own way of adding the data depending on their implementation.
+    """
+    @staticmethod
+    def encode_string(unencoded_string):
+        return base64.b64encode(unencoded_string.encode('ascii')).decode('ascii')
+
+    def setup_metadata(self):
+        self.add_namespace(self.config.get(
+            'namespace', inv.parameters.namespace))
+        self.add_annotations(self.config.annotations)
+        self.add_labels(self.config.labels)
+
+        self.items = self.config['items']
+        try:
+            if isinstance(self, ConfigMap):
+                globals = inv.parameters.generators.manifest.default_config.globals.config_maps
+            else:
+                globals = inv.parameters.generators.manifest.default_config.globals.secrets
+            self.add_annotations(globals.get('annotations', {}))
+            self.add_labels(globals.get('labels', {}))
+        except AttributeError:
+            pass
+
+        self.versioning(self.config.get('versioned', False))
+
+    def add_directory(self, directory, encode=False):
+        stringdata = inv.parameters.get('use_tesoro', False)
+        if directory and os.path.isdir(directory):
+            for filename in os.listdir(directory):
+                with open(f'{directory}/{filename}', 'r') as f:
+                    file_content = f.read()
+                    self.add_item(filename, file_content, request_encode=encode,
+                                  stringdata=stringdata)
+
+    def add_data(self, data):
+        stringdata = inv.parameters.get('use_tesoro', False)
+
+        for key, spec in data.items():
+            encode = spec.get('b64_encode', False)
+
+            if 'value' in spec:
+                value = spec.get('value')
+            if 'template' in spec:
+                value = j2(
+                    spec.template, spec.get('values', {}))
+            if 'file' in spec:
+                with open(spec.file, 'r') as f:
+                    value = f.read()
+
+            self.add_item(key, value, request_encode=encode,
+                          stringdata=stringdata)
+
+    def versioning(self, enabled=False):
+        if enabled:
+            self.hash = hashlib.sha256(
+                str(self.root.to_dict()).encode()).hexdigest()[:8]
+            self.root.metadata.name += f'-{self.hash}'
+
+
+class ConfigMap(k8s.Base, SharedConfig):
     def new(self):
         self.kwargs.apiVersion = 'v1'
         self.kwargs.kind = 'ConfigMap'
         super().new()
-        self.need('config')
-        self.need('component')
 
     def body(self):
         super().body()
-        self.add_namespace(inv.parameters.namespace)
+
+    def add_item(self, key, value, request_encode=False, stringdata=False):
+        encode = request_encode
+
+        self.root['data'][key] = self.encode_string(
+            value) if encode else value
+
+
+class ComponentConfig(ConfigMap, SharedConfig):
+    def new(self):
+        super().new()
+        self.need('config')
+
+    def body(self):
+        super().body()
         self.config = self.kwargs.config
-        component = self.kwargs.component
 
-        self.items = self.config['items']
-        if component.globals:
-            self.add_labels(component.globals.config_maps.labels)
-            self.add_annotations(component.globals.config_maps.annotations)
-
-        if 'data' in self.config:
-            for key, config_spec in self.config.data.items():
-                if 'value' in config_spec:
-                    self.root.data[key] = config_spec.get('value')
-                if 'template' in config_spec:
-                    self.root.data[key] = j2(
-                        config_spec.template, config_spec.get('values', {}))
-                if 'file' in config_spec:
-                    with open(config_spec.file, 'r') as f:
-                        self.root.data[key] = f.read()
-        elif 'directory' in self.config:
-            for filename in os.listdir(self.config.directory):
-                with open(f'{self.config.directory}/{filename}', 'r') as f:
-                    self.root.data[filename] = f.read()
-
-        if self.config.get('versioned', False):
-            self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
-            self.root.metadata.name += f'-{self.hash}'
-
-
+        self.setup_metadata()
+        self.add_data(self.config.data)
+        self.add_directory(self.config.directory, encode=False)
 
 
 class Secret(k8s.Base):
@@ -164,49 +216,30 @@ class Secret(k8s.Base):
         self.kwargs.apiVersion = 'v1'
         self.kwargs.kind = 'Secret'
         super().new()
-        self.need('config')
-        self.need('component')
-
-    @staticmethod
-    def encode_string(unencoded_string, use_tesoro=inv.parameters.use_tesoro):
-        if use_tesoro:
-            return unencoded_string
-        else:
-            return base64.b64encode(unencoded_string.encode('ascii')).decode('ascii')
 
     def body(self):
         super().body()
-        self.root.type = 'Opaque'
-        self.add_namespace(inv.parameters.namespace)
-        use_tesoro = inv.parameters.use_tesoro
+
+    def add_item(self, key, value, request_encode=False, stringdata=False):
+        encode = not stringdata and request_encode
+        field = 'stringData' if stringdata else 'data'
+        self.root[field][key] = self.encode_string(
+            value) if encode else value
+
+
+class ComponentSecret(Secret, SharedConfig):
+    def new(self):
+        super().new()
+        self.need('config')
+
+    def body(self):
+        super().body()
         self.config = self.kwargs.config
-        component = self.kwargs.component
+        self.root.type = self.config.get('type', 'Opaque')
 
-        self.items = self.config['items']
-
-        if component.globals:
-            self.add_labels(component.globals.secrets.labels)
-            self.add_annotations(component.globals.secrets.annotations)
-
-        if use_tesoro:
-            data = self.root.stringData
-        else:
-            data = self.root.data
-
-        for key, spec in self.config.data.items():
-            if 'value' in spec:
-                if spec.get('b64_encode', False):
-                    data[key] = Secret.encode_string(
-                        spec.get('value'), use_tesoro)
-                else:
-                    data[key] = spec.get('value')
-            if 'template' in spec:
-                data[key] = j2(spec.template, spec.get('values', {}))
-
-        if self.config.get('versioned', False):
-            self.hash = hashlib.sha256(str(self.to_dict()).encode()).hexdigest()[:8]
-            self.root.metadata.name += f'-{self.hash}'
-
+        self.setup_metadata()
+        self.add_data(self.config.data)
+        self.add_directory(self.config.directory, encode=True)
 
 
 class Service(k8s.Base):
@@ -242,14 +275,15 @@ class Service(k8s.Base):
         all_ports = [component.ports] + [container.ports for container in component.additional_containers.values()
                                          if 'ports' in container]
 
+        exposed_ports = {}
 
-        if service_spec.expose_ports:
-            exposed_ports = {port_name: port_spec for (port_name, port_spec) in sorted(all_ports.pop().items()) if port_name in service_spec.expose_ports }
+        for port in all_ports:
+            for port_name in port.keys():
+                if not service_spec.expose_ports or port_name in service_spec.expose_ports:
+                    exposed_ports.update(port)
 
-        else:
-            exposed_ports =  {port_name: port_spec for (port_name, port_spec) in sorted(all_ports.pop().items())}
-
-        for port_name, port_spec in exposed_ports.items():
+        for port_name in sorted(exposed_ports):
+            port_spec = exposed_ports[port_name]
             if 'service_port' in port_spec:
                 self.root.spec.ports += [{
                     'name': port_name,
@@ -257,6 +291,67 @@ class Service(k8s.Base):
                     'targetPort': port_name,
                     'protocol': port_spec.get('protocol', 'TCP')
                 }]
+
+
+class Ingress(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'networking.k8s.io/v1'
+        self.kwargs.kind = 'Ingress'
+        super().new()
+        self.need('name')
+        self.need('ingress')
+
+    def body(self):
+        super().body()
+        ingress = self.kwargs.ingress
+        self.add_namespace(inv.parameters.namespace)
+        import json
+        self.add_annotations(ingress.get('annotations', {}))
+        if 'default_backend' in ingress:
+            self.root.spec.backend.service.name = ingress.default_backend.get(
+                'name')
+            self.root.spec.backend.service.port = ingress.default_backend.get(
+                'port', 80)
+        if 'paths' in ingress:
+            paths = ingress.paths
+            self.root.spec.rules = [{'http': {'paths': paths}}]
+        if ingress.cert_manager:
+            self.root.spec.tls = [{'hosts': [ingress.domain],
+                                   'secretName': f'{ingress.domain}-cert-secret'}]
+
+
+class ManagedCertificate(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'networking.gke.io/v1beta1'
+        self.kwargs.kind = 'ManagedCertificate'
+        super().new()
+        self.need('name')
+        self.need('domains')
+
+    def body(self):
+        super().body()
+        name = self.kwargs.name
+        domains = self.kwargs.domains
+        self.add_namespace(inv.parameters.namespace)
+        self.root.spec.domains = domains
+
+
+class IstioPolicy(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'authentication.istio.io/v1alpha1'
+        self.kwargs.kind = 'Policy'
+        super().new()
+        self.need('component')
+        self.need('workload')
+
+    def body(self):
+        super().body()
+        self.add_namespace(inv.parameters.namespace)
+        component = self.kwargs.component
+        name = self.kwargs.name
+        self.root.spec.origins = component.istio_policy.policies.origins
+        self.root.spec.principalBinding = 'USE_ORIGIN'
+        self.root.spec.targets = [{'name': name}]
 
 
 class NameSpace(k8s.Base):
@@ -329,8 +424,10 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         self.root.spec.strategy = component.get('strategy', default_strategy)
         self.root.spec.updateStrategy = component.get(
             'update_strategy', update_strategy)
-        self.root.spec.serviceName = component.service.get('service_name', name)
+        self.root.spec.serviceName = component.service.get(
+            'service_name', name)
         self.set_replicas(component.get('replicas', 1))
+
 
 class DaemonSet(k8s.Base, WorkloadCommon):
     def new(self):
@@ -357,6 +454,7 @@ class DaemonSet(k8s.Base, WorkloadCommon):
             self.root.spec.template.spec.hostNetwork = component.host_network
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
+
 
 class Job(k8s.Base, WorkloadCommon):
     def new(self):
@@ -445,26 +543,26 @@ class Container(BaseObj):
         configs = container.config_maps.items()
         secrets = container.secrets.items()
         for object_name, spec in configs:
-            if spec == None:
+            if spec is None:
                 raise CompileError(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
-                    'readOnly': spec.readOnly,
+                    'readOnly': spec.get('readOnly', None),
                     'name': object_name,
                     'subPath': spec.subPath
                 }]
         for object_name, spec in secrets:
-            if spec == None:
+            if spec is None:
                 raise CompileError(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
-                    'readOnly': spec.readOnly,
+                    'readOnly': spec.get('readOnly', None),
                     'name': object_name,
                     'subPath': spec.subPath
                 }]
@@ -574,9 +672,8 @@ class Workload(WorkloadCommon):
                                  component.additional_containers.items()]
         workload.add_containers([container])
         workload.add_containers(additional_containers)
-
         init_containers = [Container(name=name, container=component) for name, component in
-                            component.init_containers.items()]
+                           component.init_containers.items()]
 
         workload.add_init_containers(init_containers)
         workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
@@ -584,7 +681,13 @@ class Workload(WorkloadCommon):
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
             'grace_period', 30)
 
-        if component.prefer_pods_in_node_with_expression:
+        if component.node_selector:
+            workload.root.spec.template.spec.nodeSelector = component.node_selector
+
+        if component.tolerations:
+            workload.root.spec.template.spec.tolerations = component.tolerations
+
+        if component.prefer_pods_in_node_with_expression and not component.node_selector:
             workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
                     'preference':
@@ -749,6 +852,7 @@ class MutatingWebhookConfiguration(k8s.Base):
         component = self.kwargs.component
         self.root.webhooks = component.webhooks
 
+
 class Role(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
@@ -789,6 +893,7 @@ class RoleBinding(k8s.Base):
             'roleRef', default_role_ref)
         self.root.subjects = component.get(
             'subject', default_subject)
+
 
 class ClusterRole(k8s.Base):
     def new(self):
@@ -844,8 +949,58 @@ class PodDisruptionBudget(k8s.Base):
         component = self.kwargs.component
         workload = self.kwargs.workload
         self.add_namespace(inv.parameters.namespace)
-        self.root.spec.minAvailable = component.pdb_min_available
+        if component.auto_pdb:
+            self.root.spec.maxUnavailable = 1
+        else:
+            self.root.spec.minAvailable = component.pdb_min_available
         self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
+
+
+class VerticalPodAutoscaler(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
+        self.kwargs.kind = 'VerticalPodAutoscaler'
+        super().new()
+        self.need('component')
+        self.need('workload')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        self.add_namespace(inv.parameters.namespace)
+        self.add_labels(workload.metadata.labels)
+        self.root.spec.targetRef.apiVersion = workload.apiVersion
+        self.root.spec.targetRef.kind = workload.kind
+        self.root.spec.targetRef.name = workload.metadata.name
+        self.root.spec.updatePolicy.updateMode = component.vpa
+
+        # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
+        self.root.spec.resourcePolicy.containerPolicies = [
+            {'containerName': 'istio-proxy', 'mode': 'Off'}]
+
+
+class HorizontalPodAutoscaler(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'autoscaling/v2beta2'
+        self.kwargs.kind = 'HorizontalPodAutoscaler'
+        super().new()
+        self.need('component')
+        self.need('workload')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        self.add_namespace(inv.parameters.namespace)
+        self.add_labels(workload.metadata.labels)
+        self.root.spec.scaleTargetRef.apiVersion = workload.apiVersion
+        self.root.spec.scaleTargetRef.kind = workload.kind
+        self.root.spec.scaleTargetRef.name = workload.metadata.name
+        self.root.spec.minReplicas = component.hpa.min_replicas
+        self.root.spec.maxReplicas = component.hpa.max_replicas
+        self.root.spec.metrics = component.hpa.metrics
+
 
 class PodSecurityPolicy(k8s.Base):
     def new(self):
@@ -872,29 +1027,6 @@ class PodSecurityPolicy(k8s.Base):
             **component.get('labels', {}),
             **component.pod_security_policy.get('labels', {})
         }
-
-class VerticalPodAutoscaler(k8s.Base):
-    def new(self):
-        self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
-        self.kwargs.kind = 'VerticalPodAutoscaler'
-        super().new()
-        self.need('component')
-        self.need('workload')
-
-    def body(self):
-        super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        self.add_namespace(inv.parameters.namespace)
-        self.add_labels(workload.metadata.labels)
-        self.root.spec.targetRef.apiVersion = workload.apiVersion
-        self.root.spec.targetRef.kind = workload.kind
-        self.root.spec.targetRef.name = workload.metadata.name
-        self.root.spec.updatePolicy.updateMode = component.vpa
-
-        # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
-        self.root.spec.resourcePolicy.containerPolicies = [
-            {'containerName': 'istio-proxy', 'mode': 'Off'}]
 
 
 def get_components():
@@ -935,16 +1067,46 @@ def generate_docs(input_params):
     return obj
 
 
-def generate_pre_deploy(input_params):
+def generate_resource_manifests(input_params):
     obj = BaseObj()
-    name = inv.parameters.namespace
-    namespace = NameSpace(name=name)
-    obj.root['{}-namespace'.format(name)] = namespace
+    namespace_name = inv.parameters.namespace
+    namespace = NameSpace(name=namespace_name)
+    obj.root['{}-namespace'.format(namespace_name)] = namespace
 
+    for secret_name, secret_spec in inv.parameters.generators.kubernetes.secrets.items():
+        name = secret_spec.get('name', secret_name)
+        secret = ComponentSecret(name=name, config=secret_spec)
+        obj.root[f'{name}'] = secret
     return obj
 
 
-def generate_manifests(input_params):
+def generate_ingress(input_params):
+    # Only generate ingress manifest if istio not enabled
+    if not inv.parameters.istio.enabled:
+        obj = BaseObj()
+        bundle = list()
+        ingresses = inv.parameters.ingresses
+        for name in ingresses.keys():
+            ingress = Ingress(name=name, ingress=ingresses[name])
+
+            if 'managed_certificate' in ingresses[name]:
+                certificate_spec = ingresses[name]
+                certificate_name = certificate_spec.managed_certificate
+                additional_domains = certificate_spec.get(
+                    'additional_domains', [])
+                domains = [certificate_name] + additional_domains
+                ingress.add_annotations(
+                    {'networking.gke.io/managed-certificates': certificate_name})
+                certificate = ManagedCertificate(
+                    name=certificate_name, domains=domains)
+                obj.root['{}-managed-certificate'.format(name)] = certificate
+
+            obj.root['{}-ingress'.format(name)] = ingress
+
+        return obj
+
+
+def generate_component_manifests(input_params):
     obj = BaseObj()
     for name, component in get_components():
         bundle = []
@@ -959,10 +1121,10 @@ def generate_manifests(input_params):
         bundle += [workload_spec]
 
         configs = GenerateMultipleObjectsForClass(
-            name=name, component=component, generating_class=ConfigMap, objects=component.config_maps, workload=workload_spec)
+            name=name, component=component, generating_class=ComponentConfig, objects=component.config_maps, workload=workload_spec)
 
         secrets = GenerateMultipleObjectsForClass(
-            name=name, component=component, generating_class=Secret, objects=component.secrets, workload=workload_spec)
+            name=name, component=component, generating_class=ComponentSecret, objects=component.secrets, workload=workload_spec)
 
         workload.add_volumes_for_objects(configs)
         workload.add_volumes_for_objects(secrets)
@@ -970,15 +1132,26 @@ def generate_manifests(input_params):
         obj.root[f'{name}-config'] = configs.root
         obj.root[f'{name}-secret'] = secrets.root
 
-        if component.vpa and component.type != 'job':
+        if component.vpa and inv.parameters.get('enable_vpa', True) and component.type != 'job':
             vpa = VerticalPodAutoscaler(
                 name=name, component=component, workload=workload_spec).root
             bundle += [vpa]
 
-        if component.pdb_min_available:
-            pdb = PodDisruptionBudget(
+        if component.hpa:
+            hpa = HorizontalPodAutoscaler(
                 name=name, component=component, workload=workload_spec).root
-            bundle += [pdb]
+            bundle += [hpa]
+
+        if component.type != 'job':
+            if component.pdb_min_available or component.auto_pdb:
+                pdb = PodDisruptionBudget(
+                    name=name, component=component, workload=workload_spec).root
+                bundle += [pdb]
+
+        if component.istio_policy:
+            istio_policy = IstioPolicy(
+                name=name, component=component, workload=workload_spec).root
+            bundle += [istio_policy]
 
         if component.pod_security_policy:
             psp = PodSecurityPolicy(
@@ -986,12 +1159,14 @@ def generate_manifests(input_params):
             bundle += [psp]
 
         if component.service:
-            service = Service(name=name, component=component, workload=workload_spec, service_spec=component.service).root
+            service = Service(name=name, component=component,
+                              workload=workload_spec, service_spec=component.service).root
             bundle += [service]
 
         if component.additional_services:
             for service_name, service_spec in component.additional_services.items():
-                service = Service(name=service_name, component=component, workload=workload_spec, service_spec=service_spec).root
+                service = Service(name=service_name, component=component,
+                                  workload=workload_spec, service_spec=service_spec).root
                 bundle += [service]
 
         if component.network_policies:
@@ -1042,9 +1217,23 @@ def generate_manifests(input_params):
     return obj
 
 
+def generate_manifests(input_params):
+    all_manifests = BaseObj()
+
+    component_manifests = generate_component_manifests(input_params)
+    ingress_manifests = generate_ingress(input_params)
+    resource_manifests = generate_resource_manifests(input_params)
+
+    all_manifests.root = component_manifests.root
+    all_manifests.root.update(ingress_manifests.root)
+    all_manifests.root.update(resource_manifests.root)
+
+    return all_manifests
+
+
 def main(input_params):
     whitelisted_functions = ['generate_manifests',
-                             'generate_docs', 'generate_pre_deploy']
+                             'generate_docs']
     function = input_params.get('function', 'generate_manifests')
     if function in whitelisted_functions:
         return globals()[function](input_params)

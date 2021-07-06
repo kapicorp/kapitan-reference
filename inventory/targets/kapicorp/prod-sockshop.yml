@@ -13,11 +13,9 @@ parameters:
       annotations:
         kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
         networking.gke.io/managed-certificates: sockshop.kapicorp.com
-      gke_managed_certificates: true
+      managed_certificate: sockshop.kapicorp.com
       domains:
       - sockshop.kapicorp.com
       default_backend:
-        service:
-          name: frontend
-          port:
-            number: 80
+        name: frontend
+        port: 80

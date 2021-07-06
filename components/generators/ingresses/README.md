@@ -11,15 +11,15 @@ For convenience, you can add the configuration in the same files as your compone
 For instance, add the following to the component [echo-server](inventory/classes/components/echo-server.yml).
 
 ```yaml
-  ingresses:
-    global:
-      annotations:
-        kubernetes.io/ingress.global-static-ip-name: my_static_ip
-      paths:
-        - backend:
-            serviceName: echo-server
-            servicePort: 80
-          path: /echo/*
+ingresses:
+  global:
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: my_static_ip
+    paths:
+      - backend:
+          serviceName: echo-server
+          servicePort: 80
+        path: /echo/*
 ```
 
 which will generate a file similar to:
@@ -47,19 +47,161 @@ spec:
 Injecting "rules" confirations is also supported:
 
 ```yaml
-  ingresses:
-    global:
-      annotations:
-        kubernetes.io/ingress.global-static-ip-name: my_static_ip
-      rules:
+ingresses:
+  global:
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: my_static_ip
+    rules:
       - http:
           paths:
-          - backend:
-            serviceName: echo-server
-            servicePort: 80
-            path: /echo/*
+            - backend:
+              serviceName: echo-server
+              servicePort: 80
+              path: /echo/*
 ```
 
-## TODO:
-* Support for GKE managed certificates
-* Support for TLS secrets
+### Create an ingress resource
+
+Each key under the `ingresses` parameters represent an ingress resource:
+
+```yaml
+parameters:
+---
+ingresses:
+  main:
+    default_backend:
+      name: frontend
+      port: 80
+```
+
+Will generate the following `Ingress` resource
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    name: main
+  name: main
+  namespace: prod-sockshop
+spec:
+  backend:
+    serviceName: frontend
+    servicePort: 80
+```
+
+### Add annotations to an ingress
+
+Simply adding the `annotations` directive allows to configure an ingress:
+
+```yaml
+ingresses:
+  main:
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: static-ip-name
+    default_backend:
+      name: frontend
+      port: 80
+```
+
+will add the annotations to the resource
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: static-ip-name
+  labels:
+    name: main
+  name: main
+  namespace: prod-sockshop
+spec:
+  backend:
+    serviceName: frontend
+    servicePort: 80
+```
+
+## Managed certificats (currently GKE only)
+
+### Add a managed certificate
+
+Set the `manage_certificate` directive to the domain you want to manage a certificate for.
+
+```yaml
+ingresses:
+  main:
+    managed_certificate: sockshop.kapicorp.com
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: static-ip-name
+    default_backend:
+      name: frontend
+      port: 80
+```
+
+Which will create a new `ManagedCertificate` resource for such domain
+
+```yaml
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  labels:
+    name: sockshop.kapicorp.com
+  name: sockshop.kapicorp.com
+  namespace: prod-sockshop
+spec:
+  domains:
+    - sockshop.kapicorp.com
+```
+
+and injects the correct annotation into the ingress resource:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: static-ip-name
+    networking.gke.io/managed-certificates: sockshop.kapicorp.com
+  labels:
+    name: main
+  name: main
+  namespace: prod-sockshop
+spec:
+  backend:
+    serviceName: frontend
+    servicePort: 80
+```
+
+### Multiple certificats
+
+The generator also supports multiple certificates with the `additional_domains` directive.
+
+```yaml
+ingresses:
+  main:
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: static-ip-name
+    managed_certificate: sockshop.kapicorp.com
+    additional_domains:
+      - secure.kapicorp.com
+    default_backend:
+      name: frontend
+      port: 80
+```
+
+Which will generate:
+
+```yaml
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  labels:
+    name: sockshop.kapicorp.com
+  name: sockshop.kapicorp.com
+  namespace: prod-sockshop
+spec:
+  domains:
+    - sockshop.kapicorp.com
+    - secure.kapicorp.com
+```
