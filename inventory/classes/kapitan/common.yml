@@ -2,6 +2,8 @@ classes:
   - kapitan.kube
   - kapitan.generators.ingresses
   - kapitan.generators.kubernetes
+  - kapitan.generators.terraform
+
 
 parameters:
   scripts: []

@@ -1,0 +1,15 @@
+{
+  "terraform": {
+    "required_providers": {
+      "google": {
+        "version": "3.46.0"
+      }
+    },
+    "backend": {
+      "gcs": {
+        "bucket": "state-kapicorp-terraform-admin",
+        "prefix": "terraform/state/kapicorp-demo-march"
+      }
+    }
+  }
+}

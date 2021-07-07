@@ -1,0 +1,7 @@
+classes:
+  - common
+  - terraform.common
+  - terraform.project-type.generic
+
+parameters:
+  name: Example Terraform Project

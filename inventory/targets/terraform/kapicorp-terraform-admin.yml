@@ -1,0 +1,7 @@
+classes:
+  - common
+  - terraform.common
+  - terraform.project-type.admin
+
+parameters:
+  name: Terraform Admin Project
