@@ -40,9 +40,9 @@ then
   done
 else
 
-  if [[ -f ${DIR}/../pre-deploy/01_namespace.yml ]]
+  if [[ -f ${DIR}/../manifests/{{p.namespace}}-namespace.yml ]]
   then
-    apply "${DIR}/../pre-deploy/01_namespace.yml"
+    apply "${DIR}/../manifests/{{p.namespace}}-namespace.yml"
   fi
 
   # Apply files in specific order

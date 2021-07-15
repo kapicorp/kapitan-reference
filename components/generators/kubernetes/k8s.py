@@ -24,4 +24,8 @@ class Base(BaseObj):
         self.root.metadata.namespace = namespace
 
     def add_annotations(self, annotations):
-        self.root.metadata.annotations = annotations
+        for key, value in annotations.items():
+            self.add_annotation(key, value)
+
+    def add_annotation(self, key, value):
+        self.root.metadata.annotations[key] = value
