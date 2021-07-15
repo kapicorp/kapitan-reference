@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
-    networking.gke.io/managed-certificates: sockshop.kapicorp.com
   labels:
     name: global
   name: global
@@ -13,3 +12,7 @@ spec:
     service:
       name: frontend
       port: 80
+  tls:
+    - hosts:
+        - sockshop.kapicorp.com
+      secretName: sockshop.kapicorp.com

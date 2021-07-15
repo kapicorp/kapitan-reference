@@ -315,9 +315,8 @@ class Ingress(k8s.Base):
         if 'paths' in ingress:
             paths = ingress.paths
             self.root.spec.rules = [{'http': {'paths': paths}}]
-        if ingress.cert_manager:
-            self.root.spec.tls = [{'hosts': [ingress.domain],
-                                   'secretName': f'{ingress.domain}-cert-secret'}]
+        if ingress.tls:
+            self.root.spec.tls = ingress.tls
 
 
 class ManagedCertificate(k8s.Base):

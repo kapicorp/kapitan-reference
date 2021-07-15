@@ -1,10 +1,11 @@
-apiVersion: networking.gke.io/v1beta1
-kind: ManagedCertificate
+apiVersion: v1
+data:
+  tls.crt: CERTIFICATE
+  tls.key: KEY
+kind: Secret
 metadata:
   labels:
     name: sockshop.kapicorp.com
   name: sockshop.kapicorp.com
   namespace: prod-sockshop
-spec:
-  domains:
-    - sockshop.kapicorp.com
+type: kubernetes.io/tls
