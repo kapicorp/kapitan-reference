@@ -15,9 +15,11 @@ parameters:
           type: kubernetes.io/tls
           data:
             tls.crt:
-              value: CERTIFICATE
+              # just an example, not a real certificate
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.crt||randomstr|base64}
             tls.key:
-              value: KEY
+              # just an example, not a real key
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.key||randomstr|base64}
   ingresses:
     tls-certificate:
       annotations:
