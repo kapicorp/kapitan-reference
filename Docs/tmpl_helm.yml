@@ -1,0 +1,40 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  <APP-NAME>:
+    chart_name: <APP-NAME>
+    chart_version: "<CHART-VERSION>"
+    application_version: "<APP-VERSION>"
+    namespace: ${namespace}
+
+    # -------------------------------------------------
+    # HELM VALUES
+    # -------------------------------------------------
+    helm_values:
+      chart_name: <APP-NAME>
+      chart_version: ${<APP-NAME>:chart_version}
+      namespace: ${namespace}
+      helm_values:
+        name: <APP-NAME>
+        # <SEE VALUES of your chart>
+
+  # -------------------------------------------------
+  # HELM RENDER DEFINITION
+  # -------------------------------------------------
+  kapitan:
+    dependencies:
+    - type: helm
+      output_path: components/charts/${<APP-NAME>:chart_name}
+      source: < CHART SOURCE e.g. https://charts.jetstack.io/>
+      version: ${<APP-NAME>:chart_version}
+      chart_name: ${<APP-NAME>:chart_name}
+    compile:
+    - input_type: helm
+      input_paths:
+        - components/charts/${<APP-NAME>:chart_name}
+      output_path: .
+      helm_params:
+        namespace: ${<APP-NAME>:namespace}
+        release_name: ${<APP-NAME>:chart_name}
+      helm_values: ${<APP-NAME>:helm_values}

@@ -103,6 +103,20 @@ spec:
       name: postgres-proxy
       tier: db
 ---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    name: postgres-proxy
+  name: postgres-proxy
+  namespace: postgres-proxy
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      name: postgres-proxy
+      tier: db
+---
 apiVersion: v1
 kind: Service
 metadata:
