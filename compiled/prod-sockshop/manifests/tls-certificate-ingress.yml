@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
+    kubernetes.io/ingress.global-static-ip-name: sock-shop-tls
   labels:
-    name: global
-  name: global
+    name: tls-certificate
+  name: tls-certificate
   namespace: prod-sockshop
 spec:
   backend:

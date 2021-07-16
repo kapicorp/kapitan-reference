@@ -19,15 +19,22 @@ parameters:
             tls.key:
               value: KEY
   ingresses:
-    global:
+    tls-certificate:
       annotations:
-        kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
-      domains:
-      - sockshop.kapicorp.com
+        kubernetes.io/ingress.global-static-ip-name: sock-shop-tls
       default_backend:
         name: frontend
         port: 80
       tls:
-      - hosts:
-          - sockshop.kapicorp.com
-        secretName: sockshop.kapicorp.com
+        - hosts:
+            - sockshop.kapicorp.com
+          secretName: sockshop.kapicorp.com
+    gke-managed-certificate:
+      annotations:
+        kubernetes.io/ingress.global-static-ip-name: sock-shop-managed
+      managed_certificate: managed-sockshop.kapicorp.com
+      additional_domains:
+        - managed-sockshop2.kapicorp.com
+      default_backend:
+        name: frontend
+        port: 80
