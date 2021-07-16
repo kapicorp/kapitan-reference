@@ -111,7 +111,8 @@ class ServiceAccount(k8s.Base):
     def body(self):
         super().body()
         component = self.kwargs.component
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         self.add_annotations(component.service_account.annotations)
         if component.image_pull_secrets or inv.parameters.pull_secret.name:
             self.root.imagePullSecrets = [
@@ -258,7 +259,8 @@ class Service(k8s.Base):
 
         self.kwargs.name = service_spec.get('service_name', self.kwargs.name)
         super().body()
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
 
         self.add_labels(component.get('labels', {}))
         self.add_annotations(service_spec.annotations)
@@ -334,6 +336,46 @@ class ManagedCertificate(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.domains = domains
 
+class CertManagerIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.root.spec = component.managed_certs.cert_manager.issuer.get('spec')
+
+class CertManagerClusterIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'ClusterIssuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        self.root.spec = component.managed_certs.cert_manager.cluster_issuer.get('spec')
+
+class CertManagerCertificate(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.root.spec = component.managed_certs.cert_manager.cert.get('spec')
+
 
 class IstioPolicy(k8s.Base):
     def new(self):
@@ -364,7 +406,9 @@ class NameSpace(k8s.Base):
         super().body()
         name = self.kwargs.name
         labels = inv.parameters.generators.kubernetes.namespace.labels
+        annotations = inv.parameters.generators.kubernetes.namespace.annotations
         self.add_labels(labels)
+        self.add_annotations(annotations)
 
 
 class Deployment(k8s.Base, WorkloadCommon):
@@ -390,6 +434,8 @@ class Deployment(k8s.Base, WorkloadCommon):
             'restart_policy', 'Always')
         if 'host_network' in component:
             self.root.spec.template.spec.hostNetwork = component.host_network
+        if 'host_pid' in component:
+            self.root.spec.template.spec.hostPID = component.host_pid
         self.root.spec.strategy = component.get(
             'update_strategy', default_strategy)
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
@@ -419,6 +465,8 @@ class StatefulSet(k8s.Base, WorkloadCommon):
             'restart_policy', 'Always')
         if 'host_network' in component:
             self.root.spec.template.spec.hostNetwork = component.host_network
+        if 'host_pid' in component:
+            self.root.spec.template.spec.hostPID = component.host_pid
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.strategy = component.get('strategy', default_strategy)
         self.root.spec.updateStrategy = component.get(
@@ -451,6 +499,8 @@ class DaemonSet(k8s.Base, WorkloadCommon):
             'restart_policy', 'Always')
         if 'host_network' in component:
             self.root.spec.template.spec.hostNetwork = component.host_network
+        if 'host_pid' in component:
+            self.root.spec.template.spec.hostPID = component.host_pid
         self.root.spec.revisionHistoryLimit = component.revision_history_limit
         self.root.spec.progressDeadlineSeconds = component.deployment_progress_deadline_seconds
 
@@ -469,6 +519,10 @@ class Job(k8s.Base, WorkloadCommon):
         self.root.spec.template.metadata.labels = self.root.metadata.labels
         self.root.spec.template.spec.restartPolicy = component.get(
             'restart_policy', 'Never')
+        if 'host_network' in component:
+            self.root.spec.template.spec.hostNetwork = component.host_network
+        if 'host_pid' in component:
+            self.root.spec.template.spec.hostPID = component.host_pid
         self.root.spec.backoffLimit = component.get('backoff_limit', 1)
         self.root.spec.completions = component.get('completions', 1)
         self.root.spec.parallelism = component.get('parallelism', 1)
@@ -627,6 +681,8 @@ class Container(BaseObj):
                 'protocol': port.get('protocol', 'TCP')
             }]
 
+        self.root.startupProbe = self.create_probe(
+            container.healthcheck.startup)
         self.root.livenessProbe = self.create_probe(
             container.healthcheck.liveness)
         self.root.readinessProbe = self.create_probe(
@@ -653,7 +709,9 @@ class Workload(WorkloadCommon):
         else:
             raise ()
 
-        workload.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            workload.root.metadata.namespace = component.get(
+                'namespace', inv.parameters.namespace)
         workload.add_annotations(component.get('annotations', {}))
         workload.root.spec.template.metadata.annotations = component.get(
             'pod_annotations', {})
@@ -675,7 +733,8 @@ class Workload(WorkloadCommon):
                            component.init_containers.items()]
 
         workload.add_init_containers(init_containers)
-        workload.root.spec.template.spec.imagePullSecrets = component.image_pull_secrets
+        if component.image_pull_secrets or inv.parameters.image_pull_secrets:
+            workload.root.spec.template.spec.imagePullSecrets = component.get('image_pull_secrets', inv.parameters.image_pull_secrets)
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
             'grace_period', 30)
@@ -691,7 +750,6 @@ class Workload(WorkloadCommon):
                 {
                     'preference':
                         {
-
                             'matchExpressions': [component.prefer_pods_in_node_with_expression]
                         }, 'weight': 1
                 }
@@ -788,7 +846,8 @@ class PrometheusRule(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
         self.root.spec.groups += [{'name': 'tesoro.rules',
@@ -808,7 +867,8 @@ class BackendConfig(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         self.root.spec = component.backend_config
 
 
@@ -830,7 +890,8 @@ class ServiceMonitor(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
         self.root.spec.namespaceSelector.matchNames = [
@@ -851,7 +912,6 @@ class MutatingWebhookConfiguration(k8s.Base):
         component = self.kwargs.component
         self.root.webhooks = component.webhooks
 
-
 class Role(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
@@ -861,9 +921,10 @@ class Role(k8s.Base):
 
     def body(self):
         super().body()
-        self.add_namespace(inv.parameters.namespace)
         name = self.kwargs.name
         component = self.kwargs.component
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         self.root.rules = component.role.rules
 
 
@@ -876,7 +937,6 @@ class RoleBinding(k8s.Base):
 
     def body(self):
         super().body()
-        self.add_namespace(inv.parameters.namespace)
         default_role_ref = {
             'apiGroup': 'rbac.authorization.k8s.io',
             'kind': 'Role',
@@ -888,11 +948,12 @@ class RoleBinding(k8s.Base):
         }]
         name = self.kwargs.name
         component = self.kwargs.component
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         self.root.roleRef = component.get(
             'roleRef', default_role_ref)
         self.root.subjects = component.get(
             'subject', default_subject)
-
 
 class ClusterRole(k8s.Base):
     def new(self):
@@ -947,7 +1008,8 @@ class PodDisruptionBudget(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         if component.auto_pdb:
             self.root.spec.maxUnavailable = 1
         else:
@@ -1000,6 +1062,31 @@ class HorizontalPodAutoscaler(k8s.Base):
         self.root.spec.maxReplicas = component.hpa.max_replicas
         self.root.spec.metrics = component.hpa.metrics
 
+class VerticalPodAutoscaler(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
+        self.kwargs.kind = 'VerticalPodAutoscaler'
+        super().new()
+        self.need('component')
+        self.need('workload')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        workload = self.kwargs.workload
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_labels(workload.metadata.labels)
+        self.root.spec.targetRef.apiVersion = workload.apiVersion
+        self.root.spec.targetRef.kind = workload.kind
+        self.root.spec.targetRef.name = workload.metadata.name
+        self.root.spec.updatePolicy.updateMode = component.vpa
+
+        # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
+        self.root.spec.resourcePolicy.containerPolicies = [
+            {'containerName': 'istio-proxy', 'mode': 'Off'}]
+
+
 
 class PodSecurityPolicy(k8s.Base):
     def new(self):
@@ -1013,7 +1100,8 @@ class PodSecurityPolicy(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(inv.parameters.namespace)
+        if component.namespace or inv.parameters.namespace:
+            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
         # relativly RAW input here, there is not much to be automatically generated
         self.root.spec = component.pod_security_policy.spec
         # Merge Dicts into PSP Annotations
@@ -1026,7 +1114,6 @@ class PodSecurityPolicy(k8s.Base):
             **component.get('labels', {}),
             **component.pod_security_policy.get('labels', {})
         }
-
 
 def get_components():
     if 'components' in inv.parameters:
@@ -1136,6 +1223,11 @@ def generate_component_manifests(input_params):
                 name=name, component=component, workload=workload_spec).root
             bundle += [vpa]
 
+        if component.pdb_min_available:
+            pdb = PodDisruptionBudget(
+                name=name, component=component, workload=workload_spec).root
+            bundle += [pdb]
+
         if component.hpa:
             hpa = HorizontalPodAutoscaler(
                 name=name, component=component, workload=workload_spec).root
@@ -1146,7 +1238,6 @@ def generate_component_manifests(input_params):
                 pdb = PodDisruptionBudget(
                     name=name, component=component, workload=workload_spec).root
                 bundle += [pdb]
-
         if component.istio_policy:
             istio_policy = IstioPolicy(
                 name=name, component=component, workload=workload_spec).root
@@ -1168,8 +1259,22 @@ def generate_component_manifests(input_params):
                                   workload=workload_spec, service_spec=service_spec).root
                 bundle += [service]
 
-        if component.network_policies:
+        if component.managed_certs:
+            cmc = CertManagerCertificate(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cm-cert'] = cmc
 
+        if component.managed_certs:
+            cmi = CertManagerIssuer(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cm-issuer'] = cmi
+
+        if component.managed_certs:
+            cmci = CertManagerClusterIssuer(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cmc-issuer'] = cmci
+
+        if component.network_policies:
             policies = GenerateMultipleObjectsForClass(
                 name=name, component=component, generating_class=NetworkPolicy, objects=component.network_policies, workload=workload_spec).root
             bundle += policies
