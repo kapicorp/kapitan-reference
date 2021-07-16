@@ -334,6 +334,45 @@ class ManagedCertificate(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.domains = domains
 
+class CertManagerIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.root.spec = component.managed_certs.cert_manager.issuer.get('spec')
+
+class CertManagerClusterIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'ClusterIssuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        self.root.spec = component.managed_certs.cert_manager.cluster_issuer.get('spec')
+
+class CertManagerCertificate(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
+        super().new()
+        self.need('component')
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.root.spec = component.managed_certs.cert_manager.cert.get('spec')
+
+
 class IstioPolicy(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'authentication.istio.io/v1alpha1'
@@ -1207,6 +1246,21 @@ def generate_component_manifests(input_params):
                 service = Service(name=service_name, component=component,
                                   workload=workload_spec, service_spec=service_spec).root
                 bundle += [service]
+
+        if component.managed_certs:
+            cmc = CertManagerCertificate(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cm-cert'] = cmc
+
+        if component.managed_certs:
+            cmi = CertManagerIssuer(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cm-issuer'] = cmi
+
+        if component.managed_certs:
+            cmci = CertManagerClusterIssuer(
+                name=name, component=component, workload=workload_spec).root
+            obj.root[f'{name}-cmc-issuer'] = cmci
 
         if component.network_policies:
             policies = GenerateMultipleObjectsForClass(
