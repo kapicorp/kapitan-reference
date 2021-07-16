@@ -111,8 +111,7 @@ class ServiceAccount(k8s.Base):
     def body(self):
         super().body()
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.add_annotations(component.service_account.annotations)
         if component.image_pull_secrets or inv.parameters.pull_secret.name:
             self.root.imagePullSecrets = [
@@ -259,8 +258,7 @@ class Service(k8s.Base):
 
         self.kwargs.name = service_spec.get('service_name', self.kwargs.name)
         super().body()
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
 
         self.add_labels(component.get('labels', {}))
         self.add_annotations(service_spec.annotations)
@@ -346,8 +344,7 @@ class CertManagerIssuer(k8s.Base):
     def body(self):
         super().body()
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.spec = component.managed_certs.cert_manager.issuer.get('spec')
 
 class CertManagerClusterIssuer(k8s.Base):
@@ -372,8 +369,7 @@ class CertManagerCertificate(k8s.Base):
     def body(self):
         super().body()
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.spec = component.managed_certs.cert_manager.cert.get('spec')
 
 
@@ -846,8 +842,7 @@ class PrometheusRule(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
         self.root.spec.groups += [{'name': 'tesoro.rules',
@@ -867,8 +862,7 @@ class BackendConfig(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.spec = component.backend_config
 
 
@@ -890,8 +884,7 @@ class ServiceMonitor(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
         self.root.spec.namespaceSelector.matchNames = [
@@ -923,8 +916,7 @@ class Role(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.rules = component.role.rules
 
 
@@ -948,8 +940,7 @@ class RoleBinding(k8s.Base):
         }]
         name = self.kwargs.name
         component = self.kwargs.component
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.root.roleRef = component.get(
             'roleRef', default_role_ref)
         self.root.subjects = component.get(
@@ -1008,8 +999,7 @@ class PodDisruptionBudget(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         if component.auto_pdb:
             self.root.spec.maxUnavailable = 1
         else:
@@ -1074,8 +1064,7 @@ class VerticalPodAutoscaler(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         self.add_labels(workload.metadata.labels)
         self.root.spec.targetRef.apiVersion = workload.apiVersion
         self.root.spec.targetRef.kind = workload.kind
@@ -1100,8 +1089,7 @@ class PodSecurityPolicy(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        if component.namespace or inv.parameters.namespace:
-            self.root.metadata.namespace = component.get('namespace', inv.parameters.namespace)
+        self.add_namespace(component.get("namespace", inv.parameters.namespace))
         # relativly RAW input here, there is not much to be automatically generated
         self.root.spec = component.pod_security_policy.spec
         # Merge Dicts into PSP Annotations
