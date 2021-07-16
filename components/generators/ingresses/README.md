@@ -104,7 +104,7 @@ ingresses:
       port: 80
 ```
 
-will add the annotations to the resource
+The generator will add the annotations to the resource
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -120,6 +120,41 @@ spec:
   backend:
     serviceName: frontend
     servicePort: 80
+```
+
+## Adding TLS certificates
+
+You can define a TLS certificate to be used by the ingress with the following syntax
+
+```yaml
+generators:
+  kubernetes:
+    secrets:
+      sockshop.kapicorp.com:
+        type: kubernetes.io/tls
+        data:
+          tls.crt:
+            value: ?{gkms:targets/${target_name}/sockshop.kapicorp.com.crt}
+          tls.key:
+            value: ?{gkms:targets/${target_name}/sockshop.kapicorp.com.key}
+```
+
+Both references need to be configured before hand with the correct PEM certificates.
+
+You can then pass the TLS configuration to the ingress, with a reference to the secret just created:
+
+```yaml
+  ingresses:
+    global:
+      annotations:
+        kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
+      default_backend:
+        name: frontend
+        port: 80
+      tls:
+      - hosts:
+          - sockshop.kapicorp.com
+        secretName: sockshop.kapicorp.com
 ```
 
 ## Managed certificats (currently GKE only)

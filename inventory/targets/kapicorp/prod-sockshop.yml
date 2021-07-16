@@ -8,14 +8,35 @@ parameters:
     frontend:
       service:
         type: NodePort
+  generators:
+    kubernetes:
+      secrets:
+        sockshop.kapicorp.com:
+          type: kubernetes.io/tls
+          data:
+            tls.crt:
+              # just an example, not a real certificate
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.crt||randomstr|base64}
+            tls.key:
+              # just an example, not a real key
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.key||randomstr|base64}
   ingresses:
-    global:
+    tls-certificate:
       annotations:
-        kubernetes.io/ingress.global-static-ip-name: sock-shop-prod
-        networking.gke.io/managed-certificates: sockshop.kapicorp.com
-      managed_certificate: sockshop.kapicorp.com
-      domains:
-      - sockshop.kapicorp.com
+        kubernetes.io/ingress.global-static-ip-name: sock-shop-tls
+      default_backend:
+        name: frontend
+        port: 80
+      tls:
+        - hosts:
+            - sockshop.kapicorp.com
+          secretName: sockshop.kapicorp.com
+    gke-managed-certificate:
+      annotations:
+        kubernetes.io/ingress.global-static-ip-name: sock-shop-managed
+      managed_certificate: managed-sockshop.kapicorp.com
+      additional_domains:
+        - managed-sockshop2.kapicorp.com
       default_backend:
         name: frontend
         port: 80
