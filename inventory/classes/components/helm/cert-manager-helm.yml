@@ -1,0 +1,54 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  cert-manager:
+    chart_name: cert-manager
+    chart_version: "v1.4.0"
+    application_version: "v1.4.0"
+    namespace: ${namespace}
+
+    # -------------------------------------------------
+    # HELM VALUES
+    # -------------------------------------------------
+    helm_values:
+      chart_name: cert-manager
+      chart_version: ${cert-manager:chart_version}
+      namespace: ${namespace}
+      helm_values:
+        name: cert-manager
+        installCRDs: true
+        rbac:
+          create: true
+        prometheus:
+          enabled: true
+          servicemonitor:
+            enabled: true
+        webhook:
+          enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        ingressShim:
+          defaultIssuerName: letsencrypt-prod
+          defaultIssuerKind: ClusterIssuer
+  # -------------------------------------------------
+  # HELM RENDER DEFINITION
+  # -------------------------------------------------
+  kapitan:
+    dependencies:
+    - type: helm
+      output_path: components/charts/${cert-manager:chart_name}
+      source: https://charts.jetstack.io/
+      version: ${cert-manager:chart_version}
+      chart_name: ${cert-manager:chart_name}
+    compile:
+    - input_type: helm
+      input_paths:
+        - components/charts/${cert-manager:chart_name}
+      output_path: .
+      helm_params:
+        namespace: ${cert-manager:namespace}
+        release_name: ${cert-manager:chart_name}
+      helm_values: ${cert-manager:helm_values}
