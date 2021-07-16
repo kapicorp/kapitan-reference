@@ -1,0 +1,318 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  <APP_NAME>:
+    image: <IMAGE>
+    version: <v.X.Y.Z>
+    component: <GO/JAVA/JAVASCRIPT.....>
+    service:
+      <APP_NAME>:
+        <SERVICE_PORT_NAME>: <PORT AS NUMBER>
+
+
+  persistence:
+    <VOLUME-NAME>:
+      storageclass: "${storageclass}"
+      accessModes: ["ReadWriteOnce"]
+      size: 10Gi
+
+  # -------------------------------------------------
+  # Component/s
+  # -------------------------------------------------
+  components:
+    <APP_NAME>:
+      type: daemonset
+      image: ${<APP_NAME>:image}
+      imagePullPolicy: Always
+
+      # -------------------------------------------------
+      # Metadata
+      # -------------------------------------------------
+      pod:
+        labels:
+          "app.kubernetes.io/running-on":
+            fieldRef:
+              fieldPath: spec.nodeName
+      labels:
+        app.kubernetes.io/version: ${<APP_NAME>:version}
+        app.kubernetes.io/component: ${<APP_NAME>:component}
+
+      # -------------------------------------------------
+      # Environment
+      # -------------------------------------------------
+      env:
+        MY_ENV_SECRET:
+          secretKeyRef:
+            name: <SECRET_NAME>
+            key: <SECRET_DATA_KEY_NAME>
+        MY_ENV_CONFIGMAP:
+          configMapKeyRef:
+            name: <CONFIGMAP_NAME>
+            key: <CONFIGMAP_DATA_KEY_NAME>
+        MY_TYPICAL_ENV: anyValue
+
+      # -------------------------------------------------
+      # Container Argument / Command
+      # -------------------------------------------------
+      args:
+        - -c
+        - mycommand
+
+      command:
+        - sh
+        - c
+        - mycommand
+
+      # -------------------------------------------------
+      # Security
+      # -------------------------------------------------
+      # hostPID: false
+      security_context:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        privileged: false
+        capabilities:
+            drop:
+            - ALL
+      workload_security_context:
+        fsGroup: 1000
+
+      pod_security_policy:
+        spec:
+          privileged: false  # Don't allow privileged pods!
+          # The rest fills in some required fields.
+          seLinux:
+            rule: RunAsAny
+          supplementalGroups:
+            rule: RunAsAny
+          runAsUser:
+            rule: RunAsAny
+          fsGroup:
+            rule: RunAsAny
+          volumes:
+            - '*'
+
+      # -------------------------------------------------
+      # Resources
+      # -------------------------------------------------
+      resources:
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+      # -------------------------------------------------
+      # Volumes / Mounts / Persistence
+      # -------------------------------------------------
+      volume_mounts:
+        <VOLUME_NAME_HOSTPATH>:
+          mountPath: /data
+        <VOLUME_NAME_STORAGECLASS>:
+          mountPath: /data
+      volumes:
+        <VOLUME_NAME_HOSTPATH>:
+          hostPath:
+            path: /my/path/on/disk
+            type: DirectoryOrCreate
+        <VOLUME_NAME_STORAGECLASS>:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: ${storageclass}
+          resources:
+            requests:
+              storage: ${persistence:size}
+
+      # -------------------------------------------------
+      # Networking
+      # -------------------------------------------------
+      host_network: false
+
+      service:
+        # only if required
+        # service_name: <OPTIONAL-SERVIE-NAME>
+        type: ClusterIP/Loadbalancer/NodePort
+        # publish_not_ready_address: True
+        # headless: True
+      ports:
+        http:
+          service_port: ${<APP_NAME>:service:<APP_NAME>:<SERVICE_PORT_NAME>}
+          container_port: ${<APP_NAME>:service:<APP_NAME>:<SERVICE_PORT_NAME>}
+
+      # additional_services:
+      #   my_service_name:
+      #     type: ClusterIP/Loadbalancer/NodePort
+      #     publish_not_ready_address: True
+      #     selectors:
+      #       xx: yy
+
+      # -------------------------------------------------
+      # Additional containers
+      # -------------------------------------------------
+      init_containers:
+        configure-sysctl:
+          image: ${<INIT_CONTAINER_IMAGE>:image}
+          terminationGracePeriodSeconds: 120
+
+          # -------------------------------------------------
+          # Security
+          # -------------------------------------------------
+          security_context:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: true
+            capabilities:
+                drop:
+                - ALL
+          workload_security_context:
+            fsGroup: 1000
+
+          # -------------------------------------------------
+          # Container Argument / Command
+          # -------------------------------------------------
+          command:
+          - sysctl
+          - -w
+          - vm.max_map_count=262144
+
+      additional_containers:
+        nginx:
+          image: nginx
+          ports:
+            nginx:
+              service_port: 80
+          config_maps:
+            config:
+              mount: /etc/nginx/conf.d/nginx.conf
+              subPath: nginx.conf
+
+      # -------------------------------------------------
+      # Healthchecks / Readinessprobe
+      # -------------------------------------------------
+      healthcheck:
+        startup:
+          type: http
+          port: ${<APP_NAME>:service:<APP_NAME>:<SERVICE_PORT_NAME>}
+          path: /_ready
+          timeout_seconds: 5
+        liveness:
+          type: http
+          port: ${<APP_NAME>:service:<APP_NAME>:<SERVICE_PORT_NAME>}
+          path: /_health
+          failure_threshold: 5
+          initial_delay_seconds: 0
+          period_seconds: 10
+          success_threshold: 1
+          timeout_seconds: 5
+        readiness:
+          type: http
+          port: ${<APP_NAME>:service:<APP_NAME>:<SERVICE_PORT_NAME>}
+          path: /_ready
+          timeout_seconds: 5
+
+      # -------------------------------------------------
+      # ServiceAccount
+      # -------------------------------------------------
+      service_account:
+        enabled: true
+        create: true
+
+      # -------------------------------------------------
+      # ROLE + Binding
+      # -------------------------------------------------
+      cluster_role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+        rules:
+          - apiGroups:
+            # "" indicates the core API group
+            - ""
+            resources:
+            - namespaces
+            - pods
+            - nodes
+            verbs:
+            - get
+            - watch
+            - list
+          - apiGroups:
+            - apps
+            resources:
+            - replicasets
+            verbs:
+            - get
+            - watch
+            - list
+      role:
+        binding:
+          subjects:
+            - kind: ServiceAccount
+              namespace: ${namespace}
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+        rules: []
+
+      # -------------------------------------------------
+      # NetworkPolicies
+      # -------------------------------------------------
+      network_policies:
+        default:
+          ingress:
+            - from:
+              - podSelector:
+                  matchLabels:
+                    role: frontend
+              ports:
+              - protocol: TCP
+                port: 6379
+
+      # -------------------------------------------------
+      # Secrets
+      # -------------------------------------------------
+      secrets:
+        <SECRET_NAME>:
+          data:
+            <SECRET_DATA_KEY_NAME>:
+              versioned: true
+              b64_encode: false
+              value: ?{plain:targets/${target_name}/<APP_NAME>/<SECRET_DATA_KEY_NAME>||randomstr:16|base64}
+
+      # -------------------------------------------------
+      # ConfigMaps
+      # -------------------------------------------------
+      config_maps:
+        <CONFIGMAP_FROM_TEMPLATE_FILE>:
+          mount: /etc/config.yml
+          readOnly: true
+          subPath: config.yml
+          data:
+            config.yml:
+              template: components/<PATH_TO_FILE>/config.yml.j2
+              values:
+                <KEY>: "<VALUE>"
+                <KEY>: ${variable:multiple:key_values}
+        <CONFIGMAP_DIRECTLY_DEFINED_SIMPLE>:
+          value: "not mounted"
+        <CONFIGMAP_DIRECTLY_DEFINED_COMPLEX>:
+          nginx.conf:
+            value: |
+              server {
+                  listen       80;
+                  server_name  localhost;
+                  location / {
+                      proxy_pass  http://localhost:8080/;
+                  }
+                  error_page   500 502 503 504  /50x.html;
+                  location = /50x.html {
+                      root   /usr/share/nginx/html;
+                  }
+              }
