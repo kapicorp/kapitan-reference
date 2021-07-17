@@ -118,27 +118,30 @@ parameters:
           resourceNames:
             - trivy
 
-      managed_certs:
-        cert_manager:
-          cert:
-            spec:
-              secretName: my-cert-tls
-              commonName: trivy.example.com
-              dnsNames:
-                - trivy.example.com
-              privateKey:
-                rotationPolicy: Always
-              issuerRef:
-                name: trivy
-                kind: Issuer
-                group: cert-manager.io
-          issuer:
-            spec:
-              vault:
-                path: ${pki:path}
-                server: ${pki:vault_address}
-                caBundle: ${pki:ca_bundle}
-                auth:
-                  tokenSecretRef:
-                    name: cert-manager-vault-token
-                    key: token
+  generators:
+    kubernetes:
+      cert_manager:
+          certs:
+            cert:
+              spec:
+                secretName: my-cert-tls
+                commonName: trivy.example.com
+                dnsNames:
+                  - trivy.example.com
+                privateKey:
+                  rotationPolicy: Always
+                issuerRef:
+                  name: trivy
+                  kind: Issuer
+                  group: cert-manager.io
+          issuers:
+            issuer:
+              spec:
+                vault:
+                  path: ${pki:path}
+                  server: ${pki:vault_address}
+                  caBundle: ${pki:ca_bundle}
+                  auth:
+                    tokenSecretRef:
+                      name: cert-manager-vault-token
+                      key: token
