@@ -2,8 +2,8 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   labels:
-    name: trivy
-  name: trivy
+    name: cert
+  name: cert
   namespace: examples
 spec:
   vault:
