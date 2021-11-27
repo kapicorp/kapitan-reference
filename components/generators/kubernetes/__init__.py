@@ -174,6 +174,23 @@ class SharedConfig():
             self.add_item(key, value, request_encode=encode,
                           stringdata=stringdata)
 
+    def add_string_data(self, string_data, encode=False):
+        stringdata = True
+
+        for key, spec in string_data.items():
+
+            if 'value' in spec:
+                value = spec.get('value')
+            if 'template' in spec:
+                value = j2(
+                    spec.template, spec.get('values', {}))
+            if 'file' in spec:
+                with open(spec.file, 'r') as f:
+                    value = f.read()
+
+            self.add_item(key, value, request_encode=encode,
+                          stringdata=stringdata)
+
     def versioning(self, enabled=False):
         if enabled:
             self.hash = hashlib.sha256(
@@ -238,7 +255,10 @@ class ComponentSecret(Secret, SharedConfig):
         self.root.type = self.config.get('type', 'Opaque')
 
         self.setup_metadata()
-        self.add_data(self.config.data)
+        if self.config.data:
+            self.add_data(self.config.data)
+        if self.config.string_data:
+            self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
 
 

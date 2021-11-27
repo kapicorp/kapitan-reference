@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    name: base64-as-plain
+  name: base64-as-plain
+  namespace: examples
+stringData:
+  CONNECTION: xyz://?{base64:eyJkYXRhIjogIlUxQjJjVmh3YWtwR1NXVjFRVUozIiwgImVuY29kaW5nIjogIm9yaWdpbmFsIiwgInR5cGUiOiAiYmFzZTY0In0=:embedded}_someotherstuff
+type: Opaque
