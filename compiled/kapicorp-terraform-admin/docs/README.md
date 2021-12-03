@@ -1,4 +1,4 @@
-# kapicorp-terraform-admin 
+# kapicorp-terraform-admin
 
 |||
 | --- | --- |
