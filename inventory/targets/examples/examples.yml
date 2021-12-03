@@ -4,6 +4,7 @@ classes:
   - components.logstash
   - components.filebeat
   - components.trivy
+  - components.shared-secret
 
 parameters:
   target_name: examples

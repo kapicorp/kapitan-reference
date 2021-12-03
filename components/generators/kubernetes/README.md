@@ -490,6 +490,22 @@ when the content of the object changes, the hash will be updated accordingly.
 
 **PLEASE NOTE:** `kapitan` is not responsible for garbage collecting unused secrets of config maps.
 
+### Shared ConfigMaps and Secrets
+
+The generator can create shared Secrets and ConfigMaps. 
+
+In secrets, you can define either `string_data` to get a `StringData` secret or `data` to get a `data` secret.
+```yaml
+parameters:
+  generators:
+    kubernetes:
+      secrets:
+        plain-plain-connection:
+          string_data:
+            CONNECTION:
+              value: postgresql://?{plain:targets/${target_name}/shared-password-plain-as-plain-user||randomstr:35}:?{plain:targets/${target_name}/shared-password-plain-as-plain-pass||randomstr:35}/database
+```
+
 ## Deployment
 
 You can define a _Deployment_ by using the `type` directive to `deployment` (its also the default type)
