@@ -4,4 +4,5 @@
 *.swo
 **/__pycache__/
 venv
-.TF_DATA_DIR
+**.TF_DATA_DIR/
+.vscode/settings.json

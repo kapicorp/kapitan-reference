@@ -1,0 +1,13 @@
+parameters:
+  google:
+    project: ${target_name}
+    region: europe-west1
+    zone: europe-west1-b
+  resources:
+    tf:
+      terraform:
+        required_providers:
+          google:
+            version: 3.46.0
+      provider:
+        - google: ${google}

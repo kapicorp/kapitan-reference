@@ -1,0 +1,12 @@
+{
+  "provider": [
+    {
+      "google": {
+        "project": "kapicorp-demo-march",
+        "region": "europe-west1",
+        "zone": "europe-west1-b",
+        "impersonate_service_account": "terraform@kapicorp-terraform-admin.iam.gserviceaccount.com"
+      }
+    }
+  ]
+}
