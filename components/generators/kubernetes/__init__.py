@@ -329,6 +329,7 @@ class Ingress(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         import json
         self.add_annotations(ingress.get('annotations', {}))
+        self.add_labels(ingress.get('labels', {}))
         if 'default_backend' in ingress:
             self.root.spec.backend.service.name = ingress.default_backend.get(
                 'name')
