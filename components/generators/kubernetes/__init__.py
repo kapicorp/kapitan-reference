@@ -335,8 +335,9 @@ class Ingress(k8s.Base):
             self.root.spec.backend.service.port = ingress.default_backend.get(
                 'port', 80)
         if 'paths' in ingress:
+            host = ingress.host
             paths = ingress.paths
-            self.root.spec.rules = [{'http': {'paths': paths}}]
+            self.root.spec.rules = [{'host': host, 'http': {'paths': paths}}]
         if ingress.tls:
             self.root.spec.tls = ingress.tls
 
