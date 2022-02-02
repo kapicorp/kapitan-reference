@@ -1,0 +1,9 @@
+---
+parameters:
+  kapitan:
+    compile:
+      - output_path: argocd
+        input_type: kadet
+        output_type: yml
+        input_paths:
+          - components/generators/argocd

@@ -1,0 +1,72 @@
+---
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  argocd_namespace: argocd
+  # -------------------------------------------------
+  # ArgoCD-Project
+  # -------------------------------------------------
+  argocd_projects:
+    guestbook-project:
+      name: guestbook-project
+      source_repos:
+        - "*"
+      destinations:
+        - namespace: ${argocd_namespace}
+          server: https://kubernetes.default.svc
+        - namespace: ${namespace}
+          server: https://kubernetes.default.svc
+
+  # -------------------------------------------------
+  # ArgoCD-Application delcaration for an application
+  # -------------------------------------------------
+  argocd_applications:
+    guestbook-app:
+      name: guestbook
+      project: guestbook-project
+      destination:
+        namespace: ${argocd_namespace}
+        server: https://kubernetes.default.svc
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: master
+        path: guestbook
+        syncPolicy:
+          automated:
+            selfHeal: true
+          syncOptions:
+            - Validate=false
+        plugin:
+          name: kapitan
+          env:
+            - name: VAULT_ADDR
+              value: https://vault.example.com
+            - name: VAULT_TOKEN
+              value: MyVaultToken
+            - name: VAULT_CAPATH
+              value: /etc/ssl/certs/example.root.crt
+            - name: VAULT_SKIP_VERIFY
+              value: "True"
+
+  generators:
+    argocd:
+      secrets:
+        repo-secret:
+          string_data:
+            insecure:
+              value: "true"
+            password:
+              value: mypsasword123
+            type:
+              value: git
+            url:
+              value: https://github.com/argoproj/argocd-example-apps.git
+
+      configs:
+        a-config-map:
+          data:
+            xxxx:
+              value: xxxyyyy
+            yyyy:
+              value: zzzyyyy

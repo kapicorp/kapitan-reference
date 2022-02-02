@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  xxxx: xxxyyyy
+  yyyy: zzzyyyy
+kind: ConfigMap
+metadata:
+  labels:
+    name: a-config-map
+  name: a-config-map
+  namespace: argocd

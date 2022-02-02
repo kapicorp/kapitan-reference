@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  labels:
+    name: guestbook-project
+  name: guestbook-project
+  namespace: argocd
+spec:
+  destinations:
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: guestbook-argocd
+      server: https://kubernetes.default.svc
+  sourceRepos:
+    - '*'
