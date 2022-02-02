@@ -354,6 +354,50 @@ class ManagedCertificate(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.domains = domains
 
+
+class CertManagerIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
+        super().new()
+        self.need('config_spec')
+
+    def body(self):
+        super().body()
+        config_spec = self.kwargs.config_spec
+        self.add_namespace(config_spec.get(
+            'namespace', inv.parameters.namespace))
+        self.root.spec = config_spec.get('spec')
+
+
+class CertManagerClusterIssuer(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'ClusterIssuer'
+        super().new()
+        self.need('config_spec')
+
+    def body(self):
+        super().body()
+        config_spec = self.kwargs.config_spec
+        self.root.spec = config_spec.get('spec')
+
+
+class CertManagerCertificate(k8s.Base):
+    def new(self):
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Certificate'
+        super().new()
+        self.need('config_spec')
+
+    def body(self):
+        super().body()
+        config_spec = self.kwargs.config_spec
+        self.add_namespace(config_spec.get(
+            'namespace', inv.parameters.namespace))
+        self.root.spec = config_spec.get('spec')
+
+
 class IstioPolicy(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'authentication.istio.io/v1alpha1'
@@ -1132,6 +1176,27 @@ def generate_resource_manifests(input_params):
         name = secret_spec.get('name', secret_name)
         secret = ComponentSecret(name=name, config=secret_spec)
         obj.root[f'{name}'] = secret
+
+    if inv.parameters.generators.kubernetes.cert_manager:
+        cert_manager = inv.parameters.generators.kubernetes.cert_manager
+
+        for cert_name, cert_spec in cert_manager.certs.items():
+            if cert_spec.get('type', 'certmanager') == 'certmanager':
+                name = cert_spec.get('name', cert_name)
+                cmc = CertManagerCertificate(name=name, config_spec=cert_spec)
+                obj.root[f'{name}-cm-cert'] = cmc
+
+        for issuer_name, issuer_spec in cert_manager.issuers.items():
+            if issuer_spec.get('type', 'certmanager') == 'certmanager':
+                name = issuer_spec.get('name', issuer_name)
+                cmi = CertManagerIssuer(name=name, config_spec=issuer_spec)
+                obj.root[f'{name}-cm-issuer'] = cmi
+
+        for issuer_name, issuer_spec in cert_manager.clusterissuers.items():
+            if issuer_spec.get('type', 'certmanager') == 'certmanager':
+                name = issuer_spec.get('name', issuer_name)
+                cmci = CertManagerClusterIssuer(name=name, config_spec=issuer_spec)
+                obj.root[f'{name}-cmc-issuer'] = cmci
     return obj
 
 
