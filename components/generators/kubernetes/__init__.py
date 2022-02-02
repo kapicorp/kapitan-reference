@@ -111,7 +111,8 @@ class ServiceAccount(k8s.Base):
     def body(self):
         super().body()
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.add_annotations(component.service_account.annotations)
         if component.image_pull_secrets or inv.parameters.pull_secret.name:
             self.root.imagePullSecrets = [
@@ -278,7 +279,8 @@ class Service(k8s.Base):
 
         self.kwargs.name = service_spec.get('service_name', self.kwargs.name)
         super().body()
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
 
         self.add_labels(component.get('labels', {}))
         self.add_annotations(service_spec.annotations)
@@ -867,7 +869,8 @@ class PrometheusRule(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
         self.root.spec.groups += [{'name': 'tesoro.rules',
@@ -887,7 +890,8 @@ class BackendConfig(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.spec = component.backend_config
 
 
@@ -909,7 +913,8 @@ class ServiceMonitor(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
         self.root.spec.namespaceSelector.matchNames = [
@@ -930,6 +935,7 @@ class MutatingWebhookConfiguration(k8s.Base):
         component = self.kwargs.component
         self.root.webhooks = component.webhooks
 
+
 class Role(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
@@ -941,7 +947,8 @@ class Role(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.rules = component.role.rules
 
 
@@ -965,11 +972,13 @@ class RoleBinding(k8s.Base):
         }]
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.roleRef = component.get(
             'roleRef', default_role_ref)
         self.root.subjects = component.get(
             'subject', default_subject)
+
 
 class ClusterRole(k8s.Base):
     def new(self):
@@ -1024,7 +1033,8 @@ class PodDisruptionBudget(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         if component.auto_pdb:
             self.root.spec.maxUnavailable = 1
         else:
@@ -1077,6 +1087,7 @@ class HorizontalPodAutoscaler(k8s.Base):
         self.root.spec.maxReplicas = component.hpa.max_replicas
         self.root.spec.metrics = component.hpa.metrics
 
+
 class VerticalPodAutoscaler(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
@@ -1089,7 +1100,8 @@ class VerticalPodAutoscaler(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.add_labels(workload.metadata.labels)
         self.root.spec.targetRef.apiVersion = workload.apiVersion
         self.root.spec.targetRef.kind = workload.kind
@@ -1099,7 +1111,6 @@ class VerticalPodAutoscaler(k8s.Base):
         # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
         self.root.spec.resourcePolicy.containerPolicies = [
             {'containerName': 'istio-proxy', 'mode': 'Off'}]
-
 
 
 class PodSecurityPolicy(k8s.Base):
@@ -1114,7 +1125,8 @@ class PodSecurityPolicy(k8s.Base):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         # relativly RAW input here, there is not much to be automatically generated
         self.root.spec = component.pod_security_policy.spec
         # Merge Dicts into PSP Annotations
@@ -1127,6 +1139,7 @@ class PodSecurityPolicy(k8s.Base):
             **component.get('labels', {}),
             **component.pod_security_policy.get('labels', {})
         }
+
 
 def get_components():
     if 'components' in inv.parameters:
