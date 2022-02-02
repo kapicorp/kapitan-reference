@@ -759,7 +759,8 @@ class Workload(WorkloadCommon):
 
         workload.add_init_containers(init_containers)
         if component.image_pull_secrets or inv.parameters.image_pull_secrets:
-            workload.root.spec.template.spec.imagePullSecrets = component.get('image_pull_secrets', inv.parameters.image_pull_secrets)
+            workload.root.spec.template.spec.imagePullSecrets = component.get(
+                'image_pull_secrets', inv.parameters.image_pull_secrets)
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
             'grace_period', 30)
