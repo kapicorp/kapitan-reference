@@ -1164,13 +1164,7 @@ def generate_ingress(input_params):
 def generate_component_manifests(input_params):
     obj = BaseObj()
     for name, component in get_components():
-        bundle_workload = []
-        bundle_configs = []
-        bundle_secrets = []
-        bundle_service = []
-        bundle_rbac = []
-        bundle_scaling = []
-        bundle_security = []
+        bundle = []
 
         workload = Workload(name=name, component=component)
 
@@ -1179,7 +1173,7 @@ def generate_component_manifests(input_params):
 
         workload_spec = workload.root
 
-        bundle_workload += [workload_spec]
+        bundle += [workload_spec]
 
         configs = GenerateMultipleObjectsForClass(
             name=name, component=component, generating_class=ComponentConfig, objects=component.config_maps, workload=workload_spec)
@@ -1190,101 +1184,94 @@ def generate_component_manifests(input_params):
         workload.add_volumes_for_objects(configs)
         workload.add_volumes_for_objects(secrets)
 
-        bundle_configs += configs.root
-        bundle_secrets += secrets.root
+        obj.root[f'{name}-config'] = configs.root
+        obj.root[f'{name}-secret'] = secrets.root
 
         if component.vpa and inv.parameters.get('enable_vpa', True) and component.type != 'job':
             vpa = VerticalPodAutoscaler(
                 name=name, component=component, workload=workload_spec).root
-            bundle_scaling += [vpa]
+            bundle += [vpa]
 
         if component.pdb_min_available:
             pdb = PodDisruptionBudget(
                 name=name, component=component, workload=workload_spec).root
-            bundle_scaling += [pdb]
+            bundle += [pdb]
 
         if component.hpa:
             hpa = HorizontalPodAutoscaler(
                 name=name, component=component, workload=workload_spec).root
-            bundle_scaling += [hpa]
+            bundle += [hpa]
 
         if component.type != 'job':
             if component.pdb_min_available or component.auto_pdb:
                 pdb = PodDisruptionBudget(
                     name=name, component=component, workload=workload_spec).root
-                bundle_scaling += [pdb]
+                bundle += [pdb]
         if component.istio_policy:
             istio_policy = IstioPolicy(
                 name=name, component=component, workload=workload_spec).root
-            bundle_security += [istio_policy]
+            bundle += [istio_policy]
 
         if component.pod_security_policy:
             psp = PodSecurityPolicy(
                 name=name, component=component, workload=workload_spec).root
-            bundle_security += [psp]
+            bundle += [psp]
 
         if component.service:
             service = Service(name=name, component=component,
                               workload=workload_spec, service_spec=component.service).root
-            bundle_service += [service]
+            bundle += [service]
 
         if component.additional_services:
             for service_name, service_spec in component.additional_services.items():
                 service = Service(name=service_name, component=component,
                                   workload=workload_spec, service_spec=service_spec).root
-                bundle_service += [service]
+                bundle += [service]
 
         if component.network_policies:
             policies = GenerateMultipleObjectsForClass(
                 name=name, component=component, generating_class=NetworkPolicy, objects=component.network_policies, workload=workload_spec).root
-            bundle_security += policies
+            bundle += policies
 
         if component.webhooks:
             webhooks = MutatingWebhookConfiguration(
                 name=name, component=component).root
-            bundle_workload += [webhooks]
+            bundle += [webhooks]
 
         if component.service_monitors:
             service_monitor = ServiceMonitor(
                 name=name, component=component, workload=workload_spec).root
-            bundle_workload += [service_monitor]
+            bundle += [service_monitor]
 
         if component.prometheus_rules:
             prometheus_rule = PrometheusRule(
                 name=name, component=component).root
-            bundle_workload += [prometheus_rule]
+            bundle += [prometheus_rule]
 
         if component.role:
             role = Role(name=name, component=component).root
-            bundle_rbac += [role]
+            bundle += [role]
             role_binding = RoleBinding(
                 name=name, component=component).root
-            bundle_rbac += [role_binding]
+            bundle += [role_binding]
 
         if component.cluster_role:
             cluster_role = ClusterRole(name=name, component=component).root
-            bundle_rbac += [cluster_role]
+            bundle += [cluster_role]
             cluster_role_binding = ClusterRoleBinding(
                 name=name, component=component).root
-            bundle_rbac += [cluster_role_binding]
+            bundle += [cluster_role_binding]
 
         if component.backend_config:
             backend_config = BackendConfig(name=name, component=component).root
-            bundle_workload += [backend_config]
+            bundle += [backend_config]
+
+        obj.root['{}-bundle'.format(name)] = bundle
 
         if component.service_account.get('create', False):
             sa_name = component.service_account.get('name', name)
             sa = ServiceAccount(name=sa_name, component=component).root
-            bundle_rbac += [sa]
-
-        obj.root['{}-bundle'.format(name)] = bundle_workload
-        obj.root['{}-config'.format(name)] = bundle_configs
-        obj.root['{}-secret'.format(name)] = bundle_secrets
-        obj.root['{}-service'.format(name)] = bundle_service
-        obj.root['{}-rbac'.format(name)] = bundle_rbac
-        obj.root['{}-scaling'.format(name)] = bundle_scaling
-        obj.root['{}-security'.format(name)] = bundle_security
-
+            obj.root['{}-sa'.format(name)] = sa
     return obj
 
 
