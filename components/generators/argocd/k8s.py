@@ -1,6 +1,7 @@
 
 from kapitan.inputs.kadet import BaseObj
 
+# TODO: Imported from k8s-generator
 class Base(BaseObj):
     def new(self):
         self.need('apiVersion')

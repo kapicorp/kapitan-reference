@@ -31,21 +31,18 @@ def merge(source, destination):
 
 class ArgoCDAppProject(k8s.Base):
     def new(self):
+        self.need('name')
         self.kwargs.apiVersion = 'argoproj.io/v1alpha1'
         self.kwargs.kind = 'AppProject'
 
-        """
-        Add a this finalizer ONLY if you want these to cascade delete
-        """
+        # Add a this finalizer ONLY if you want these to cascade delete
         self.kwargs.finalizers = list('resources-finalizer.argocd.argoproj.io')
         super().new()
-        self.need('name')
 
     def body(self):
         super().body()
-        """
-        You'll usually want to add your resources to the argocd namespace.
-        """
+
+        # You'll usually want to add your resources to the argocd namespace.
         self.add_namespace(inv.parameters.argocd_namespace)
 
         argocd_project = self.kwargs.argocd_project
@@ -53,66 +50,50 @@ class ArgoCDAppProject(k8s.Base):
         self.add_annotations(argocd_project.get('annotations', {}))
         self.add_labels(argocd_project.get('labels', {}))
 
-        """
-        Allow manifests to deploy from any Git repos
-        """
+        # Allow manifests to deploy from any Git repos
         if argocd_project.source_repos:
             self.root.spec.sourceRepos = argocd_project.source_repos
 
-        """
-        Only permit applications to deploy to the namespace in the same cluster
-        """
+        # Only permit applications to deploy to the namespace in the same cluster
         if argocd_project.destinations:
             self.root.spec.destinations = argocd_project.destinations
 
-        """
-        Deny all cluster-scoped resources from being created, except for Namespace
-        """
+        # Deny all cluster-scoped resources from being created, except for Namespace
         if argocd_project.cluster_resource_whitelist:
             self.root.spec.clusterResourceWhitelist = argocd_project.cluster_resource_whitelist
 
-        """
-        Allow all namespaced-scoped resources to be created, except for ResourceQuota, LimitRange, NetworkPolicy
-        """
+        # Allow all namespaced-scoped resources to be created, except for ResourceQuota, LimitRange, NetworkPolicy
         if argocd_project.namespace_resource_blacklist:
             self.root.spec.namespaceResourceBlacklist = argocd_project.namespace_resource_blacklist
 
-        """
-        Deny all namespaced-scoped resources from being created, except for Deployment and StatefulSet
-        """
+        # Deny all namespaced-scoped resources from being created, except for Deployment and StatefulSet
         if argocd_project.namespace_resource_whitelist:
             self.root.spec.namespaceResourceWhitelist = argocd_project.namespace_resource_whitelist
 
-        """
-        Enables namespace orphaned resource monitoring.
-        """
+        # Enables namespace orphaned resource monitoring.
         if argocd_project.orphaned_resources:
             self.root.spec.orphanedResources = argocd_project.orphaned_resources
 
-        """
-        Roles
-        """
+        # Roles
         if argocd_project.roles:
             self.root.spec.roles = argocd_project.roles
 
 
 class ArgoCDApplication(k8s.Base):
     def new(self):
+        self.need('name')
         self.kwargs.apiVersion = 'argoproj.io/v1alpha1'
         self.kwargs.kind = 'Application'
-        """
-        Add a this finalizer ONLY if you want these to cascade delete
-        """
-        self.kwargs.finalizers = list('resources-finalizer.argocd.argoproj.io')
+        
+       # Add a this finalizer ONLY if you want these to cascade delete
+        
+       # self.kwargs.finalizers = list('resources-finalizer.argocd.argoproj.io')
         super().new()
-        self.need('name')
 
     def body(self):
         super().body()
 
-        """
-        You'll usually want to add your resources to the argocd namespace.
-        """
+       # You'll usually want to add your resources to the argocd namespace.
         self.add_namespace(inv.parameters.argocd_namespace)
 
         argocd_application = self.kwargs.argocd_application
@@ -120,27 +101,30 @@ class ArgoCDApplication(k8s.Base):
         self.add_annotations(argocd_application.get('annotations', {}))
         self.add_labels(argocd_application.get('labels', {}))
 
-        """
-        The project the argocd_application belongs to.
-        """
+       # The project the argocd_application belongs to.
         self.root.spec.project = argocd_application.project
-        """
-        The destination in which Namespace the application should be deployed
-        """
+        
+       # The destination in which Namespace the application should be deployed
         self.root.spec.destination = argocd_application.destination
-        """
-        Source of the application manifests
-        """
+        
+       # Source of the application manifests
         if argocd_application.source:
             self.root.spec.source = argocd_application.source
 
-"""
-The following classes are required to generate Secrets + ConfigMaps
-"""
+       # Sync policy
+        if argocd_application.sync_policy:
+            self.root.spec.syncPolicy = argocd_application.sync_policy
+
+       # Ignore differences at the specified json pointers
+        if argocd_application.ignore_differences:
+            self.root.spec.ignoreDifferences = argocd_application.ignore_differences
+
+# The following classes are required to generate Secrets + ConfigMaps
+# TODO: Imported from k8s-generator
 class SharedConfig():
     """Shared class to use for both Secrets and ConfigMaps classes.
 
-    containt anything needed by both classes, so that their behavious is basically the same.
+    contain anything needed by both classes, so that their behavious is basically the same.
     Each subclass will then implement its own way of adding the data depending on their implementation.
     """
     @staticmethod
@@ -215,6 +199,7 @@ class SharedConfig():
                 str(self.root.to_dict()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
+# TODO: Imported from k8s-generator
 class ConfigMap(k8s.Base, SharedConfig):
     def new(self):
         self.kwargs.apiVersion = 'v1'
@@ -230,7 +215,7 @@ class ConfigMap(k8s.Base, SharedConfig):
         self.root['data'][key] = self.encode_string(
             value) if encode else value
 
-
+# TODO: Imported from k8s-generator
 class ComponentConfig(ConfigMap, SharedConfig):
     def new(self):
         super().new()
@@ -259,7 +244,6 @@ class Secret(k8s.Base):
         self.root[field][key] = self.encode_string(
             value) if encode else value
 
-
 class ComponentSecret(Secret, SharedConfig):
     def new(self):
         super().new()
@@ -277,11 +261,7 @@ class ComponentSecret(Secret, SharedConfig):
             self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
 
-
-
-"""
-This function renderes an ArgoCD-AppProject
-"""
+# This function renderes an ArgoCD-AppProject
 def generate_argocd_appproject(input_params):
     obj = BaseObj()
     bundle = list()
@@ -294,10 +274,7 @@ def generate_argocd_appproject(input_params):
 
     return obj
 
-
-"""
-This function renderes an ArgoCD-Application
-"""
+# This function renderes an ArgoCD-Application
 def generate_argocd_application(input_params):
     obj = BaseObj()
     bundle = list()
@@ -310,10 +287,7 @@ def generate_argocd_application(input_params):
 
     return obj
 
-
-"""
-This function renderes an Shared-ConfigMaps + Secrets
-"""
+# This function renderes an Shared-ConfigMaps + Secrets
 def generate_resource_manifests(input_params):
     obj = BaseObj()
 
@@ -329,10 +303,7 @@ def generate_resource_manifests(input_params):
 
     return obj
 
-
-"""
-This function renderes all previous defined functions and returns
-"""
+# This function renderes all previous defined functions and returns
 def generate_manifests(input_params):
     all_manifests = BaseObj()
 
@@ -345,7 +316,6 @@ def generate_manifests(input_params):
     all_manifests.root.update(resource_manifests.root)
 
     return all_manifests
-
 
 def main(input_params):
     whitelisted_functions = ['generate_manifests']
