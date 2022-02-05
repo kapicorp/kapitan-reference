@@ -13,10 +13,11 @@ parameters:
       source_repos:
         - "*"
       destinations:
-        - namespace: ${argocd_namespace}
-          server: https://kubernetes.default.svc
-        - namespace: ${namespace}
-          server: https://kubernetes.default.svc
+        - namespace: "*"
+          server: "*"
+      cluster_resource_whitelist:
+        - group: "*"
+          kind: "*"
 
   # -------------------------------------------------
   # ArgoCD-Application delcaration for an application
