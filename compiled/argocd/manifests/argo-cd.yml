@@ -3949,7 +3949,7 @@ spec:
           workingDir: /home/argocd
       initContainers:
         - args:
-            - wget --quiet --no-check-certificate https://vault.example.com:8200/v1/example_certs/ca/pem
+            - wget --quiet --no-check-certificate https://vault.example.com/v1/example_certs/ca/pem
               -O /selfsigned-certs/example.root.crt
           command:
             - sh
