@@ -52,7 +52,11 @@ parameters:
   generators:
     argocd:
       secrets:
-        repo-secret:
+        repo-my-repo-name:
+          annotations:
+            managed-by: argocd.argoproj.io
+          labels:
+            argocd.argoproj.io/secret-type: repository
           string_data:
             insecure:
               value: "true"
