@@ -100,21 +100,3 @@ spec:
           requests:
             storage: 10Gi
         storageClassName: standard
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: pritunl-mongo
-  name: pritunl-mongo
-  namespace: pritunl
-spec:
-  ports:
-    - name: mongo
-      port: 27017
-      protocol: TCP
-      targetPort: mongo
-  selector:
-    name: pritunl-mongo
-  sessionAffinity: None
-  type: ClusterIP

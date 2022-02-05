@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tesoro
+  name: tesoro
+  namespace: tesoro
+spec:
+  ports:
+    - name: tesoro-api
+      port: 443
+      protocol: TCP
+      targetPort: tesoro-api
+    - name: tesoro-metrics
+      port: 9095
+      protocol: TCP
+      targetPort: tesoro-metrics
+  selector:
+    name: tesoro
+  sessionAffinity: None
+  type: ClusterIP
