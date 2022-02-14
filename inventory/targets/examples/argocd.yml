@@ -1,0 +1,11 @@
+---
+classes:
+  - common
+  - components.argoproj.cd.argocd
+
+parameters:
+  target_name: argocd
+  namespace: argocd
+  argocd_namespace: argocd
+
+  external_url: argocd.example.com

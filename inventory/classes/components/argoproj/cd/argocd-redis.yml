@@ -1,0 +1,52 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  argocd:
+
+    # -------------------------------------------------
+    # HELM VALUES
+    # -------------------------------------------------
+    helm_values:
+      redis:
+        enabled: false
+
+        # -------------------------------------------------
+        # Container
+        # -------------------------------------------------
+
+        # -------------------------------------------------
+        # Security
+        # -------------------------------------------------
+        containerSecurityContext:
+          capabilities:
+            drop:
+              - all
+          readOnlyRootFilesystem: true
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+
+        # -------------------------------------------------
+        # Resources
+        # -------------------------------------------------
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+
+        # -------------------------------------------------
+        # Monitoring
+        # -------------------------------------------------
+        metrics:
+          enabled: true
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi

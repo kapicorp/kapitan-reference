@@ -1,0 +1,25 @@
+
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  argocd:
+
+    # -------------------------------------------------
+    # HELM VALUES
+    # -------------------------------------------------
+    helm_values:
+      server:
+        # -------------------------------------------------
+        # CUSTOM TOOLS
+        # -------------------------------------------------
+        configEnabled: true
+        config:
+          configManagementPlugins: |
+            - name: kapitan
+              generate:
+                args:
+                - for f in *.yml; do echo '---'; cat $f | sed '1 s/^[-]{3}//'; done | kapitan refs --reveal -f -
+                command:
+                - sh
+                - -c

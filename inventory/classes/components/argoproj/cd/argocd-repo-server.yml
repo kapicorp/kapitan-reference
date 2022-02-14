@@ -1,0 +1,90 @@
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  argocd:
+
+    # -------------------------------------------------
+    # HELM VALUES
+    # -------------------------------------------------
+    helm_values:
+      repoServer:
+        name: repo-server
+        replicas: 2
+
+        # -------------------------------------------------
+        # Autoscaling
+        # -------------------------------------------------
+        autoscaling:
+          enabled: true
+          minReplicas: 2
+          maxReplicas: 3
+          targetCPUUtilizationPercentage: 80
+          targetMemoryUtilizationPercentage: 80
+
+        # -------------------------------------------------
+        # Logging
+        # -------------------------------------------------
+        logFormat: json
+
+        # -------------------------------------------------
+        # Security
+        # -------------------------------------------------
+        containerSecurityContext:
+          capabilities:
+            drop:
+              - all
+          readOnlyRootFilesystem: true
+
+        # -------------------------------------------------
+        # Resources
+        # -------------------------------------------------
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2048Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+        # -------------------------------------------------
+        # Monitoring
+        # -------------------------------------------------
+        metrics:
+          enabled: true
+
+        # -------------------------------------------------
+        # Custom Tools
+        # -------------------------------------------------
+        volumes:
+          - name: custom-tools
+            emptyDir: {}
+          - name: selfsigned-certs
+            emptyDir: {}
+        volumeMounts:
+          - name: custom-tools
+            mountPath: /usr/local/bin/kapitan
+            subPath: kapitan
+          - name: custom-tools
+            mountPath: /usr/local/bin/kapitan-reveal
+            subPath: kapitan-reveal
+          - name: selfsigned-certs
+            mountPath: /etc/ssl/certs/example.root.crt
+            subPath: example.root.crt
+        initContainers:
+          - name: selfsigned-certs
+            image: ${argocd:tools:selfsigned-certs:image}
+            command: [sh, -c]
+            args:
+              - wget --quiet --no-check-certificate https://vault.example.com/v1/example_certs/ca/pem -O /selfsigned-certs/example.root.crt
+            volumeMounts:
+              - mountPath: /selfsigned-certs
+                name: selfsigned-certs
+          - name: kapitan
+            image: ${argocd:tools:kapitan:image}
+            command: [sh, -c]
+            args:
+              - cp /usr/local/bin/kapitan /custom-tools/
+            volumeMounts:
+              - mountPath: /custom-tools
+                name: custom-tools
