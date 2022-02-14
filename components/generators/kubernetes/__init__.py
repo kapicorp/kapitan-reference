@@ -81,11 +81,11 @@ class WorkloadCommon(BaseObj):
 
 class NetworkPolicy(k8s.Base):
     def new(self):
+        self.need('config')
+        self.need('workload')
         self.kwargs.apiVersion = 'networking.k8s.io/v1'
         self.kwargs.kind = 'NetworkPolicy'
         super().new()
-        self.need('config')
-        self.need('workload')
 
     def body(self):
         super().body()
@@ -103,15 +103,16 @@ class NetworkPolicy(k8s.Base):
 
 class ServiceAccount(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'v1'
         self.kwargs.kind = 'ServiceAccount'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.add_annotations(component.service_account.annotations)
         if component.image_pull_secrets or inv.parameters.pull_secret.name:
             self.root.imagePullSecrets = [
@@ -216,8 +217,8 @@ class ConfigMap(k8s.Base, SharedConfig):
 
 class ComponentConfig(ConfigMap, SharedConfig):
     def new(self):
-        super().new()
         self.need('config')
+        super().new()
 
     def body(self):
         super().body()
@@ -246,8 +247,8 @@ class Secret(k8s.Base):
 
 class ComponentSecret(Secret, SharedConfig):
     def new(self):
-        super().new()
         self.need('config')
+        super().new()
 
     def body(self):
         super().body()
@@ -264,12 +265,12 @@ class ComponentSecret(Secret, SharedConfig):
 
 class Service(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'v1'
-        self.kwargs.kind = 'Service'
-        super().new()
         self.need('component')
         self.need('workload')
         self.need('service_spec')
+        self.kwargs.apiVersion = 'v1'
+        self.kwargs.kind = 'Service'
+        super().new()
 
     def body(self):
         component = self.kwargs.component
@@ -278,7 +279,8 @@ class Service(k8s.Base):
 
         self.kwargs.name = service_spec.get('service_name', self.kwargs.name)
         super().body()
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
 
         self.add_labels(component.get('labels', {}))
         self.add_annotations(service_spec.annotations)
@@ -315,11 +317,11 @@ class Service(k8s.Base):
 
 class Ingress(k8s.Base):
     def new(self):
+        self.need('name')
+        self.need('ingress')
         self.kwargs.apiVersion = 'networking.k8s.io/v1'
         self.kwargs.kind = 'Ingress'
         super().new()
-        self.need('name')
-        self.need('ingress')
 
     def body(self):
         super().body()
@@ -327,25 +329,27 @@ class Ingress(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         import json
         self.add_annotations(ingress.get('annotations', {}))
+        self.add_labels(ingress.get('labels', {}))
         if 'default_backend' in ingress:
             self.root.spec.backend.service.name = ingress.default_backend.get(
                 'name')
             self.root.spec.backend.service.port = ingress.default_backend.get(
                 'port', 80)
         if 'paths' in ingress:
+            host = ingress.host
             paths = ingress.paths
-            self.root.spec.rules = [{'http': {'paths': paths}}]
+            self.root.spec.rules = [{'host': host, 'http': {'paths': paths}}]
         if ingress.tls:
             self.root.spec.tls = ingress.tls
 
 
 class ManagedCertificate(k8s.Base):
     def new(self):
+        self.need('name')
+        self.need('domains')
         self.kwargs.apiVersion = 'networking.gke.io/v1beta1'
         self.kwargs.kind = 'ManagedCertificate'
         super().new()
-        self.need('name')
-        self.need('domains')
 
     def body(self):
         super().body()
@@ -354,17 +358,63 @@ class ManagedCertificate(k8s.Base):
         self.add_namespace(inv.parameters.namespace)
         self.root.spec.domains = domains
 
-class IstioPolicy(k8s.Base):
+
+class CertManagerIssuer(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'authentication.istio.io/v1alpha1'
-        self.kwargs.kind = 'Policy'
+        self.need('config_spec')
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Issuer'
         super().new()
-        self.need('component')
-        self.need('workload')
+
+    def body(self):
+        config_spec = self.kwargs.config_spec
+        self.add_namespace(config_spec.get(
+            'namespace', inv.parameters.namespace))
+        super().body()
+        self.root.spec = config_spec.get('spec')
+
+
+class CertManagerClusterIssuer(k8s.Base):
+    def new(self):
+        self.need('config_spec')
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'ClusterIssuer'
+        super().new()
 
     def body(self):
         super().body()
-        self.add_namespace(inv.parameters.namespace)
+        config_spec = self.kwargs.config_spec
+        self.root.spec = config_spec.get('spec')
+
+
+class CertManagerCertificate(k8s.Base):
+    def new(self):
+        self.need('config_spec')
+        self.kwargs.apiVersion = 'cert-manager.io/v1'
+        self.kwargs.kind = 'Certificate'
+        super().new()
+
+    def body(self):
+        config_spec = self.kwargs.config_spec
+        self.add_namespace(config_spec.get(
+            'namespace', inv.parameters.namespace))
+        super().body()
+        self.root.spec = config_spec.get('spec')
+
+
+class IstioPolicy(k8s.Base):
+    def new(self):
+        self.need('component')
+        self.need('workload')
+        self.kwargs.apiVersion = 'authentication.istio.io/v1alpha1'
+        self.kwargs.kind = 'Policy'
+        super().new()
+
+    def body(self):
+        config_spec = self.kwargs.config_spec
+        self.add_namespace(config_spec.get(
+            'namespace', inv.parameters.namespace))
+        super().body()
         component = self.kwargs.component
         name = self.kwargs.name
         self.root.spec.origins = component.istio_policy.policies.origins
@@ -374,10 +424,10 @@ class IstioPolicy(k8s.Base):
 
 class NameSpace(k8s.Base):
     def new(self):
+        self.need('name')
         self.kwargs.apiVersion = 'v1'
         self.kwargs.kind = 'Namespace'
         super().new()
-        self.need('name')
 
     def body(self):
         super().body()
@@ -390,10 +440,10 @@ class NameSpace(k8s.Base):
 
 class Deployment(k8s.Base, WorkloadCommon):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'apps/v1'
         self.kwargs.kind = 'Deployment'
         super().new()
-        self.need('component')
 
     def body(self):
         default_strategy = {
@@ -422,10 +472,10 @@ class Deployment(k8s.Base, WorkloadCommon):
 
 class StatefulSet(k8s.Base, WorkloadCommon):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'apps/v1'
         self.kwargs.kind = 'StatefulSet'
         super().new()
-        self.need('component')
 
     def body(self):
         default_strategy = {}
@@ -455,10 +505,10 @@ class StatefulSet(k8s.Base, WorkloadCommon):
 
 class DaemonSet(k8s.Base, WorkloadCommon):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'apps/v1'
         self.kwargs.kind = 'DaemonSet'
         super().new()
-        self.need('component')
 
     def body(self):
         default_strategy = {
@@ -507,11 +557,11 @@ class Job(k8s.Base, WorkloadCommon):
 
 class CronJob(k8s.Base, WorkloadCommon):
     def new(self):
+        self.need('component')
+        self.need('job')
         self.kwargs.apiVersion = 'batch/v1beta1'
         self.kwargs.kind = 'CronJob'
         super().new()
-        self.need('component')
-        self.need('job')
 
     def body(self):
         super().body()
@@ -711,7 +761,8 @@ class Workload(WorkloadCommon):
 
         workload.add_init_containers(init_containers)
         if component.image_pull_secrets or inv.parameters.image_pull_secrets:
-            workload.root.spec.template.spec.imagePullSecrets = component.get('image_pull_secrets', inv.parameters.image_pull_secrets)
+            workload.root.spec.template.spec.imagePullSecrets = component.get(
+                'image_pull_secrets', inv.parameters.image_pull_secrets)
         workload.root.spec.template.spec.dnsPolicy = component.dns_policy
         workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
             'grace_period', 30)
@@ -810,10 +861,10 @@ class GenerateMultipleObjectsForClass(BaseObj):
 
 class PrometheusRule(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'monitoring.coreos.com/v1'
         self.kwargs.kind = 'PrometheusRule'
         super().new()
-        self.need('component')
 
     def body(self):
         # TODO(ademaria) This name mangling is here just to simplify diff.
@@ -823,7 +874,8 @@ class PrometheusRule(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
         self.root.spec.groups += [{'name': 'tesoro.rules',
@@ -832,10 +884,10 @@ class PrometheusRule(k8s.Base):
 
 class BackendConfig(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'cloud.google.com/v1'
         self.kwargs.kind = 'BackendConfig'
         super().new()
-        self.need('component')
 
     def body(self):
         component_name = self.kwargs.name
@@ -843,17 +895,18 @@ class BackendConfig(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.spec = component.backend_config
 
 
 class ServiceMonitor(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'monitoring.coreos.com/v1'
         self.kwargs.kind = 'ServiceMonitor'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         # TODO(ademaria) This name mangling is here just to simplify diff.
@@ -865,7 +918,8 @@ class ServiceMonitor(k8s.Base):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.spec.endpoints = component.service_monitors.endpoints
         self.root.spec.jobLabel = name
         self.root.spec.namespaceSelector.matchNames = [
@@ -875,10 +929,10 @@ class ServiceMonitor(k8s.Base):
 
 class MutatingWebhookConfiguration(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'admissionregistration.k8s.io/v1beta1'
         self.kwargs.kind = 'MutatingWebhookConfiguration'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
@@ -886,27 +940,29 @@ class MutatingWebhookConfiguration(k8s.Base):
         component = self.kwargs.component
         self.root.webhooks = component.webhooks
 
+
 class Role(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'Role'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.rules = component.role.rules
 
 
 class RoleBinding(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'RoleBinding'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
@@ -921,18 +977,20 @@ class RoleBinding(k8s.Base):
         }]
         name = self.kwargs.name
         component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.root.roleRef = component.get(
             'roleRef', default_role_ref)
         self.root.subjects = component.get(
             'subject', default_subject)
 
+
 class ClusterRole(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'ClusterRole'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
@@ -943,10 +1001,10 @@ class ClusterRole(k8s.Base):
 
 class ClusterRoleBinding(k8s.Base):
     def new(self):
+        self.need('component')
         self.kwargs.apiVersion = 'rbac.authorization.k8s.io/v1'
         self.kwargs.kind = 'ClusterRoleBinding'
         super().new()
-        self.need('component')
 
     def body(self):
         super().body()
@@ -970,17 +1028,18 @@ class ClusterRoleBinding(k8s.Base):
 
 class PodDisruptionBudget(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'policy/v1beta1'
         self.kwargs.kind = 'PodDisruptionBudget'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         if component.auto_pdb:
             self.root.spec.maxUnavailable = 1
         else:
@@ -990,11 +1049,11 @@ class PodDisruptionBudget(k8s.Base):
 
 class VerticalPodAutoscaler(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
         self.kwargs.kind = 'VerticalPodAutoscaler'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         super().body()
@@ -1014,11 +1073,11 @@ class VerticalPodAutoscaler(k8s.Base):
 
 class HorizontalPodAutoscaler(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'autoscaling/v2beta2'
         self.kwargs.kind = 'HorizontalPodAutoscaler'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         super().body()
@@ -1033,19 +1092,21 @@ class HorizontalPodAutoscaler(k8s.Base):
         self.root.spec.maxReplicas = component.hpa.max_replicas
         self.root.spec.metrics = component.hpa.metrics
 
+
 class VerticalPodAutoscaler(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'autoscaling.k8s.io/v1beta2'
         self.kwargs.kind = 'VerticalPodAutoscaler'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         self.add_labels(workload.metadata.labels)
         self.root.spec.targetRef.apiVersion = workload.apiVersion
         self.root.spec.targetRef.kind = workload.kind
@@ -1057,20 +1118,20 @@ class VerticalPodAutoscaler(k8s.Base):
             {'containerName': 'istio-proxy', 'mode': 'Off'}]
 
 
-
 class PodSecurityPolicy(k8s.Base):
     def new(self):
+        self.need('component')
+        self.need('workload')
         self.kwargs.apiVersion = 'policy/v1beta1'
         self.kwargs.kind = 'PodSecurityPolicy'
         super().new()
-        self.need('component')
-        self.need('workload')
 
     def body(self):
         super().body()
         component = self.kwargs.component
         workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
+        self.add_namespace(component.get(
+            'namespace', inv.parameters.namespace))
         # relativly RAW input here, there is not much to be automatically generated
         self.root.spec = component.pod_security_policy.spec
         # Merge Dicts into PSP Annotations
@@ -1083,6 +1144,7 @@ class PodSecurityPolicy(k8s.Base):
             **component.get('labels', {}),
             **component.pod_security_policy.get('labels', {})
         }
+
 
 def get_components():
     if 'components' in inv.parameters:
@@ -1132,6 +1194,27 @@ def generate_resource_manifests(input_params):
         name = secret_spec.get('name', secret_name)
         secret = ComponentSecret(name=name, config=secret_spec)
         obj.root[f'{name}'] = secret
+
+    if inv.parameters.generators.kubernetes.cert_manager:
+        cert_manager = inv.parameters.generators.kubernetes.cert_manager
+
+        for cert_name, cert_spec in cert_manager.certs.items():
+            if cert_spec.get('type', 'certmanager') == 'certmanager':
+                name = cert_spec.get('name', cert_name)
+                cmc = CertManagerCertificate(name=name, config_spec=cert_spec)
+                obj.root[f'{name}-cm-cert'] = cmc
+
+        for issuer_name, issuer_spec in cert_manager.issuers.items():
+            if issuer_spec.get('type', 'certmanager') == 'certmanager':
+                name = issuer_spec.get('name', issuer_name)
+                cmi = CertManagerIssuer(name=name, config_spec=issuer_spec)
+                obj.root[f'{name}-cm-issuer'] = cmi
+
+        for issuer_name, issuer_spec in cert_manager.clusterissuers.items():
+            if issuer_spec.get('type', 'certmanager') == 'certmanager':
+                name = issuer_spec.get('name', issuer_name)
+                cmci = CertManagerClusterIssuer(name=name, config_spec=issuer_spec)
+                obj.root[f'{name}-cmc-issuer'] = cmci
     return obj
 
 
