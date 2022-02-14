@@ -1,6 +1,7 @@
 classes:
   - kapitan.kube
   - kapitan.generators.kubernetes
+  - kapitan.generators.argocd
   - kapitan.generators.terraform
 
 
