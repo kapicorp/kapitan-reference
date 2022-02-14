@@ -56,28 +56,6 @@ spec:
             defaultMode: 420
             secretName: tesoro
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: tesoro
-  name: tesoro
-  namespace: tesoro
-spec:
-  ports:
-    - name: tesoro-api
-      port: 443
-      protocol: TCP
-      targetPort: tesoro-api
-    - name: tesoro-metrics
-      port: 9095
-      protocol: TCP
-      targetPort: tesoro-metrics
-  selector:
-    name: tesoro
-  sessionAffinity: None
-  type: ClusterIP
----
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -163,44 +141,3 @@ spec:
           for: 1m
           labels:
             severity: warning
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    name: tesoro
-  name: tesoro
-rules:
-  - apiGroups:
-      - ''
-    resources:
-      - pods
-      - events
-      - secrets
-      - configmaps
-    verbs:
-      - '*'
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-      - daemonsets
-      - replicasets
-      - statefulsets
-    verbs:
-      - '*'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    name: tesoro
-  name: tesoro
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: tesoro
-subjects:
-  - kind: ServiceAccount
-    name: tesoro
-    namespace: tesoro

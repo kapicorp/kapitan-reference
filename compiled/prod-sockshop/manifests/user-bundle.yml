@@ -70,21 +70,3 @@ spec:
         - emptyDir:
             medium: Memory
           name: tmp-volume
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: user
-  name: user
-  namespace: prod-sockshop
-spec:
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
-  selector:
-    name: user
-  sessionAffinity: None
-  type: ClusterIP

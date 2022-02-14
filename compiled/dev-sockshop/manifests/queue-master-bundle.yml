@@ -70,23 +70,3 @@ spec:
         - emptyDir:
             medium: Memory
           name: tmp-volume
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/part-of: sock-shop
-    name: queue-master
-  name: queue-master
-  namespace: dev-sockshop
-spec:
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
-  selector:
-    app.kubernetes.io/part-of: sock-shop
-    name: queue-master
-  sessionAffinity: None
-  type: ClusterIP

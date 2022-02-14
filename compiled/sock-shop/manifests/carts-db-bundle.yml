@@ -51,23 +51,3 @@ spec:
         - emptyDir:
             medium: Memory
           name: tmp-volume
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/part-of: sock-shop
-    name: carts-db
-  name: carts-db
-  namespace: sock-shop
-spec:
-  ports:
-    - name: mongo
-      port: 27017
-      protocol: TCP
-      targetPort: mongo
-  selector:
-    app.kubernetes.io/part-of: sock-shop
-    name: carts-db
-  sessionAffinity: None
-  type: ClusterIP
