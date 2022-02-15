@@ -12,5 +12,5 @@ kind: ConfigMap
 metadata:
   labels:
     name: echo-server
-  name: echo-server-92c05fe0
+  name: echo-server-44136fa3
   namespace: tutorial

@@ -194,8 +194,10 @@ class SharedConfig():
 
     def versioning(self, enabled=False):
         if enabled:
+            keys_of_interest = ["data", "binaryData", "stringData"]
+            subset = {key: value for key, value in self.root.to_dict().items() if key in keys_of_interest} 
             self.hash = hashlib.sha256(
-                str(self.root.to_dict()).encode()).hexdigest()[:8]
+                str(subset).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
 
