@@ -146,7 +146,7 @@ class SharedConfig():
         except AttributeError:
             pass
 
-        self.versioning(self.config.get('versioned', False))
+        
 
     def add_directory(self, directory, encode=False):
         stringdata = inv.parameters.get('use_tesoro', False)
@@ -229,6 +229,7 @@ class ComponentConfig(ConfigMap, SharedConfig):
         self.setup_metadata()
         self.add_data(self.config.data)
         self.add_directory(self.config.directory, encode=False)
+        self.versioning(self.config.get('versioned', False))
 
 
 class Secret(k8s.Base):
@@ -263,6 +264,7 @@ class ComponentSecret(Secret, SharedConfig):
         if self.config.string_data:
             self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
+        self.versioning(self.config.get('versioned', False))
 
 
 class Service(k8s.Base):
