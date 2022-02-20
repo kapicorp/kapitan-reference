@@ -12,5 +12,5 @@ kind: ConfigMap
 metadata:
   labels:
     name: echo-server
-  name: echo-server-b32f584a
+  name: echo-server-caa935ba
   namespace: echo-server
