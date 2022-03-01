@@ -311,12 +311,17 @@ class Service(k8s.Base):
         for port_name in sorted(exposed_ports):
             port_spec = exposed_ports[port_name]
             if 'service_port' in port_spec:
-                self.root.spec.ports += [{
+                ports = {
                     'name': port_name,
                     'port': port_spec.service_port,
                     'targetPort': port_name,
                     'protocol': port_spec.get('protocol', 'TCP')
-                }]
+                }
+
+                if 'node_port' in port_spec and service_spec.type == 'NodePort':
+                    ports['nodePort'] = port_spec.node_port
+
+                self.root.spec.ports += [ports]
 
 
 class Ingress(k8s.Base):

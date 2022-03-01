@@ -30,12 +30,14 @@ parameters:
 
       # Networking
       service:
-        type: LoadBalancer
+        type: NodePort
       ports:
         http:
           container_port: 8080
+          node_port: 30001
         internal:
           container_port: 8081
+          node_port: 30002
 
       # One or many network policies
       network_policies:
