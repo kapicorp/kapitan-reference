@@ -7,11 +7,18 @@ metadata:
   namespace: tutorial
 spec:
   ports:
+    - name: http
+      nodePort: 30001
+      protocol: TCP
+      targetPort: http
+    - name: internal
+      nodePort: 30002
+      protocol: TCP
+      targetPort: internal
     - name: nginx
-      port: 80
       protocol: TCP
       targetPort: nginx
   selector:
     name: echo-server
   sessionAffinity: None
-  type: LoadBalancer
+  type: NodePort

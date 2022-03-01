@@ -310,10 +310,10 @@ class Service(k8s.Base):
 
         for port_name in sorted(exposed_ports):
             port_spec = exposed_ports[port_name]
-            if 'service_port' in port_spec:
+            if 'service_port' in port_spec or 'container_port' in port_spec:
                 ports = {
                     'name': port_name,
-                    'port': port_spec.service_port,
+                    'port': port_spec.get('service_port', port_spec.container_port),
                     'targetPort': port_name,
                     'protocol': port_spec.get('protocol', 'TCP')
                 }

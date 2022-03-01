@@ -34,6 +34,7 @@ parameters:
       ports:
         http:
           container_port: 8080
+          service_port: 9999
           node_port: 30001
         internal:
           container_port: 8081

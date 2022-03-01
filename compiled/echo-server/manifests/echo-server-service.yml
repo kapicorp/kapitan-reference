@@ -7,6 +7,16 @@ metadata:
   namespace: echo-server
 spec:
   ports:
+    - name: http
+      nodePort: 30001
+      port: 9999
+      protocol: TCP
+      targetPort: http
+    - name: internal
+      nodePort: 30002
+      port: 8081
+      protocol: TCP
+      targetPort: internal
     - name: nginx
       port: 80
       protocol: TCP
@@ -14,4 +24,4 @@ spec:
   selector:
     name: echo-server
   sessionAffinity: None
-  type: LoadBalancer
+  type: NodePort
