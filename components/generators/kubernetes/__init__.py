@@ -1193,7 +1193,8 @@ def generate_resource_manifests(input_params):
     obj = BaseObj()
     namespace_name = inv.parameters.namespace
     namespace = NameSpace(name=namespace_name)
-    obj.root['{}-namespace'.format(namespace_name)] = namespace
+    if namespace_name != "":
+        obj.root['{}-namespace'.format(namespace_name)] = namespace
 
     for secret_name, secret_spec in inv.parameters.generators.kubernetes.secrets.items():
         name = secret_spec.get('name', secret_name)
