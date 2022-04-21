@@ -131,7 +131,10 @@ class SharedConfig():
 
     def setup_metadata(self):
         self.add_namespace(self.config.get(
-            'namespace', inv.parameters.namespace))
+            'namespace', self.kwargs.component.get("namespace", 
+            inv.parameters.namespace
+        )))
+
         self.add_annotations(self.config.annotations)
         self.add_labels(self.config.labels)
 
