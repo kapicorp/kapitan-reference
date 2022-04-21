@@ -330,7 +330,8 @@ class Ingress(k8s.Base):
     def body(self):
         super().body()
         ingress = self.kwargs.ingress
-        self.add_namespace(inv.parameters.namespace)
+        self.add_namespace(ingress.get(
+            'namespace', inv.parameters.namespace))
         import json
         self.add_annotations(ingress.get('annotations', {}))
         self.add_labels(ingress.get('labels', {}))
