@@ -1,0 +1,10 @@
+---
+classes:
+  - common
+  - components.rabbitmq-operator.rabbitmq-operator
+  - components.rabbitmq-operator.rabbitmq-configuration
+
+parameters:
+  target_name: rabbitmq-operator
+  namespace: rabbitmq-system
+  rabbitmq_namespace: rabbitmq-system

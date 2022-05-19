@@ -1,0 +1,17 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Federation
+metadata:
+  annotations:
+    federation: default-federation
+  labels:
+    federation: default-federation
+    name: default-federation
+  name: default-federation
+  namespace: rabbitmq-system
+spec:
+  ackMode: on-confirm
+  name: origin
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  uriSecret:
+    name: secret-name

@@ -1,0 +1,14 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Vhost
+metadata:
+  annotations:
+    vhost: default-vhost
+  labels:
+    name: default-vhost
+    vhost: default-vhost
+  name: default-vhost
+  namespace: rabbitmq-system
+spec:
+  name: /
+  rabbitmqClusterReference:
+    name: rabbitmqcluster

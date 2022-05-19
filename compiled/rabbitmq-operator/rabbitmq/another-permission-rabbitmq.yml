@@ -1,0 +1,16 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Permission
+metadata:
+  labels:
+    name: another-permission
+  name: another-permission
+  namespace: rabbitmq-system
+spec:
+  permissions:
+    configure: .*
+    read: .*
+    write: .*
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  user: rabbit-user-2
+  vhost: /

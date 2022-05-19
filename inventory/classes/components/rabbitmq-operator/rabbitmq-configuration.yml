@@ -1,0 +1,265 @@
+# This class contains example CRDs for the rabbitmq-operator to configure the rabbitmq cluster including users, vhosts, exchanges, policy etc...
+# generally all "components" accepts multiple entries e.g. multiple users
+# examples where taken from https://www.rabbitmq.com/kubernetes/operator/using-operator.html and https://www.rabbitmq.com/kubernetes/operator/using-topology-operator.html
+
+parameters:
+  rabbitmqcluster:
+    rabbitmqcluster:
+      annotations:
+        additional.annotation: rabbitmq
+      labels:
+        additional.label: rabbitmq
+      replicas: 3
+      image: my-private-registry/rabbitmq:my-custom-tag
+      imagePullSecrets:
+        - name: default-secrets
+      service:
+        type: ClusterIP
+        annotations:
+          service.annotation: service
+      persistence:
+        storageClassName: csi-disk
+        storage: 20Gi
+      resources:
+        requests:
+          cpu: 1000m
+          memory: 2Gi
+        limits:
+          cpu: 1250m
+          memory: 2Gi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - node-1
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "rabbitmq"
+          effect: "NoSchedule"
+      rabbitmq:
+        additionalConfig: |
+          channel_max = 1050
+        advancedConfig: |
+          [
+              {ra, [
+                  {wal_data_dir, '/var/lib/rabbitmq/quorum-wal'}
+              ]}
+          ].
+        envConfig: |
+          RABBITMQ_DISTRIBUTION_BUFFER_SIZE=some_value
+        additionalPlugins:
+          - rabbitmq_top
+          - rabbitmq_shovel
+          - rabbitmq_prometheus
+          - rabbitmq_peer_discovery_k8s
+          - rabbitmq_management
+
+      tls:
+        secretName: rabbitmq-server-certs
+        caSecretName: rabbitmq-ca-cert
+        disableNonTLSListeners: true
+        
+      override:
+        service:
+          spec:
+            ports:
+              - name: additional-port # adds an additional port on the service
+                protocol: TCP
+                port: 12345
+        statefulSet:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: rabbitmq
+                    ports:
+                      - containerPort: 12345 # opens an additional port on the rabbitmq server container
+                        name: additional-port
+                        protocol: TCP
+    another-rabbitmq-cluster:
+      replicas: 2
+
+  rabbitmq_queue:
+    default-queue:
+      labels:
+        queue: default-queue
+      annotations:
+        queue: default-queue
+      name: test
+      autoDelete: false
+      durable: true
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-queue:
+      name: another-queue
+      autoDelete: false
+      durable: true
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_policy:
+    default-policy:
+      labels:
+        policy: default-policy
+      annotations:
+        policy: default-policy
+      name: lazy-queue
+      pattern: "^lazy-queue"
+      applyTo: "queues"
+      definition:
+        queue-mode: lazy
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-policy:
+      name: another-policy
+      pattern: "^lazy-queue"
+      applyTo: "queues"
+      definition:
+        queue-mode: lazy
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_exchange:
+    default_exchange:
+      labels:
+        exchange: default-exchange
+      annotations:
+        exchange: default-exchange
+      name: fanout-exchange
+      type: fanout
+      autoDelete: false
+      durable: true
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-exchange:
+      name: another-exchange
+      type: fanout
+      autoDelete: false
+      durable: true
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_binding:
+    default-binding:
+      labels:
+        binding: default-binding
+      annotations:
+        binding: default-binding
+      source: test
+      destination: test
+      destinationType: queue
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-binding:
+      source: test
+      destination: test
+      destinationType: queue
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_user:
+    default-user:
+      labels:
+        user: default-user
+      annotations:
+        user: default-user
+      tags:
+        - policymaker
+        - monitoring
+        - administrator
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+      importCredentialsSecret:
+        name: my-rabbit-user
+    another-user:
+      tags:
+        - policymaker
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+      importCredentialsSecret:
+        name: my-rabbit-user2
+  
+  rabbitmq_permission:
+    default-permission:
+      annotations:
+        permission: default-permission
+      labels:
+        permission: default-permission
+      vhost: "/"
+      user: "rabbit-user-1"
+      permissions:
+        write: ".*"
+        configure: ".*"
+        read: ".*"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-permission:
+      vhost: "/"
+      user: "rabbit-user-2"
+      permissions:
+        write: ".*"
+        configure: ".*"
+        read: ".*"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_vhost:
+    default-vhost:
+      annotations:
+        vhost: default-vhost
+      labels:
+        vhost: default-vhost
+      name: "/"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-vhost:
+      name: "another-vhost"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+
+  rabbitmq_federation:
+    default-federation:
+      annotations:
+        federation: default-federation
+      labels:
+        federation: default-federation    
+      name: "origin"
+      uriSecret:
+        name: secret-name
+      ackMode: "on-confirm"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-federation:   
+      name: "origin"
+      uriSecret:
+        name: secret-name
+      ackMode: "on-confirm"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    
+  rabbitmq_shovel:
+    default-shovel:
+      annotations:
+        shovel: default-shovel
+      labels:
+        shovel: default-shovel
+      name: "my-shovel"
+      uriSecret:
+        name: secret-name
+      srcQueue: "the-source-queue"
+      destQueue: "the-destination-queue"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
+    another-shovel:
+      name: "another-shovel"
+      uriSecret:
+        name: secret-name
+      srcQueue: "the-source-queue"
+      destQueue: "the-destination-queue"
+      rabbitmqClusterReference:
+        name: rabbitmqcluster
