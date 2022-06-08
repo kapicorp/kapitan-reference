@@ -41,7 +41,7 @@ For now, you can see that the [`./kapitan`](kapitan) file is a wrapper script th
 | ------ | ----------- |
 | ./kapitan | Wrapper script to invoke kapitan |
 | [generate_sa_secrets.sh](templates/scripts/generate_sa_secrets.sh) | Templated script to automatically inject service accounts into refs |
-| [import_kubernetes_cluster.sh](scripts/import_kubernetes_cluster.sh) | Helper scripts that looks for GKE cluster and automatically imports them into the inventory |
+| [import_kubernetes_cluster](scripts/import_kubernetes_cluster) | Helper scripts that looks for GKE cluster and automatically imports them into the inventory |
 
 ### Libraries
 
