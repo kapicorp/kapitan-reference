@@ -1,0 +1,15 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Shovel
+metadata:
+  labels:
+    name: another-shovel
+  name: another-shovel
+  namespace: rabbitmq-system
+spec:
+  destQueue: the-destination-queue
+  name: another-shovel
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  srcQueue: the-source-queue
+  uriSecret:
+    name: secret-name

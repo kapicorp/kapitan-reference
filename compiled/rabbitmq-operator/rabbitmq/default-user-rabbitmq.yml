@@ -1,0 +1,19 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  annotations:
+    user: default-user
+  labels:
+    name: default-user
+    user: default-user
+  name: default-user
+  namespace: rabbitmq-system
+spec:
+  importCredentialsSecret:
+    name: my-rabbit-user
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  tags:
+    - policymaker
+    - monitoring
+    - administrator

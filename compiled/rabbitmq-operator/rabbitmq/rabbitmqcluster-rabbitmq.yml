@@ -1,0 +1,72 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  annotations:
+    additional.annotation: rabbitmq
+  labels:
+    additional.label: rabbitmq
+    name: rabbitmqcluster
+  name: rabbitmqcluster
+  namespace: rabbitmq-system
+spec:
+  image: my-private-registry/rabbitmq:my-custom-tag
+  imagePullSecrets:
+    - name: default-secrets
+  override:
+    service:
+      spec:
+        ports:
+          - name: additional-port
+            port: 12345
+            protocol: TCP
+    statefulSet:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: rabbitmq
+                ports:
+                  - containerPort: 12345
+                    name: additional-port
+                    protocol: TCP
+  persistence:
+    storage: 20Gi
+    storageClassName: csi-disk
+  rabbitmq:
+    additionalConfig: 'channel_max = 1050
+
+      '
+    additionalPlugins:
+      - rabbitmq_top
+      - rabbitmq_shovel
+      - rabbitmq_prometheus
+      - rabbitmq_peer_discovery_k8s
+      - rabbitmq_management
+    advancedConfig: "[\n    {ra, [\n        {wal_data_dir, '/var/lib/rabbitmq/quorum-wal'}\n\
+      \    ]}\n].\n"
+    envConfig: 'RABBITMQ_DISTRIBUTION_BUFFER_SIZE=some_value
+
+      '
+  replicas: 3
+  resources:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - node-1
+  service:
+    annotations:
+      service.annotation: service
+    type: ClusterIP
+  tls:
+    caSecretName: rabbitmq-ca-cert
+    disableNonTLSListeners: true
+    secretName: rabbitmq-server-certs
+  tolerations:
+    - effect: NoSchedule
+      key: dedicated
+      operator: Equal
+      value: rabbitmq

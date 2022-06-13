@@ -1,0 +1,14 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  labels:
+    name: another-user
+  name: another-user
+  namespace: rabbitmq-system
+spec:
+  importCredentialsSecret:
+    name: my-rabbit-user2
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  tags:
+    - policymaker

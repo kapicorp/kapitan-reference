@@ -1,0 +1,13 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  labels:
+    name: another-queue
+  name: another-queue
+  namespace: rabbitmq-system
+spec:
+  autoDelete: false
+  durable: true
+  name: another-queue
+  rabbitmqClusterReference:
+    name: rabbitmqcluster

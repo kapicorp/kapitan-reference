@@ -1,0 +1,14 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  labels:
+    name: another-exchange
+  name: another-exchange
+  namespace: rabbitmq-system
+spec:
+  autoDelete: false
+  durable: true
+  name: another-exchange
+  rabbitmqClusterReference:
+    name: rabbitmqcluster
+  type: fanout
