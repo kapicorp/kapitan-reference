@@ -131,7 +131,10 @@ class SharedConfig():
 
     def setup_metadata(self):
         self.add_namespace(self.config.get(
-            'namespace', inv.parameters.namespace))
+            'namespace', self.kwargs.component.get("namespace", 
+            inv.parameters.namespace
+        )))
+
         self.add_annotations(self.config.annotations)
         self.add_labels(self.config.labels)
 
@@ -330,7 +333,8 @@ class Ingress(k8s.Base):
     def body(self):
         super().body()
         ingress = self.kwargs.ingress
-        self.add_namespace(inv.parameters.namespace)
+        self.add_namespace(ingress.get(
+            'namespace', inv.parameters.namespace))
         import json
         self.add_annotations(ingress.get('annotations', {}))
         self.add_labels(ingress.get('labels', {}))
@@ -1192,7 +1196,8 @@ def generate_resource_manifests(input_params):
     obj = BaseObj()
     namespace_name = inv.parameters.namespace
     namespace = NameSpace(name=namespace_name)
-    obj.root['{}-namespace'.format(namespace_name)] = namespace
+    if namespace_name != "":
+        obj.root['{}-namespace'.format(namespace_name)] = namespace
 
     for secret_name, secret_spec in inv.parameters.generators.kubernetes.secrets.items():
         name = secret_spec.get('name', secret_name)
