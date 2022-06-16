@@ -1,9 +1,0 @@
-apiVersion: rabbitmq.com/v1beta1
-kind: RabbitmqCluster
-metadata:
-  labels:
-    name: another-rabbitmq-cluster
-  name: another-rabbitmq-cluster
-  namespace: rabbitmq-system
-spec:
-  replicas: 2
