@@ -14,6 +14,7 @@
 |[postgres-proxy](../postgres-proxy/docs/README.md)|
 |[pritunl](../pritunl/docs/README.md)|
 |[prod-sockshop](../prod-sockshop/docs/README.md)|
+|[rabbitmq-operator](../rabbitmq-operator/docs/README.md)|
 |[sock-shop](../sock-shop/docs/README.md)|
 |[tesoro](../tesoro/docs/README.md)|
 |[tutorial](../tutorial/docs/README.md)|
