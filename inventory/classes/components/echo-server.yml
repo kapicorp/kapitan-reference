@@ -12,9 +12,10 @@ parameters:
 
       init_containers:
         busybox:
-          image: docker pull busybox
+          image: busybox
           command:
-            - echo "test"
+            - /bin/touch
+            - /initialised
 
       env:
         NODENAME:
@@ -91,7 +92,7 @@ parameters:
         config:
           mount: /opt/echo-service/echo-service.conf
           subPath: echo-service.conf
-          default_mode: 550
+          default_mode: 0550
           versioned: true
           data:
             echo-service.conf:
