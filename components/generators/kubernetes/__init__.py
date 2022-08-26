@@ -10,7 +10,7 @@ from . import k8s
 
 search_paths = args.get("search_paths")
 
-inv = inventory()
+inv = inventory(lazy=True)
 
 
 def j2(filename, ctx):
@@ -36,21 +36,25 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
+        self.root.spec.template.spec.setdefault("containers", [])
         self.root.spec.template.spec.containers += [
             container.root for container in containers
         ]
 
     def add_init_containers(self, containers):
+        self.root.spec.template.spec.setdefault("initContainers", [])
         self.root.spec.template.spec.initContainers += [
             container.root for container in containers
         ]
 
     def add_volumes(self, volumes):
+        self.root.spec.template.spec.setdefault("volumes", [])
         for key, value in volumes.items():
             merge({"name": key}, value)
-            self.root.spec.template.spec.volumes += [value]
+            self.root.spec.template.spec.volumes.append(value)
 
     def add_volume_claims(self, volume_claims):
+        self.root.spec.setdefault("volumeClaimTemplates", [])
         for key, value in volume_claims.items():
             merge({"metadata": {"name": key, "labels": {"name": key}}}, value)
             self.root.spec.volumeClaimTemplates += [value]
@@ -101,10 +105,10 @@ class NetworkPolicy(k8s.Base):
         self.root.spec.ingress = policy.ingress
         self.root.spec.egress = policy.egress
         if self.root.spec.ingress:
-            self.root.spec.policyTypes += ["Ingress"]
+            self.root.spec.setdefault("policyTypes", []).append("Ingress")
 
         if self.root.spec.egress:
-            self.root.spec.policyTypes += ["Egress"]
+            self.root.spec.setdefault("policyTypes", []).append("Egress")
 
 
 class ServiceAccount(k8s.Base):
@@ -332,6 +336,7 @@ class Service(k8s.Base):
                     exposed_ports.update(port)
 
         for port_name in sorted(exposed_ports):
+            self.root.spec.setdefault("ports", [])
             port_spec = exposed_ports[port_name]
             if "service_port" in port_spec:
                 self.root.spec.ports += [
@@ -479,8 +484,12 @@ class Deployment(k8s.Base, WorkloadCommon):
         }
         super().body()
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels = self.root.metadata.labels
-        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.metadata.labels += (
+            component.labels + self.root.metadata.labels
+        )
+        self.root.spec.selector.matchLabels += (
+            component.labels + self.root.metadata.labels
+        )
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always"
         )
@@ -510,8 +519,12 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels = self.root.metadata.labels
-        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.metadata.labels += (
+            component.labels + self.root.metadata.labels
+        )
+        self.root.spec.selector.matchLabels += (
+            component.labels + self.root.metadata.labels
+        )
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always"
         )
@@ -542,8 +555,12 @@ class DaemonSet(k8s.Base, WorkloadCommon):
         }
         super().body()
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels = self.root.metadata.labels
-        self.root.spec.selector.matchLabels = self.root.metadata.labels
+        self.root.spec.template.metadata.labels += (
+            component.labels + self.root.metadata.labels
+        )
+        self.root.spec.selector.matchLabels += (
+            component.labels + self.root.metadata.labels
+        )
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Always"
         )
@@ -568,7 +585,9 @@ class Job(k8s.Base, WorkloadCommon):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels = self.root.metadata.labels
+        self.root.spec.template.metadata.labels += (
+            component.labels + self.root.metadata.labels
+        )
         self.root.spec.template.spec.restartPolicy = component.get(
             "restart_policy", "Never"
         )
@@ -616,6 +635,7 @@ class Container(BaseObj):
 
     def process_envs(self, container):
         for name, value in sorted(container.env.items()):
+            self.root.setdefault("env", [])
             if isinstance(value, dict):
                 if "fieldRef" in value:
                     self.root.env += [{"name": name, "valueFrom": value}]
@@ -662,6 +682,7 @@ class Container(BaseObj):
                 )
 
             if "mount" in spec:
+                self.root.setdefault("volumeMounts", [])
                 self.root.volumeMounts += [
                     {
                         "mountPath": spec.mount,
@@ -677,19 +698,19 @@ class Container(BaseObj):
                 )
 
             if "mount" in spec:
-                self.root.volumeMounts += [
+                self.root.setdefault("volumeMounts", []).append(
                     {
                         "mountPath": spec.mount,
                         "readOnly": spec.get("readOnly", None),
                         "name": object_name,
                         "subPath": spec.subPath,
                     }
-                ]
+                )
 
     def add_volume_mounts(self, volume_mounts):
         for key, value in volume_mounts.items():
             merge({"name": key}, value)
-            self.root.volumeMounts += [value]
+            self.root.setdefault("volumeMounts", []).append(value)
 
     @staticmethod
     def create_probe(probe_definition):
@@ -738,13 +759,14 @@ class Container(BaseObj):
         self.add_volume_mounts(container.volume_mounts)
 
         for name, port in sorted(container.ports.items()):
-            self.root.ports += [
+            self.root.setdefault("ports", [])
+            self.root.ports.append(
                 {
                     "containerPort": port.get("container_port", port.service_port),
                     "name": name,
                     "protocol": port.get("protocol", "TCP"),
                 }
-            ]
+            )
 
         self.root.startupProbe = self.create_probe(container.healthcheck.startup)
         self.root.livenessProbe = self.create_probe(container.healthcheck.liveness)
@@ -771,17 +793,17 @@ class Workload(WorkloadCommon):
         else:
             raise ()
 
-        if component.namespace or inv.parameters.namespace:
-            workload.root.metadata.namespace = component.get(
+        if component.get("namespace") or inv.parameters.get("namespace"):
+            workload.root.metadata.namespace = component.setdefault(
                 "namespace", inv.parameters.namespace
             )
-        workload.add_annotations(component.get("annotations", {}))
+        workload.add_annotations(component.setdefault("annotations", {}))
         workload.root.spec.template.metadata.annotations = component.get(
             "pod_annotations", {}
         )
-        workload.add_labels(component.get("labels", {}))
-        workload.add_volumes(component.volumes)
-        workload.add_volume_claims(component.volume_claims)
+        workload.add_labels(component.setdefault("labels", {}))
+        workload.add_volumes(component.setdefault("volumes", {}))
+        workload.add_volume_claims(component.setdefault("volume_claims", {}))
         workload.root.spec.template.spec.securityContext = (
             component.workload_security_context
         )
@@ -819,11 +841,15 @@ class Workload(WorkloadCommon):
         if component.tolerations:
             workload.root.spec.template.spec.tolerations = component.tolerations
 
+        affinity = workload.root.spec.template.spec.affinity
         if (
             component.prefer_pods_in_node_with_expression
             and not component.node_selector
         ):
-            workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+            affinity.nodeAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecutio", []
+            )
+            affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
                 {
                     "preference": {
                         "matchExpressions": [
@@ -832,10 +858,13 @@ class Workload(WorkloadCommon):
                     },
                     "weight": 1,
                 }
-            ]
+            )
 
         if component.prefer_pods_in_different_nodes:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+            affinity.podAntiAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecution", []
+            )
+            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
                 {
                     "podAffinityTerm": {
                         "labelSelector": {
@@ -847,10 +876,13 @@ class Workload(WorkloadCommon):
                     },
                     "weight": 1,
                 }
-            ]
+            )
 
         if component.prefer_pods_in_different_zones:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
+            affinity.podAntiAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecution", []
+            )
+            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
                 {
                     "podAffinityTerm": {
                         "labelSelector": {
@@ -862,7 +894,7 @@ class Workload(WorkloadCommon):
                     },
                     "weight": 1,
                 }
-            ]
+            )
 
         self.root = workload.root
 
@@ -884,6 +916,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
         self.need("objects")
         self.need("generating_class")
         self.need("workload")
+        self.root = []
 
     def body(self):
         objects = self.kwargs.objects
@@ -903,7 +936,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
             else:
                 rendered_name = f"{name}-{object_name}"
 
-            self.root += [
+            self.root.append(
                 generating_class(
                     name=object_name,
                     rendered_name=rendered_name,
@@ -911,7 +944,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
                     component=component,
                     workload=workload,
                 )
-            ]
+            )
 
 
 class PrometheusRule(k8s.Base):
@@ -932,9 +965,9 @@ class PrometheusRule(k8s.Base):
         self.add_namespace(component.get("namespace", inv.parameters.namespace))
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
-        self.root.spec.groups += [
+        self.root.spec.setdefault("groups", []).append(
             {"name": "tesoro.rules", "rules": component.prometheus_rules.rules}
-        ]
+        )
 
 
 class BackendConfig(k8s.Base):
