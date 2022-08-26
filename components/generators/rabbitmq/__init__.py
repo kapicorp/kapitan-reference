@@ -3,7 +3,7 @@ import hashlib
 import os
 
 from kapitan.cached import args
-from kapitan.inputs.kadet import BaseObj, inventory
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
 from kapitan.utils import render_jinja2_file
 
 search_paths = args.get('search_paths')
@@ -14,7 +14,7 @@ from . import k8s
 def j2(filename, ctx):
     return render_jinja2_file(filename, ctx, search_paths=search_paths)
 
-inv = inventory()
+inv = Dict()
 
 def merge(source, destination):
     for key, value in source.items():
@@ -563,7 +563,7 @@ class SharedConfig():
     def versioning(self, enabled=False):
         if enabled:
             self.hash = hashlib.sha256(
-                str(self.root.to_dict()).encode()).hexdigest()[:8]
+                str(self.root.dump()).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
 
 class ConfigMap(k8s.Base, SharedConfig):

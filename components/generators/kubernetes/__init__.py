@@ -3,14 +3,14 @@ import hashlib
 import os
 
 from kapitan.cached import args
-from kapitan.inputs.kadet import BaseObj, CompileError, inventory
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
 from kapitan.utils import render_jinja2_file
 
 from . import k8s
 
 search_paths = args.get('search_paths')
 
-inv = inventory()
+inv = Dict()
 
 
 def j2(filename, ctx):
@@ -198,7 +198,7 @@ class SharedConfig():
     def versioning(self, enabled=False):
         if enabled:
             keys_of_interest = ["data", "binaryData", "stringData"]
-            subset = {key: value for key, value in self.root.to_dict().items() if key in keys_of_interest} 
+            subset = {key: value for key, value in self.root.dump().items() if key in keys_of_interest} 
             self.hash = hashlib.sha256(
                 str(subset).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
@@ -632,7 +632,7 @@ class Container(BaseObj):
         secrets = container.secrets.items()
         for object_name, spec in configs:
             if spec is None:
-                raise CompileError(
+                raise ABORT_EXCEPTION_TYPE(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
@@ -644,7 +644,7 @@ class Container(BaseObj):
                 }]
         for object_name, spec in secrets:
             if spec is None:
-                raise CompileError(
+                raise ABORT_EXCEPTION_TYPE(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
@@ -855,7 +855,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
 
         for object_name, object_config in objects.items():
             if object_config == None:
-                raise CompileError(
+                raise ABORT_EXCEPTION_TYPE(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if len(objects.items()) == 1:
@@ -1187,8 +1187,8 @@ def generate_docs(input_params):
     if template:
         for name, component in get_components():
             obj.root['{}-readme.md'.format(name)] = j2(template,
-                                                       {'service_component': component.to_dict(),
-                                                        'inventory': inv.parameters.to_dict()})
+                                                       {'service_component': component.dump(),
+                                                        'inventory': inv.parameters.dump()})
     return obj
 
 

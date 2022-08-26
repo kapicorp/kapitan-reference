@@ -1,4 +1,4 @@
-version: 0.30.0rc0
+version: 0.30.0
 compile:
  prune: true
  embed-refs: true

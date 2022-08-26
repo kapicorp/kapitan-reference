@@ -1,6 +1,6 @@
-from kapitan.inputs.kadet import BaseObj, inventory
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
 
-inv = inventory()
+inv = Dict()
 
 
 def main(input_params):
