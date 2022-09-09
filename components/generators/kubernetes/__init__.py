@@ -36,23 +36,20 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
-        self.root.spec.template.spec.containers = []
         self.root.spec.template.spec.containers += [
             container.root for container in containers]
 
     def add_init_containers(self, containers):
-        self.root.spec.template.spec.initContainers = []
         self.root.spec.template.spec.initContainers += [
             container.root for container in containers]
 
     def add_volumes(self, volumes):
-        self.root.spec.template.spec.volumes = []
         for key, value in volumes.items():
             merge({'name': key}, value)
             self.root.spec.template.spec.volumes += [value]
 
     def add_volume_claims(self, volume_claims):
-        self.root.spec.volumeClaimTemplates = []
+        volume_claims = {}
         for key, value in volume_claims.items():
             merge({'metadata': {'name': key, 'labels': {'name': key}}}, value)
             self.root.spec.volumeClaimTemplates.append(value)
@@ -591,6 +588,9 @@ class Container(BaseObj):
     def new(self):
         self.need('name')
         self.need('container')
+        self.root.env = []
+        self.root.volumeMounts = []
+        self.root.ports = []
 
     @staticmethod
     def find_key_in_config(key, configs):
@@ -600,8 +600,8 @@ class Container(BaseObj):
         raise (BaseException(
             'Unable to find key {} in your configs definitions'.format(key)))
 
+    
     def process_envs(self, container):
-        self.root.env = []
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
                 if 'fieldRef' in value:
@@ -636,7 +636,6 @@ class Container(BaseObj):
         container = self.kwargs.container
         configs = container.config_maps.items()
         secrets = container.secrets.items()
-        self.root.volumeMounts = []
         for object_name, spec in configs:
             if spec is None:
                 raise ABORT_EXCEPTION_TYPE(
@@ -716,7 +715,6 @@ class Container(BaseObj):
         self.add_volume_mounts_from_configs()
         self.add_volume_mounts(container.volume_mounts)
 
-        self.root.ports = []
         for name, port in sorted(container.ports.items()):
             self.root.ports += [{
                 'containerPort': port.get('container_port', port.service_port),
@@ -737,6 +735,7 @@ class Workload(WorkloadCommon):
     def new(self):
         self.need('name')
         self.need('component')
+
 
     def body(self):
         component = self.kwargs.component
@@ -767,11 +766,14 @@ class Workload(WorkloadCommon):
             workload.root.spec.template.spec.serviceAccountName = component.service_account.get(
                 'name', name)
 
+        container = []
         container = Container(name=name, container=component)
+        additional_containers = []
         additional_containers = [Container(name=name, container=component) for name, component in
                                  component.additional_containers.items()]
         workload.add_containers([container])
         workload.add_containers(additional_containers)
+        init_containers = []
         init_containers = [Container(name=name, container=component) for name, component in
                            component.init_containers.items()]
 
@@ -789,6 +791,7 @@ class Workload(WorkloadCommon):
         if component.tolerations:
             workload.root.spec.template.spec.tolerations = component.tolerations
 
+        workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = []
         if component.prefer_pods_in_node_with_expression and not component.node_selector:
             workload.root.spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
@@ -799,7 +802,6 @@ class Workload(WorkloadCommon):
                 }
             ]
 
-        workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = []
         if component.prefer_pods_in_different_nodes:
             workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
@@ -854,6 +856,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
         self.need('objects')
         self.need('generating_class')
         self.need('workload')
+        self.root = []
 
     def body(self):
         objects = self.kwargs.objects
@@ -862,7 +865,6 @@ class GenerateMultipleObjectsForClass(BaseObj):
         generating_class = self.kwargs.generating_class
         workload = self.kwargs.workload
 
-        self.root = []
         for object_name, object_config in objects.items():
             if object_config == None:
                 raise ABORT_EXCEPTION_TYPE(
