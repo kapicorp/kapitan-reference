@@ -1,6 +1,6 @@
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, inventory
 
-inv = Dict()
+inv = inventory()
 
 
 def main(input_params):

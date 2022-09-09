@@ -3,7 +3,7 @@ import hashlib
 import os
 
 from kapitan.cached import args
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, inventory
 from kapitan.utils import render_jinja2_file
 
 search_paths = args.get('search_paths')
@@ -14,7 +14,7 @@ from . import k8s
 def j2(filename, ctx):
     return render_jinja2_file(filename, ctx, search_paths=search_paths)
 
-inv = Dict()
+inv = inventory(lazy=True)
 
 def merge(source, destination):
     for key, value in source.items():
