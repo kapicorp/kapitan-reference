@@ -3,7 +3,7 @@ import hashlib
 import os
 
 from kapitan.cached import args
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, inventory
+from kapitan.inputs.kadet import BaseObj, inventory
 from kapitan.utils import render_jinja2_file
 
 search_paths = args.get('search_paths')

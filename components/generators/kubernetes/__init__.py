@@ -48,6 +48,7 @@ class WorkloadCommon(BaseObj):
     def add_volumes(self, volumes):
         for key, value in volumes.items():
             merge({'name': key}, value)
+            self.root.spec.template.spec.volumes = []
             self.root.spec.template.spec.volumes += [value]
 
     def add_volume_claims(self, volume_claims):
@@ -99,9 +100,11 @@ class NetworkPolicy(k8s.Base):
         self.root.spec.ingress = policy.ingress
         self.root.spec.egress = policy.egress
         if self.root.spec.ingress:
+            self.root.spec.policyTypes = []
             self.root.spec.policyTypes += ['Ingress']
 
         if self.root.spec.egress:
+            self.root.spec.policyTypes = []
             self.root.spec.policyTypes += ['Egress']
 
 
@@ -318,6 +321,7 @@ class Service(k8s.Base):
         for port_name in sorted(exposed_ports):
             port_spec = exposed_ports[port_name]
             if 'service_port' in port_spec:
+                self.root.spec.ports = []
                 self.root.spec.ports += [{
                     'name': port_name,
                     'port': port_spec.service_port,
@@ -601,6 +605,7 @@ class Container(BaseObj):
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
                 if 'fieldRef' in value:
+                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
                 elif 'secretKeyRef' in value:
                     if 'name' not in value['secretKeyRef']:
@@ -612,7 +617,7 @@ class Container(BaseObj):
                         else:
                             value['secretKeyRef']['name'] = '{}-{}'.format(
                                 self.kwargs.name, config_name)
-
+                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
                 if 'configMapKeyRef' in value:
                     if 'name' not in value['configMapKeyRef']:
@@ -624,7 +629,7 @@ class Container(BaseObj):
                         else:
                             value['configMapKeyRef']['name'] = '{}-{}'.format(
                                 self.kwargs.name, config_name)
-
+                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
             else:
                 self.root.env = []
@@ -665,6 +670,7 @@ class Container(BaseObj):
     def add_volume_mounts(self, volume_mounts):
         for key, value in volume_mounts.items():
             merge({'name': key}, value)
+            self.root.volumeMounts = []
             self.root.volumeMounts += [value]
 
     @staticmethod
@@ -800,6 +806,7 @@ class Workload(WorkloadCommon):
             ]
 
         if component.prefer_pods_in_different_nodes:
+            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = []
             workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
                     'podAffinityTerm': {
@@ -894,6 +901,7 @@ class PrometheusRule(k8s.Base):
             'namespace', inv.parameters.namespace))
 
         # TODO(ademaria): use `name` instead of `tesoro.rules`
+        self.root.spec.groups = []
         self.root.spec.groups += [{'name': 'tesoro.rules',
                                    'rules': component.prometheus_rules.rules}]
 
@@ -1289,9 +1297,11 @@ def generate_component_manifests(input_params):
 
         workload.add_volumes_for_objects(configs)
         workload.add_volumes_for_objects(secrets)
-
-        bundle_configs += configs.root
-        bundle_secrets += secrets.root
+        
+        if configs.root:
+            bundle_configs += configs.root
+        if secrets.root:
+            bundle_secrets += secrets.root
 
         if component.vpa and inv.parameters.get('enable_vpa', True) and component.type != 'job':
             vpa = VerticalPodAutoscaler(

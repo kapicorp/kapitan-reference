@@ -1,4 +1,4 @@
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, inventory
+from kapitan.inputs.kadet import BaseObj, inventory
 
 inv = inventory(lazy=True)
 
