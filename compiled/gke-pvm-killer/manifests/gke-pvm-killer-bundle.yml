@@ -21,6 +21,8 @@ spec:
       labels:
         name: gke-pvm-killer
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

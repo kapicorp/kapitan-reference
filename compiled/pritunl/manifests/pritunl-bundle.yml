@@ -21,6 +21,8 @@ spec:
       labels:
         name: pritunl
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

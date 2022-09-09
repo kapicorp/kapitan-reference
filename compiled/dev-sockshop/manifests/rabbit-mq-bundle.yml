@@ -22,5 +22,7 @@ spec:
       labels:
         name: rabbit-mq
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30

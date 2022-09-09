@@ -24,6 +24,8 @@ spec:
       labels:
         name: postgres-proxy
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

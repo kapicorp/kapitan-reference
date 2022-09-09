@@ -10,6 +10,10 @@ metadata:
 spec:
   clusterIP: None
   ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
     - name: https-internal
       port: 8201
       protocol: TCP
@@ -31,6 +35,10 @@ metadata:
   namespace: vault
 spec:
   ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
     - name: https-internal
       port: 8201
       protocol: TCP
@@ -53,6 +61,10 @@ metadata:
   namespace: vault
 spec:
   ports:
+    - name: http
+      port: 8200
+      protocol: TCP
+      targetPort: http
     - name: https-internal
       port: 8201
       protocol: TCP

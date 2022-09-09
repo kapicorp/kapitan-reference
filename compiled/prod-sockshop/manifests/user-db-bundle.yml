@@ -21,6 +21,8 @@ spec:
       labels:
         name: user-db
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

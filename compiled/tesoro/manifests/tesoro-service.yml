@@ -7,6 +7,10 @@ metadata:
   namespace: tesoro
 spec:
   ports:
+    - name: tesoro-api
+      port: 443
+      protocol: TCP
+      targetPort: tesoro-api
     - name: tesoro-metrics
       port: 9095
       protocol: TCP

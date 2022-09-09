@@ -17,6 +17,8 @@ spec:
       labels:
         name: mysql
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

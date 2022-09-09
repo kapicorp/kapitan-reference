@@ -21,6 +21,8 @@ spec:
       labels:
         name: tesoro
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       serviceAccountName: tesoro
       terminationGracePeriodSeconds: 30

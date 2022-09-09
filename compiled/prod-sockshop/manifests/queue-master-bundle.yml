@@ -22,6 +22,8 @@ spec:
       labels:
         name: queue-master
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

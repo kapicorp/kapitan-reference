@@ -23,6 +23,8 @@ spec:
       labels:
         name: trivy
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       serviceAccountName: trivy
       terminationGracePeriodSeconds: 30

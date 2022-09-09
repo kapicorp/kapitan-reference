@@ -22,5 +22,7 @@ spec:
       labels:
         name: catalogue
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30

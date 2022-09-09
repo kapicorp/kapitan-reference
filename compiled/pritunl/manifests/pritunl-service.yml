@@ -7,6 +7,14 @@ metadata:
   namespace: pritunl
 spec:
   ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+    - name: vpn
+      port: 1194
+      protocol: TCP
+      targetPort: vpn
     - name: webui
       port: 443
       protocol: TCP

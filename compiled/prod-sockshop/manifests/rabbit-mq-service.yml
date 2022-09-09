@@ -8,6 +8,10 @@ metadata:
   namespace: prod-sockshop
 spec:
   ports:
+    - name: management
+      port: 15672
+      protocol: TCP
+      targetPort: management
     - name: rabbitmq
       port: 5672
       protocol: TCP

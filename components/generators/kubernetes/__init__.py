@@ -46,9 +46,9 @@ class WorkloadCommon(BaseObj):
             container.root for container in containers]
 
     def add_volumes(self, volumes):
+        self.root.spec.template.spec.volumes = []
         for key, value in volumes.items():
             merge({'name': key}, value)
-            self.root.spec.template.spec.volumes = []
             self.root.spec.template.spec.volumes += [value]
 
     def add_volume_claims(self, volume_claims):
@@ -99,12 +99,11 @@ class NetworkPolicy(k8s.Base):
         self.root.spec.podSelector.matchLabels = workload.metadata.labels
         self.root.spec.ingress = policy.ingress
         self.root.spec.egress = policy.egress
+        self.root.spec.policyTypes = []
         if self.root.spec.ingress:
-            self.root.spec.policyTypes = []
             self.root.spec.policyTypes += ['Ingress']
 
         if self.root.spec.egress:
-            self.root.spec.policyTypes = []
             self.root.spec.policyTypes += ['Egress']
 
 
@@ -313,6 +312,7 @@ class Service(k8s.Base):
 
         exposed_ports = {}
 
+        self.root.spec.ports = []
         for port in all_ports:
             for port_name in port.keys():
                 if not service_spec.expose_ports or port_name in service_spec.expose_ports:
@@ -321,7 +321,6 @@ class Service(k8s.Base):
         for port_name in sorted(exposed_ports):
             port_spec = exposed_ports[port_name]
             if 'service_port' in port_spec:
-                self.root.spec.ports = []
                 self.root.spec.ports += [{
                     'name': port_name,
                     'port': port_spec.service_port,
@@ -602,10 +601,10 @@ class Container(BaseObj):
             'Unable to find key {} in your configs definitions'.format(key)))
 
     def process_envs(self, container):
+        self.root.env = []
         for name, value in sorted(container.env.items()):
             if isinstance(value, dict):
                 if 'fieldRef' in value:
-                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
                 elif 'secretKeyRef' in value:
                     if 'name' not in value['secretKeyRef']:
@@ -617,7 +616,6 @@ class Container(BaseObj):
                         else:
                             value['secretKeyRef']['name'] = '{}-{}'.format(
                                 self.kwargs.name, config_name)
-                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
                 if 'configMapKeyRef' in value:
                     if 'name' not in value['configMapKeyRef']:
@@ -629,10 +627,8 @@ class Container(BaseObj):
                         else:
                             value['configMapKeyRef']['name'] = '{}-{}'.format(
                                 self.kwargs.name, config_name)
-                    self.root.env = []
                     self.root.env += [{'name': name, 'valueFrom': value}]
             else:
-                self.root.env = []
                 self.root.env += [{'name': name, 'value': str(value)}]
 
     def add_volume_mounts_from_configs(self):
@@ -640,13 +636,13 @@ class Container(BaseObj):
         container = self.kwargs.container
         configs = container.config_maps.items()
         secrets = container.secrets.items()
+        self.root.volumeMounts = []
         for object_name, spec in configs:
             if spec is None:
                 raise ABORT_EXCEPTION_TYPE(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
-                self.root.volumeMounts = []
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
                     'readOnly': spec.get('readOnly', None),
@@ -659,7 +655,6 @@ class Container(BaseObj):
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
-                self.root.volumeMounts = []
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
                     'readOnly': spec.get('readOnly', None),
@@ -670,7 +665,6 @@ class Container(BaseObj):
     def add_volume_mounts(self, volume_mounts):
         for key, value in volume_mounts.items():
             merge({'name': key}, value)
-            self.root.volumeMounts = []
             self.root.volumeMounts += [value]
 
     @staticmethod
@@ -722,8 +716,8 @@ class Container(BaseObj):
         self.add_volume_mounts_from_configs()
         self.add_volume_mounts(container.volume_mounts)
 
+        self.root.ports = []
         for name, port in sorted(container.ports.items()):
-            self.root.ports = []
             self.root.ports += [{
                 'containerPort': port.get('container_port', port.service_port),
                 'name': name,
@@ -805,8 +799,8 @@ class Workload(WorkloadCommon):
                 }
             ]
 
+        workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = []
         if component.prefer_pods_in_different_nodes:
-            workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = []
             workload.root.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution += [
                 {
                     'podAffinityTerm': {
@@ -868,6 +862,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
         generating_class = self.kwargs.generating_class
         workload = self.kwargs.workload
 
+        self.root = []
         for object_name, object_config in objects.items():
             if object_config == None:
                 raise ABORT_EXCEPTION_TYPE(
@@ -877,7 +872,6 @@ class GenerateMultipleObjectsForClass(BaseObj):
                 rendered_name = f'{name}'
             else:
                 rendered_name = f'{name}-{object_name}'
-            self.root = []
             self.root += [generating_class(name=object_name, rendered_name=rendered_name,
                                            config=object_config, component=component, workload=workload)]
 
@@ -1413,7 +1407,6 @@ def generate_manifests(input_params):
 
 
 def main(input_params):
-    whitelisted_functions = []
     whitelisted_functions = ['generate_manifests',
                              'generate_docs']
     function = input_params.get('function', 'generate_manifests')

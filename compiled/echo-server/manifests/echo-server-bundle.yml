@@ -21,6 +21,8 @@ spec:
       labels:
         name: echo-server
     spec:
+      affinity:
+        podAntiAffinity: {}
       containers:
         - image: nginx
           imagePullPolicy: IfNotPresent

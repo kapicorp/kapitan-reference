@@ -17,6 +17,8 @@ spec:
       labels:
         name: pritunl-mongo
     spec:
+      affinity:
+        podAntiAffinity: {}
       restartPolicy: Always
       securityContext:
         fsGroup: 1001
