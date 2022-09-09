@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: pritunl-mongo
+  name: pritunl-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pritunl-mongo
+  serviceName: pritunl-mongo
+  template:
+    metadata:
+      labels:
+        name: pritunl-mongo
+    spec:
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: pritunl-mongo
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            secretName: pritunl-mongo
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        labels:
+          name: datadir
+        name: datadir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard

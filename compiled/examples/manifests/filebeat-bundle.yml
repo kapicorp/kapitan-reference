@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: filebeat
+  name: filebeat
+spec:
+  selector:
+    matchLabels:
+      name: filebeat
+  template:
+    metadata:
+      labels:
+        name: filebeat
+    spec:
+      hostNetwork: true
+      restartPolicy: Always
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: filebeat
+          name: config

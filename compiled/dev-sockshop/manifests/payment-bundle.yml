@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app.kubernetes.io/part-of: sock-shop
+    name: payment
+  name: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: payment
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: payment
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

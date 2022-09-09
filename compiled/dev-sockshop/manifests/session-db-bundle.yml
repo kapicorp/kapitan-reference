@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: session-db
+  name: session-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: session-db
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: session-db
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    app.kubernetes.io/component: go
+    app.kubernetes.io/version: 0.18.1
+    name: trivy
+  name: trivy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: trivy
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: trivy
+    spec:
+      restartPolicy: Always
+      serviceAccountName: trivy
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: trivy
+          secret:
+            defaultMode: 420
+            secretName: trivy

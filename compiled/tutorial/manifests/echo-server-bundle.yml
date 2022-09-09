@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: echo-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: echo-server
+    spec:
+      containers:
+        - image: nginx
+          imagePullPolicy: IfNotPresent
+          name: nginx
+          ports:
+            - containerPort: 80
+              name: nginx
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d/nginx.conf
+              name: config
+              subPath: nginx.conf
+      initContainers:
+        - command:
+            - /bin/touch
+            - /initialised
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          name: busybox
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secret
+          secret:
+            defaultMode: 420
+            secretName: echo-server

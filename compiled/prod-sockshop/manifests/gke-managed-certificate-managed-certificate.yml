@@ -1,0 +1,11 @@
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  labels:
+    name: managed-sockshop.kapicorp.com
+  name: managed-sockshop.kapicorp.com
+  namespace: prod-sockshop
+spec:
+  domains:
+    - managed-sockshop.kapicorp.com
+    - managed-sockshop2.kapicorp.com

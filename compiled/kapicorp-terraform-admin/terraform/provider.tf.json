@@ -1,0 +1,11 @@
+{
+  "provider": [
+    {
+      "google": {
+        "project": "kapicorp-terraform-admin",
+        "region": "europe-west1",
+        "zone": "europe-west1-b"
+      }
+    }
+  ]
+}

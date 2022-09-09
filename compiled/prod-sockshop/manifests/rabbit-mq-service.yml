@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/part-of: sock-shop
+    name: rabbit-mq
+  name: rabbit-mq
+  namespace: prod-sockshop
+spec:
+  ports:
+    - name: rabbitmq
+      port: 5672
+      protocol: TCP
+      targetPort: rabbitmq
+  selector:
+    name: rabbit-mq
+  sessionAffinity: None
+  type: ClusterIP

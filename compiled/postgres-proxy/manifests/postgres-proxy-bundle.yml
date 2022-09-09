@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: postgres-proxy
+    tier: db
+  name: postgres-proxy
+spec:
+  minReadySeconds: 30
+  progressDeadlineSeconds: 600
+  replicas: 3
+  selector:
+    matchLabels:
+      name: postgres-proxy
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: postgres-proxy
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            items:
+              - key: service_account_file
+                path: service_account_file
+            secretName: postgres-proxy

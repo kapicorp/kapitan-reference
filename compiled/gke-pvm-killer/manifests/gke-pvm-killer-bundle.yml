@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
+  labels:
+    name: gke-pvm-killer
+  name: gke-pvm-killer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: gke-pvm-killer
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: gke-pvm-killer
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: secrets
+          secret:
+            defaultMode: 420
+            items:
+              - key: service_account_file
+                path: service_account_file
+            secretName: gke-pvm-killer
