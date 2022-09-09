@@ -36,10 +36,12 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
+        self.root.spec.template.spec.containers = []
         self.root.spec.template.spec.containers += [
             container.root for container in containers]
 
     def add_init_containers(self, containers):
+        self.root.spec.template.spec.initContainers = []
         self.root.spec.template.spec.initContainers += [
             container.root for container in containers]
 
@@ -49,9 +51,10 @@ class WorkloadCommon(BaseObj):
             self.root.spec.template.spec.volumes += [value]
 
     def add_volume_claims(self, volume_claims):
+        self.root.spec.volumeClaimTemplates = []
         for key, value in volume_claims.items():
             merge({'metadata': {'name': key, 'labels': {'name': key}}}, value)
-            self.root.spec.volumeClaimTemplates += [value]
+            self.root.spec.volumeClaimTemplates.append(value)
 
     def add_volumes_for_objects(self, objects):
         for object in objects.root:
@@ -68,7 +71,8 @@ class WorkloadCommon(BaseObj):
             template = self.root.spec.template
             if isinstance(self, CronJob):
                 template = self.root.spec.jobTemplate.spec.template
-
+            
+            template.spec.volumes = []
             template.spec.volumes += [{
                 'name': object_name,
                 key: {
@@ -623,6 +627,7 @@ class Container(BaseObj):
 
                     self.root.env += [{'name': name, 'valueFrom': value}]
             else:
+                self.root.env = []
                 self.root.env += [{'name': name, 'value': str(value)}]
 
     def add_volume_mounts_from_configs(self):
@@ -636,6 +641,7 @@ class Container(BaseObj):
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
+                self.root.volumeMounts = []
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
                     'readOnly': spec.get('readOnly', None),
@@ -648,6 +654,7 @@ class Container(BaseObj):
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!")
 
             if 'mount' in spec:
+                self.root.volumeMounts = []
                 self.root.volumeMounts += [{
                     'mountPath': spec.mount,
                     'readOnly': spec.get('readOnly', None),
@@ -710,6 +717,7 @@ class Container(BaseObj):
         self.add_volume_mounts(container.volume_mounts)
 
         for name, port in sorted(container.ports.items()):
+            self.root.ports = []
             self.root.ports += [{
                 'containerPort': port.get('container_port', port.service_port),
                 'name': name,
@@ -862,7 +870,7 @@ class GenerateMultipleObjectsForClass(BaseObj):
                 rendered_name = f'{name}'
             else:
                 rendered_name = f'{name}-{object_name}'
-
+            self.root = []
             self.root += [generating_class(name=object_name, rendered_name=rendered_name,
                                            config=object_config, component=component, workload=workload)]
 
@@ -1395,6 +1403,7 @@ def generate_manifests(input_params):
 
 
 def main(input_params):
+    whitelisted_functions = []
     whitelisted_functions = ['generate_manifests',
                              'generate_docs']
     function = input_params.get('function', 'generate_manifests')

@@ -1,6 +1,6 @@
 from kadet import ABORT_EXCEPTION_TYPE, BaseObj, inventory
 
-inv = inventory()
+inv = inventory(lazy=True)
 
 
 def main(input_params):
