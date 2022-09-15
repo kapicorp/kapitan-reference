@@ -24,6 +24,45 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - env:
+            - name: JAVA_OPTS
+              value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC
+                -Djava.security.egd=file:/dev/urandom
+            - name: ZIPKIN
+              value: zipkin.jaeger.svc.cluster.local
+          image: weaveworksdemos/queue-master:0.3.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: queue-master
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

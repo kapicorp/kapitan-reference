@@ -23,6 +23,47 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - env:
+            - name: DRAIN_TIMEOUT
+              value: '300'
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /opt/secrets/service_account_file
+            - name: INTERVAL
+              value: '600'
+          image: estafette/estafette-gke-preemptible-killer:1.2.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /liveness
+              port: liveness
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          name: gke-pvm-killer
+          ports:
+            - containerPort: 5000
+              name: liveness
+              protocol: TCP
+            - containerPort: 9001
+              name: prom-metrics
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /liveness
+              port: liveness
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /opt/secrets
+              name: secrets
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

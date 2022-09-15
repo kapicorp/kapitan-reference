@@ -19,6 +19,34 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: ''
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: mysql
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-root-password
+                  name: mysql
+            - name: MYSQL_USER
+              value: ''
+          image: mysql:5.7.28
+          imagePullPolicy: IfNotPresent
+          name: mysql
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/mysql/conf.d/
+              name: config
+            - mountPath: /var/lib/mysql
+              name: datadir
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
@@ -30,15 +58,3 @@ spec:
     rollingUpdate:
       partition: 0
     type: RollingUpdate
-  volumeClaimTemplates:
-    - metadata:
-        labels:
-          name: datadir
-        name: datadir
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 10Gi
-        storageClassName: standard

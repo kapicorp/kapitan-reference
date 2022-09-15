@@ -42,6 +42,29 @@ spec:
                         - logstash
                 topologyKey: failure-domain.beta.kubernetes.io/zone
               weight: 1
+      containers:
+        - image: eu.gcr.io/antha-images/logstash:7.5.1
+          imagePullPolicy: IfNotPresent
+          name: logstash
+          ports:
+            - containerPort: 9600
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 9600
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - mountPath: /usr/share/logstash/config/
+              name: config
+            - mountPath: /usr/share/logstash/pipeline/
+              name: pipelines
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

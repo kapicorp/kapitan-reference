@@ -24,5 +24,20 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: socksdb
+            - name: MYSQL_ROOT_PASSWORD
+              value: 64MnOIqcXhO5yY5EETJsh6flWQYTmQ-mziB7MAgrMW8
+          image: weaveworksdemos/catalogue-db:0.3.0
+          imagePullPolicy: IfNotPresent
+          name: catalogue-db
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: false
       restartPolicy: Always
       terminationGracePeriodSeconds: 30

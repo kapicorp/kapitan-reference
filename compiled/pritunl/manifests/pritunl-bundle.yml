@@ -23,6 +23,46 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - image: alledm/pritunl
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: webui
+              scheme: HTTPS
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          name: pritunl
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+            - containerPort: 1194
+              name: vpn
+              protocol: TCP
+            - containerPort: 443
+              name: webui
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: webui
+              scheme: HTTPS
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /etc/pritunl.conf
+              name: config
+              subPath: pritunl.conf
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

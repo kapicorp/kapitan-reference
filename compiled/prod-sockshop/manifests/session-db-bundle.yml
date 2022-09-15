@@ -23,5 +23,21 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - image: redis:alpine
+          imagePullPolicy: IfNotPresent
+          name: session-db
+          ports:
+            - containerPort: 6379
+              name: redis
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - CHOWN
+                - SETGID
+                - SETUID
+              drop:
+                - all
       restartPolicy: Always
       terminationGracePeriodSeconds: 30

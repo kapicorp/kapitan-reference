@@ -25,6 +25,50 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - args:
+            - server
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: GITHUB_TOKEN
+                  name: trivy
+            - name: HTTPS_PROXY
+              value: ''
+            - name: HTTP_PROXY
+              value: ''
+            - name: NO_PROXY
+              value: ''
+            - name: TRIVY_CACHE_DIR
+              value: /home/scanner/.cache/trivy
+            - name: TRIVY_DEBUG
+              value: 'False'
+            - name: TRIVY_LISTEN
+              value: 0.0.0.0:4954
+            - name: TRIVY_SKIP_UPDATE
+              value: 'False'
+          image: docker.io/aquasec/trivy:0.18.1
+          imagePullPolicy: IfNotPresent
+          name: trivy
+          ports:
+            - containerPort: 4954
+              name: http
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: /home/scanner/.cache
+              name: data
+              readOnly: false
+            - mountPath: /tmp
+              name: tmp-data
+              readOnly: false
       restartPolicy: Always
       serviceAccountName: trivy
       terminationGracePeriodSeconds: 30

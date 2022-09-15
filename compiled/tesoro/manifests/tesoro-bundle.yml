@@ -23,6 +23,31 @@ spec:
     spec:
       affinity:
         podAntiAffinity: {}
+      containers:
+        - args:
+            - --ca-file=/certs/cacert.pem
+            - --cert-file=/certs/cert.pem
+            - --key-file=/certs/cert.key
+            - --port=443
+          image: kapicorp/tesoro
+          imagePullPolicy: IfNotPresent
+          name: tesoro
+          ports:
+            - containerPort: 443
+              name: tesoro-api
+              protocol: TCP
+            - containerPort: 9095
+              name: tesoro-metrics
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - all
+          volumeMounts:
+            - mountPath: /certs
+              name: secrets
       restartPolicy: Always
       serviceAccountName: tesoro
       terminationGracePeriodSeconds: 30

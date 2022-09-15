@@ -36,16 +36,22 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
+        if not self.root.spec.template.spec.containers:
+            self.root.spec.template.spec.containers = []
         self.root.spec.template.spec.containers += [
             container.root for container in containers]
 
     def add_init_containers(self, containers):
+        if not self.root.spec.template.spec.initContainers:
+            self.root.spec.template.spec.initContainers = []
         self.root.spec.template.spec.initContainers += [
             container.root for container in containers]
 
     def add_volumes(self, volumes):
         for key, value in volumes.items():
             merge({'name': key}, value)
+            if not self.root.spec.template.spec.volumes:
+                self.root.spec.template.spec.volumes = []
             self.root.spec.template.spec.volumes += [value]
 
     def add_volume_claims(self, volume_claims):

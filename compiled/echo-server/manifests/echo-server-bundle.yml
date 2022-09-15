@@ -24,6 +24,53 @@ spec:
       affinity:
         podAntiAffinity: {}
       containers:
+        - env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: jmalloc/echo-server
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Host
+                  value: www.google.com
+              path: /_health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          name: echo-server
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 8081
+              name: internal
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /_ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 1G
+            requests:
+              memory: 1G
+          volumeMounts:
+            - mountPath: /opt/echo-service/echo-service.conf
+              name: config
+              subPath: echo-service.conf
         - image: nginx
           imagePullPolicy: IfNotPresent
           name: nginx
