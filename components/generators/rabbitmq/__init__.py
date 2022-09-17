@@ -6,7 +6,7 @@ from kapitan.cached import args
 from kapitan.inputs.kadet import BaseObj, inventory
 from kapitan.utils import render_jinja2_file
 
-search_paths = args.get('search_paths')
+search_paths = args.get("search_paths")
 
 from . import k8s
 
@@ -14,7 +14,9 @@ from . import k8s
 def j2(filename, ctx):
     return render_jinja2_file(filename, ctx, search_paths=search_paths)
 
+
 inv = inventory()
+
 
 def merge(source, destination):
     for key, value in source.items():
@@ -35,9 +37,11 @@ class RabbitmqCluster(k8s.Base):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "RabbitmqCluster"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -45,18 +49,18 @@ class RabbitmqCluster(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmqcluster = self.kwargs.rabbitmqcluster
-        self.add_annotations(rabbitmqcluster.get('annotations', {}))
-        self.add_labels(rabbitmqcluster.get('labels', {}))
+        self.add_annotations(rabbitmqcluster.get("annotations", {}))
+        self.add_labels(rabbitmqcluster.get("labels", {}))
 
         if rabbitmqcluster.replicas:
             self.root.spec.replicas = rabbitmqcluster.replicas
-        
+
         if rabbitmqcluster.image:
             self.root.spec.image = rabbitmqcluster.image
 
         if rabbitmqcluster.imagePullSecrets:
             self.root.spec.imagePullSecrets = rabbitmqcluster.imagePullSecrets
-        
+
         if rabbitmqcluster.service:
             self.root.spec.service = rabbitmqcluster.service
 
@@ -71,7 +75,7 @@ class RabbitmqCluster(k8s.Base):
 
         if rabbitmqcluster.tolerations:
             self.root.spec.tolerations = rabbitmqcluster.tolerations
-        
+
         if rabbitmqcluster.rabbitmq:
             self.root.spec.rabbitmq = rabbitmqcluster.rabbitmq
 
@@ -82,7 +86,9 @@ class RabbitmqCluster(k8s.Base):
             self.root.spec.skipPostDeploySteps = rabbitmqcluster.skipPostDeploySteps
 
         if rabbitmqcluster.terminationGracePeriodSeconds:
-            self.root.spec.terminationGracePeriodSeconds = rabbitmqcluster.terminationGracePeriodSeconds
+            self.root.spec.terminationGracePeriodSeconds = (
+                rabbitmqcluster.terminationGracePeriodSeconds
+            )
 
         if rabbitmqcluster.secretBackend:
             self.root.spec.secretBackend = rabbitmqcluster.secretBackend
@@ -90,14 +96,17 @@ class RabbitmqCluster(k8s.Base):
         if rabbitmqcluster.override:
             self.root.spec.override = rabbitmqcluster.override
 
+
 class RabbitmqQueue(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Queue"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -105,8 +114,8 @@ class RabbitmqQueue(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_queue = self.kwargs.rabbitmq_queue
-        self.add_annotations(rabbitmq_queue.get('annotations', {}))
-        self.add_labels(rabbitmq_queue.get('labels', {}))
+        self.add_annotations(rabbitmq_queue.get("annotations", {}))
+        self.add_labels(rabbitmq_queue.get("labels", {}))
 
         if rabbitmq_queue.name:
             self.root.spec.name = rabbitmq_queue.name
@@ -118,19 +127,24 @@ class RabbitmqQueue(k8s.Base):
             self.root.spec.durable = rabbitmq_queue.durable
 
         if rabbitmq_queue.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_queue.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_queue.rabbitmqClusterReference
+            )
 
         if rabbitmq_queue.arguments:
             self.root.spec.arguments = rabbitmq_queue.arguments
+
 
 class RabbitmqPolicy(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Policy"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -138,12 +152,12 @@ class RabbitmqPolicy(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_policy = self.kwargs.rabbitmq_policy
-        self.add_annotations(rabbitmq_policy.get('annotations', {}))
-        self.add_labels(rabbitmq_policy.get('labels', {}))
+        self.add_annotations(rabbitmq_policy.get("annotations", {}))
+        self.add_labels(rabbitmq_policy.get("labels", {}))
 
         if rabbitmq_policy.name:
             self.root.spec.name = rabbitmq_policy.name
-        
+
         if rabbitmq_policy.pattern:
             self.root.spec.pattern = rabbitmq_policy.pattern
 
@@ -154,22 +168,27 @@ class RabbitmqPolicy(k8s.Base):
             self.root.spec.definition = rabbitmq_policy.definition
 
         if rabbitmq_policy.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_policy.rabbitmqClusterReference
-        
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_policy.rabbitmqClusterReference
+            )
+
         if rabbitmq_policy.priority:
             self.root.spec.priority = rabbitmq_policy.priority
 
         if rabbitmq_policy.vhost:
             self.root.spec.vhost = rabbitmq_policy.vhost
 
+
 class RabbitmqExchange(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Exchange"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -177,8 +196,8 @@ class RabbitmqExchange(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_exchange = self.kwargs.rabbitmq_exchange
-        self.add_annotations(rabbitmq_exchange.get('annotations', {}))
-        self.add_labels(rabbitmq_exchange.get('labels', {}))
+        self.add_annotations(rabbitmq_exchange.get("annotations", {}))
+        self.add_labels(rabbitmq_exchange.get("labels", {}))
 
         if rabbitmq_exchange.name:
             self.root.spec.name = rabbitmq_exchange.name
@@ -193,7 +212,9 @@ class RabbitmqExchange(k8s.Base):
             self.root.spec.durable = rabbitmq_exchange.durable
 
         if rabbitmq_exchange.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_exchange.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_exchange.rabbitmqClusterReference
+            )
 
         if rabbitmq_exchange.arguments:
             self.root.spec.arguments = rabbitmq_exchange.arguments
@@ -201,14 +222,17 @@ class RabbitmqExchange(k8s.Base):
         if rabbitmq_exchange.vhost:
             self.root.spec.vhost = rabbitmq_exchange.vhost
 
+
 class RabbitmqBinding(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Binding"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -216,38 +240,43 @@ class RabbitmqBinding(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_binding = self.kwargs.rabbitmq_binding
-        self.add_annotations(rabbitmq_binding.get('annotations', {}))
-        self.add_labels(rabbitmq_binding.get('labels', {}))
+        self.add_annotations(rabbitmq_binding.get("annotations", {}))
+        self.add_labels(rabbitmq_binding.get("labels", {}))
 
         if rabbitmq_binding.source:
             self.root.spec.source = rabbitmq_binding.source
-        
+
         if rabbitmq_binding.destination:
             self.root.spec.destination = rabbitmq_binding.destination
 
         if rabbitmq_binding.destinationType:
             self.root.spec.destinationType = rabbitmq_binding.destinationType
-        
+
         if rabbitmq_binding.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_binding.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_binding.rabbitmqClusterReference
+            )
 
         if rabbitmq_binding.routingKey:
             self.root.spec.routingKey = rabbitmq_binding.routingKey
-        
+
         if rabbitmq_binding.arguments:
             self.root.spec.arguments = rabbitmq_binding.arguments
 
         if rabbitmq_binding.vhost:
             self.root.spec.vhost = rabbitmq_binding.vhost
 
+
 class RabbitmqUser(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "User"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -255,39 +284,46 @@ class RabbitmqUser(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_user = self.kwargs.rabbitmq_user
-        self.add_annotations(rabbitmq_user.get('annotations', {}))
-        self.add_labels(rabbitmq_user.get('labels', {}))
+        self.add_annotations(rabbitmq_user.get("annotations", {}))
+        self.add_labels(rabbitmq_user.get("labels", {}))
 
         if rabbitmq_user.tags:
             self.root.spec.tags = rabbitmq_user.tags
 
         if rabbitmq_user.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_user.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_user.rabbitmqClusterReference
+            )
 
         if rabbitmq_user.importCredentialsSecret:
-            self.root.spec.importCredentialsSecret = rabbitmq_user.importCredentialsSecret
+            self.root.spec.importCredentialsSecret = (
+                rabbitmq_user.importCredentialsSecret
+            )
+
 
 class RabbitmqPermission(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Permission"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
 
         self.add_namespace(inv.parameters.rabbitmq_namespace)
-    
+
         rabbitmq_permission = self.kwargs.rabbitmq_permission
-        self.add_annotations(rabbitmq_permission.get('annotations', {}))
-        self.add_labels(rabbitmq_permission.get('labels', {}))
+        self.add_annotations(rabbitmq_permission.get("annotations", {}))
+        self.add_labels(rabbitmq_permission.get("labels", {}))
 
         if rabbitmq_permission.vhost:
             self.root.spec.vhost = rabbitmq_permission.vhost
-        
+
         if rabbitmq_permission.user:
             self.root.spec.user = rabbitmq_permission.user
 
@@ -295,19 +331,24 @@ class RabbitmqPermission(k8s.Base):
             self.root.spec.permissions = rabbitmq_permission.permissions
 
         if rabbitmq_permission.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_permission.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_permission.rabbitmqClusterReference
+            )
 
         if rabbitmq_permission.userReference:
             self.root.spec.userReference = rabbitmq_permission.userReference
+
 
 class RabbitmqVhost(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Vhost"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -315,29 +356,34 @@ class RabbitmqVhost(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_vhost = self.kwargs.rabbitmq_vhost
-        self.add_annotations(rabbitmq_vhost.get('annotations', {}))
-        self.add_labels(rabbitmq_vhost.get('labels', {}))
+        self.add_annotations(rabbitmq_vhost.get("annotations", {}))
+        self.add_labels(rabbitmq_vhost.get("labels", {}))
 
         if rabbitmq_vhost.name:
             self.root.spec.name = rabbitmq_vhost.name
 
         if rabbitmq_vhost.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_vhost.rabbitmqClusterReference
-        
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_vhost.rabbitmqClusterReference
+            )
+
         if rabbitmq_vhost.tags:
             self.root.spec.tags = rabbitmq_vhost.tags
 
         if rabbitmq_vhost.tracing:
             self.root.spec.tracing = rabbitmq_vhost.tracing
 
+
 class RabbitmqFederation(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Federation"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -345,27 +391,29 @@ class RabbitmqFederation(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_federation = self.kwargs.rabbitmq_federation
-        self.add_annotations(rabbitmq_federation.get('annotations', {}))
-        self.add_labels(rabbitmq_federation.get('labels', {}))
+        self.add_annotations(rabbitmq_federation.get("annotations", {}))
+        self.add_labels(rabbitmq_federation.get("labels", {}))
 
         if rabbitmq_federation.name:
             self.root.spec.name = rabbitmq_federation.name
-        
+
         if rabbitmq_federation.uriSecret:
             self.root.spec.uriSecret = rabbitmq_federation.uriSecret
 
         if rabbitmq_federation.ackMode:
             self.root.spec.ackMode = rabbitmq_federation.ackMode
-        
+
         if rabbitmq_federation.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_federation.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_federation.rabbitmqClusterReference
+            )
 
         if rabbitmq_federation.exchange:
             self.root.sec.exchange = rabbitmq_federation.exchange
 
         if rabbitmq_federation.expires:
             self.root.spec.expires = rabbitmq_federation.expires
-        
+
         if rabbitmq_federation.maxHops:
             self.root.spec.maxHops = rabbitmq_federation.maxHops
 
@@ -385,17 +433,19 @@ class RabbitmqFederation(k8s.Base):
             self.root.spec.trustUserId = rabbitmq_federation.trustUserId
 
         if rabbitmq_federation.vhost:
-            self.root.spec.vhost =  rabbitmq_federation.vhost
-        
+            self.root.spec.vhost = rabbitmq_federation.vhost
+
 
 class RabbitmqShovel(k8s.Base):
     def new(self):
         self.kwargs.apiVersion = "rabbitmq.com/v1beta1"
         self.kwargs.kind = "Shovel"
 
-        self.kwargs.finalizers = list('deletion.finalizers.rabbitmqclusters.rabbitmq.com')
+        self.kwargs.finalizers = list(
+            "deletion.finalizers.rabbitmqclusters.rabbitmq.com"
+        )
         super().new()
-        self.need('name')
+        self.need("name")
 
     def body(self):
         super().body()
@@ -403,12 +453,12 @@ class RabbitmqShovel(k8s.Base):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
 
         rabbitmq_shovel = self.kwargs.rabbitmq_shovel
-        self.add_annotations(rabbitmq_shovel.get('annotations', {}))
-        self.add_labels(rabbitmq_shovel.get('labels', {}))
+        self.add_annotations(rabbitmq_shovel.get("annotations", {}))
+        self.add_labels(rabbitmq_shovel.get("labels", {}))
 
         if rabbitmq_shovel.name:
             self.root.spec.name = rabbitmq_shovel.name
-        
+
         if rabbitmq_shovel.uriSecret:
             self.root.spec.uriSecret = rabbitmq_shovel.uriSecret
 
@@ -417,9 +467,11 @@ class RabbitmqShovel(k8s.Base):
 
         if rabbitmq_shovel.destQueue:
             self.root.spec.destQueue = rabbitmq_shovel.destQueue
-        
+
         if rabbitmq_shovel.rabbitmqClusterReference:
-            self.root.spec.rabbitmqClusterReference = rabbitmq_shovel.rabbitmqClusterReference
+            self.root.spec.rabbitmqClusterReference = (
+                rabbitmq_shovel.rabbitmqClusterReference
+            )
 
         if rabbitmq_shovel.ackMode:
             self.root.spec.ackMode = rabbitmq_shovel.ackMode
@@ -434,13 +486,17 @@ class RabbitmqShovel(k8s.Base):
             self.root.spec.destAddForwardHeaders = rabbitmq_shovel.destAddForwardHeaders
 
         if rabbitmq_shovel.destAddTimestampHeader:
-            self.root.spec.destAddTimestampHeader = rabbitmq_shovel.destAddTimestampHeader
+            self.root.spec.destAddTimestampHeader = (
+                rabbitmq_shovel.destAddTimestampHeader
+            )
 
         if rabbitmq_shovel.destAddress:
             self.root.spec.destAddress = rabbitmq_shovel.destAddress
 
         if rabbitmq_shovel.destApplicationProperties:
-            self.root.spec.destApplicationProperties = rabbitmq_shovel.destApplicationProperties
+            self.root.spec.destApplicationProperties = (
+                rabbitmq_shovel.destApplicationProperties
+            )
 
         if rabbitmq_shovel.destExchange:
             self.root.spec.destExchange = rabbitmq_shovel.destExchange
@@ -485,91 +541,96 @@ class RabbitmqShovel(k8s.Base):
             self.root.spec.vhost = rabbitmq_shovel.vhost
 
 
-"""
-The following classes are required to generate Secrets + ConfigMaps
-"""
-class SharedConfig():
+# The following classes are required to generate Secrets + ConfigMaps
+class SharedConfig:
     """Shared class to use for both Secrets and ConfigMaps classes.
 
     containt anything needed by both classes, so that their behavious is basically the same.
     Each subclass will then implement its own way of adding the data depending on their implementation.
     """
+
     @staticmethod
     def encode_string(unencoded_string):
-        return base64.b64encode(unencoded_string.encode('ascii')).decode('ascii')
+        return base64.b64encode(unencoded_string.encode("ascii")).decode("ascii")
 
     def setup_metadata(self):
         self.add_namespace(inv.parameters.rabbitmq_namespace)
         self.add_annotations(self.config.annotations)
         self.add_labels(self.config.labels)
 
-        self.items = self.config['items']
+        self.items = self.config["items"]
         try:
             if isinstance(self, ConfigMap):
-                globals = inv.parameters.generators.manifest.default_config.globals.config_maps
+                globals = (
+                    inv.parameters.generators.manifest.default_config.globals.config_maps
+                )
             else:
-                globals = inv.parameters.generators.manifest.default_config.globals.secrets
-            self.add_annotations(globals.get('annotations', {}))
-            self.add_labels(globals.get('labels', {}))
+                globals = (
+                    inv.parameters.generators.manifest.default_config.globals.secrets
+                )
+            self.add_annotations(globals.get("annotations", {}))
+            self.add_labels(globals.get("labels", {}))
         except AttributeError:
             pass
 
-        self.versioning(self.config.get('versioned', False))
+        self.versioning(self.config.get("versioned", False))
 
     def add_directory(self, directory, encode=False):
-        stringdata = inv.parameters.get('use_tesoro', False)
+        stringdata = inv.parameters.get("use_tesoro", False)
         if directory and os.path.isdir(directory):
             for filename in os.listdir(directory):
-                with open(f'{directory}/{filename}', 'r') as f:
+                with open(f"{directory}/{filename}", "r") as f:
                     file_content = f.read()
-                    self.add_item(filename, file_content, request_encode=encode,
-                                  stringdata=stringdata)
+                    self.add_item(
+                        filename,
+                        file_content,
+                        request_encode=encode,
+                        stringdata=stringdata,
+                    )
 
     def add_data(self, data):
-        stringdata = inv.parameters.get('use_tesoro', False)
+        stringdata = inv.parameters.get("use_tesoro", False)
 
         for key, spec in data.items():
-            encode = spec.get('b64_encode', False)
+            encode = spec.get("b64_encode", False)
 
-            if 'value' in spec:
-                value = spec.get('value')
-            if 'template' in spec:
-                value = j2(
-                    spec.template, spec.get('values', {}))
-            if 'file' in spec:
-                with open(spec.file, 'r') as f:
+            if "value" in spec:
+                value = spec.get("value")
+            if "template" in spec:
+                value = j2(spec.template, spec.get("values", {}))
+            if "file" in spec:
+                with open(spec.file, "r") as f:
                     value = f.read()
 
-            self.add_item(key, value, request_encode=encode,
-                          stringdata=stringdata)
+            self.add_item(key, value, request_encode=encode, stringdata=stringdata)
 
     def add_string_data(self, string_data, encode=False):
         stringdata = True
 
         for key, spec in string_data.items():
 
-            if 'value' in spec:
-                value = spec.get('value')
-            if 'template' in spec:
-                value = j2(
-                    spec.template, spec.get('values', {}))
-            if 'file' in spec:
-                with open(spec.file, 'r') as f:
+            if "value" in spec:
+                value = spec.get("value")
+            if "template" in spec:
+                value = j2(spec.template, spec.get("values", {}))
+            if "file" in spec:
+                with open(spec.file, "r") as f:
                     value = f.read()
 
-            self.add_item(key, value, request_encode=encode,
-                          stringdata=stringdata)
+            self.add_item(key, value, request_encode=encode, stringdata=stringdata)
 
     def versioning(self, enabled=False):
         if enabled:
-            self.hash = hashlib.sha256(
-                str(self.root.to_dict()).encode()).hexdigest()[:8]
-            self.root.metadata.name += f'-{self.hash}'
+            self.hash = hashlib.sha256(str(self.root.to_dict()).encode()).hexdigest()[
+                :8
+            ]
+            self.root.metadata.name += f"-{self.hash}"
+
 
 class ConfigMap(k8s.Base, SharedConfig):
     def new(self):
-        self.kwargs.apiVersion = 'v1'
-        self.kwargs.kind = 'ConfigMap'
+        self.kwargs.apiVersion = "v1"
+        self.kwargs.kind = "ConfigMap"
         super().new()
 
     def body(self):
@@ -578,14 +639,13 @@ class ConfigMap(k8s.Base, SharedConfig):
     def add_item(self, key, value, request_encode=False, stringdata=False):
         encode = request_encode
 
-        self.root['data'][key] = self.encode_string(
-            value) if encode else value
+        self.root["data"][key] = self.encode_string(value) if encode else value
 
 
 class ComponentConfig(ConfigMap, SharedConfig):
     def new(self):
         super().new()
-        self.need('config')
+        self.need("config")
 
     def body(self):
         super().body()
@@ -595,10 +655,11 @@ class ComponentConfig(ConfigMap, SharedConfig):
         self.add_data(self.config.data)
         self.add_directory(self.config.directory, encode=False)
 
+
 class Secret(k8s.Base):
     def new(self):
-        self.kwargs.apiVersion = 'v1'
-        self.kwargs.kind = 'Secret'
+        self.kwargs.apiVersion = "v1"
+        self.kwargs.kind = "Secret"
         super().new()
 
     def body(self):
@@ -606,20 +667,19 @@ class Secret(k8s.Base):
 
     def add_item(self, key, value, request_encode=False, stringdata=False):
         encode = not stringdata and request_encode
-        field = 'stringData' if stringdata else 'data'
-        self.root[field][key] = self.encode_string(
-            value) if encode else value
+        field = "stringData" if stringdata else "data"
+        self.root[field][key] = self.encode_string(value) if encode else value
 
 
 class ComponentSecret(Secret, SharedConfig):
     def new(self):
         super().new()
-        self.need('config')
+        self.need("config")
 
     def body(self):
         super().body()
         self.config = self.kwargs.config
-        self.root.type = self.config.get('type', 'Opaque')
+        self.root.type = self.config.get("type", "Opaque")
 
         self.setup_metadata()
         if self.config.data:
@@ -628,118 +688,147 @@ class ComponentSecret(Secret, SharedConfig):
             self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
 
+
 def generate_rabbitmqcluster(input_params):
     obj = BaseObj()
     rabbitmqcluster_list = inv.parameters.rabbitmqcluster
     for name in rabbitmqcluster_list.keys():
-        rabbitmqcluster = RabbitmqCluster(name = name, rabbitmqcluster=rabbitmqcluster_list[name] )
+        rabbitmqcluster = RabbitmqCluster(
+            name=name, rabbitmqcluster=rabbitmqcluster_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmqcluster
+        obj.root["{}-rabbitmq".format(name)] = rabbitmqcluster
 
     return obj
+
 
 def generate_rabbitmq_queue(input_params):
     obj = BaseObj()
     rabbitmq_queue_list = inv.parameters.rabbitmq_queue
     for name in rabbitmq_queue_list.keys():
-        rabbitmq_queue = RabbitmqQueue(name = name, rabbitmq_queue=rabbitmq_queue_list[name] )
+        rabbitmq_queue = RabbitmqQueue(
+            name=name, rabbitmq_queue=rabbitmq_queue_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_queue
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_queue
     return obj
+
 
 def generate_rabbitmq_policy(input_params):
     obj = BaseObj()
     rabbitmq_policy_list = inv.parameters.rabbitmq_policy
     for name in rabbitmq_policy_list.keys():
-        rabbitmq_policy = RabbitmqPolicy(name = name, rabbitmq_policy=rabbitmq_policy_list[name] )
+        rabbitmq_policy = RabbitmqPolicy(
+            name=name, rabbitmq_policy=rabbitmq_policy_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_policy
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_policy
     return obj
+
 
 def generate_rabbitmq_exchange(input_params):
     obj = BaseObj()
     rabbitmq_exchange_list = inv.parameters.rabbitmq_exchange
     for name in rabbitmq_exchange_list.keys():
-        rabbitmq_exchange = RabbitmqExchange(name = name, rabbitmq_exchange=rabbitmq_exchange_list[name] )
+        rabbitmq_exchange = RabbitmqExchange(
+            name=name, rabbitmq_exchange=rabbitmq_exchange_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_exchange
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_exchange
     return obj
+
 
 def generate_rabbitmq_binding(input_params):
     obj = BaseObj()
     rabbitmq_binding_list = inv.parameters.rabbitmq_binding
     for name in rabbitmq_binding_list.keys():
-        rabbitmq_binding = RabbitmqBinding(name = name, rabbitmq_binding=rabbitmq_binding_list[name] )
+        rabbitmq_binding = RabbitmqBinding(
+            name=name, rabbitmq_binding=rabbitmq_binding_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_binding
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_binding
     return obj
+
 
 def generate_rabbitmq_user(input_params):
     obj = BaseObj()
     rabbitmq_user_list = inv.parameters.rabbitmq_user
     for name in rabbitmq_user_list.keys():
-        rabbitmq_user = RabbitmqUser(name = name, rabbitmq_user=rabbitmq_user_list[name])
+        rabbitmq_user = RabbitmqUser(name=name, rabbitmq_user=rabbitmq_user_list[name])
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_user
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_user
     return obj
+
 
 def generate_rabbitmq_permission(input_params):
     obj = BaseObj()
     rabbitmq_permission_list = inv.parameters.rabbitmq_permission
     for name in rabbitmq_permission_list.keys():
-        rabbitmq_permission = RabbitmqPermission(name = name, rabbitmq_permission=rabbitmq_permission_list[name] )
+        rabbitmq_permission = RabbitmqPermission(
+            name=name, rabbitmq_permission=rabbitmq_permission_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_permission
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_permission
     return obj
+
 
 def generate_rabbitmq_vhost(input_params):
     obj = BaseObj()
     rabbitmq_vhost_list = inv.parameters.rabbitmq_vhost
     for name in rabbitmq_vhost_list.keys():
-        rabbitmq_vhost = RabbitmqVhost(name = name, rabbitmq_vhost=rabbitmq_vhost_list[name] )
+        rabbitmq_vhost = RabbitmqVhost(
+            name=name, rabbitmq_vhost=rabbitmq_vhost_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_vhost
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_vhost
     return obj
+
 
 def generate_rabbitmq_federation(input_params):
     obj = BaseObj()
     rabbitmq_federation_list = inv.parameters.rabbitmq_federation
     for name in rabbitmq_federation_list.keys():
-        rabbitmq_federation = RabbitmqFederation(name = name, rabbitmq_federation=rabbitmq_federation_list[name] )
+        rabbitmq_federation = RabbitmqFederation(
+            name=name, rabbitmq_federation=rabbitmq_federation_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_federation
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_federation
     return obj
+
 
 def generate_rabbitmq_shovel(input_params):
     obj = BaseObj()
     rabbitmq_shovel_list = inv.parameters.rabbitmq_shovel
     for name in rabbitmq_shovel_list.keys():
-        rabbitmq_shovel = RabbitmqShovel(name = name, rabbitmq_shovel=rabbitmq_shovel_list[name] )
+        rabbitmq_shovel = RabbitmqShovel(
+            name=name, rabbitmq_shovel=rabbitmq_shovel_list[name]
+        )
 
-        obj.root['{}-rabbitmq'.format(name)] = rabbitmq_shovel
+        obj.root["{}-rabbitmq".format(name)] = rabbitmq_shovel
     return obj
 
-"""
-This function renderes an Shared-ConfigMaps + Secrets
-"""
+
+# This function renderes an Shared-ConfigMaps + Secrets
 def generate_resource_manifests(input_params):
     obj = BaseObj()
 
     for secret_name, secret_spec in inv.parameters.generators.rabbitmq.secrets.items():
-        name = secret_spec.get('name', secret_name)
+        name = secret_spec.get("name", secret_name)
         secret = ComponentSecret(name=name, config=secret_spec)
-        obj.root[f'{name}'] = secret
+        obj.root[f"{name}"] = secret
 
     for config_name, config_spec in inv.parameters.generators.rabbitmq.configs.items():
-        name = config_spec.get('name', config_name)
+        name = config_spec.get("name", config_name)
         config = ComponentConfig(name=name, config=config_spec)
-        obj.root[f'{name}'] = config
+        obj.root[f"{name}"] = config
     return obj
 
 
 """
 This function renderes all previous defined functions and returns
 """
+
+
 def generate_manifests(input_params):
     all_manifests = BaseObj()
 
@@ -773,7 +862,7 @@ def generate_manifests(input_params):
 
 
 def main(input_params):
-    whitelisted_functions = ['generate_manifests']
-    function = input_params.get('function', 'generate_manifests')
+    whitelisted_functions = ["generate_manifests"]
+    function = input_params.get("function", "generate_manifests")
     if function in whitelisted_functions:
         return globals()[function](input_params)

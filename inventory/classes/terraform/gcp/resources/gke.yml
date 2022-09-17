@@ -11,7 +11,7 @@ parameters:
           default:
             account_id: "gke-sa"
             display_name: Service Account for GKE
-        
+
         google_container_cluster:
           primary:
             name: gke-cluster

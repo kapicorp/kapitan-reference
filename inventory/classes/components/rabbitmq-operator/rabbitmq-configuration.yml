@@ -63,7 +63,7 @@ parameters:
         secretName: rabbitmq-server-certs
         caSecretName: rabbitmq-ca-cert
         disableNonTLSListeners: true
-        
+
       override:
         service:
           spec:
@@ -183,7 +183,7 @@ parameters:
         name: rabbitmqcluster
       importCredentialsSecret:
         name: my-rabbit-user2
-  
+
   rabbitmq_permission:
     default-permission:
       annotations:
@@ -227,21 +227,21 @@ parameters:
       annotations:
         federation: default-federation
       labels:
-        federation: default-federation    
+        federation: default-federation
       name: "origin"
       uriSecret:
         name: secret-name
       ackMode: "on-confirm"
       rabbitmqClusterReference:
         name: rabbitmqcluster
-    another-federation:   
+    another-federation:
       name: "origin"
       uriSecret:
         name: secret-name
       ackMode: "on-confirm"
       rabbitmqClusterReference:
         name: rabbitmqcluster
-    
+
   rabbitmq_shovel:
     default-shovel:
       annotations:

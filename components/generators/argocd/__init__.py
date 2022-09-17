@@ -84,9 +84,9 @@ class ArgoCDApplication(k8s.Base):
         self.need('name')
         self.kwargs.apiVersion = 'argoproj.io/v1alpha1'
         self.kwargs.kind = 'Application'
-        
+
        # Add a this finalizer ONLY if you want these to cascade delete
-        
+
        # self.kwargs.finalizers = list('resources-finalizer.argocd.argoproj.io')
         super().new()
 
@@ -103,10 +103,10 @@ class ArgoCDApplication(k8s.Base):
 
        # The project the argocd_application belongs to.
         self.root.spec.project = argocd_application.project
-        
+
        # The destination in which Namespace the application should be deployed
         self.root.spec.destination = argocd_application.destination
-        
+
        # Source of the application manifests
         if argocd_application.source:
             self.root.spec.source = argocd_application.source
