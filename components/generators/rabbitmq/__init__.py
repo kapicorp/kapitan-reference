@@ -824,9 +824,7 @@ def generate_resource_manifests(input_params):
     return obj
 
 
-"""
-This function renderes all previous defined functions and returns
-"""
+# This function renderes all previous defined functions and returns
 
 
 def generate_manifests(input_params):
