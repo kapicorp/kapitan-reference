@@ -131,7 +131,7 @@ class SharedConfig():
 
     def setup_metadata(self):
         self.add_namespace(self.config.get(
-            'namespace', self.kwargs.component.get("namespace", 
+            'namespace', self.kwargs.component.get('namespace',
             inv.parameters.namespace
         )))
 
@@ -149,7 +149,7 @@ class SharedConfig():
         except AttributeError:
             pass
 
-        
+
 
     def add_directory(self, directory, encode=False):
         stringdata = inv.parameters.get('use_tesoro', False)
@@ -197,8 +197,8 @@ class SharedConfig():
 
     def versioning(self, enabled=False):
         if enabled:
-            keys_of_interest = ["data", "binaryData", "stringData"]
-            subset = {key: value for key, value in self.root.to_dict().items() if key in keys_of_interest} 
+            keys_of_interest = ['data', 'binaryData', 'stringData']
+            subset = {key: value for key, value in self.root.to_dict().items() if key in keys_of_interest}
             self.hash = hashlib.sha256(
                 str(subset).encode()).hexdigest()[:8]
             self.root.metadata.name += f'-{self.hash}'
@@ -1196,7 +1196,7 @@ def generate_resource_manifests(input_params):
     obj = BaseObj()
     namespace_name = inv.parameters.namespace
     namespace = NameSpace(name=namespace_name)
-    if namespace_name != "":
+    if namespace_name != '':
         obj.root['{}-namespace'.format(namespace_name)] = namespace
 
     for secret_name, secret_spec in inv.parameters.generators.kubernetes.secrets.items():

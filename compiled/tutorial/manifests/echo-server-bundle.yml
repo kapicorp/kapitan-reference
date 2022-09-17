@@ -85,15 +85,16 @@ spec:
               subPath: nginx.conf
       initContainers:
         - command:
-            - echo "test"
-          image: docker pull busybox
+            - /bin/touch
+            - /initialised
+          image: busybox
           imagePullPolicy: IfNotPresent
           name: busybox
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
         - configMap:
-            defaultMode: 550
+            defaultMode: 360
             name: echo-server-caa935ba
           name: config
         - name: secret
