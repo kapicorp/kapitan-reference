@@ -1,7 +1,7 @@
 exclude: ^compiled/|^components/charts/
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.3.0
     hooks:
     -   id: trailing-whitespace
     -   id: check-docstring-first
@@ -16,3 +16,12 @@ repos:
     -   id: requirements-txt-fixer
     -   id: double-quote-string-fixer
     -   id: check-merge-conflict
+-   repo: https://github.com/psf/black
+    rev: 22.8.0
+    hooks:
+    -   id: black
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    -   id: isort
+        args: ["--profile", "black"]
