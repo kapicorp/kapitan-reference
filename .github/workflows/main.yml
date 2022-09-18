@@ -17,5 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Kapitan compile
-      uses: ademariag/kapitan/kapitan-compile-action@v1
+# Disable because it's not working
+#    - name: Kapitan compile
+#      uses: ademariag/kapitan/kapitan-compile-action@v1

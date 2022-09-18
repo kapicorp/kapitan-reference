@@ -12,9 +12,11 @@ def main(input_params):
         root = root.get(path, {})
 
     for section_name, content in root.items():
-        if section_name in [ "resource", "data" ]:
+        if section_name in ["resource", "data"]:
             for resource_name, content in content.items():
-               obj.root["{}.tf".format(resource_name)][section_name][resource_name] = content 
+                obj.root["{}.tf".format(resource_name)][section_name][
+                    resource_name
+                ] = content
         else:
             obj.root["{}.tf".format(section_name)][section_name] = content
     return obj

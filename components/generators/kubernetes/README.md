@@ -492,7 +492,7 @@ when the content of the object changes, the hash will be updated accordingly.
 
 ### Shared ConfigMaps and Secrets
 
-The generator can create shared Secrets and ConfigMaps. 
+The generator can create shared Secrets and ConfigMaps.
 
 In secrets, you can define either `string_data` to get a `StringData` secret or `data` to get a `data` secret.
 ```yaml
