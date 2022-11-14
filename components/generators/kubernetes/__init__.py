@@ -36,22 +36,19 @@ class WorkloadCommon(BaseObj):
         self.root.spec.replicas = replicas
 
     def add_containers(self, containers):
-        self.root.spec.template.spec.setdefault("containers", [])
-        self.root.spec.template.spec.containers += [
-            container.root for container in containers
-        ]
+        self.root.spec.template.spec.setdefault("containers", []).extend(
+            [container.root for container in containers]
+        )
 
     def add_init_containers(self, containers):
-        self.root.spec.template.spec.setdefault("initContainers", [])
-        self.root.spec.template.spec.initContainers += [
+        self.root.spec.template.spec.setdefault("initContainers", []).extend(
             container.root for container in containers
-        ]
+        )
 
     def add_volumes(self, volumes):
-        self.root.spec.template.spec.setdefault("volumes", [])
         for key, value in volumes.items():
             merge({"name": key}, value)
-            self.root.spec.template.spec.volumes.append(value)
+            self.root.spec.template.spec.setdefault("volumes", []).append(value)
 
     def add_volume_claims(self, volume_claims):
         self.root.spec.setdefault("volumeClaimTemplates", [])
@@ -75,7 +72,7 @@ class WorkloadCommon(BaseObj):
             if isinstance(self, CronJob):
                 template = self.root.spec.jobTemplate.spec.template
 
-            template.spec.volumes += [
+            template.spec.setdefault("volumes", []).append(
                 {
                     "name": object_name,
                     key: {
@@ -86,7 +83,7 @@ class WorkloadCommon(BaseObj):
                         ],
                     },
                 }
-            ]
+            )
 
 
 class NetworkPolicy(k8s.Base):
@@ -310,8 +307,10 @@ class Service(k8s.Base):
 
         self.add_labels(component.get("labels", {}))
         self.add_annotations(service_spec.annotations)
-        self.root.spec.selector = workload.spec.template.metadata.labels
-        self.root.spec.selector.update(service_spec.selectors)
+        self.root.spec.setdefault("selector", {}).update(
+            workload.spec.template.metadata.labels
+        )
+        self.root.spec.setdefault("selector", {}).update(service_spec.selectors)
         self.root.spec.type = service_spec.type
         if service_spec.get("publish_not_ready_address", False):
             self.root.spec.publishNotReadyAddresses = True
@@ -339,14 +338,14 @@ class Service(k8s.Base):
             self.root.spec.setdefault("ports", [])
             port_spec = exposed_ports[port_name]
             if "service_port" in port_spec:
-                self.root.spec.ports += [
+                self.root.spec.setdefault("ports", []).append(
                     {
                         "name": port_name,
                         "port": port_spec.service_port,
                         "targetPort": port_name,
                         "protocol": port_spec.get("protocol", "TCP"),
                     }
-                ]
+                )
 
 
 class Ingress(k8s.Base):
@@ -484,10 +483,10 @@ class Deployment(k8s.Base, WorkloadCommon):
         }
         super().body()
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels += (
+        self.root.spec.template.metadata.setdefault("labels", {}).update(
             component.labels + self.root.metadata.labels
         )
-        self.root.spec.selector.matchLabels += (
+        self.root.spec.selector.setdefault("matchLabels", {}).update(
             component.labels + self.root.metadata.labels
         )
         self.root.spec.template.spec.restartPolicy = component.get(
@@ -519,10 +518,10 @@ class StatefulSet(k8s.Base, WorkloadCommon):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels += (
+        self.root.spec.template.metadata.setdefault("labels", {}).update(
             component.labels + self.root.metadata.labels
         )
-        self.root.spec.selector.matchLabels += (
+        self.root.spec.selector.setdefault("matchLabels", {}).update(
             component.labels + self.root.metadata.labels
         )
         self.root.spec.template.spec.restartPolicy = component.get(
@@ -555,10 +554,10 @@ class DaemonSet(k8s.Base, WorkloadCommon):
         }
         super().body()
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels += (
+        self.root.spec.template.metadata.setdefault("labels", {}).update(
             component.labels + self.root.metadata.labels
         )
-        self.root.spec.selector.matchLabels += (
+        self.root.spec.selector.setdefault("matchLabels", {}).update(
             component.labels + self.root.metadata.labels
         )
         self.root.spec.template.spec.restartPolicy = component.get(
@@ -585,7 +584,7 @@ class Job(k8s.Base, WorkloadCommon):
         super().body()
         name = self.kwargs.name
         component = self.kwargs.component
-        self.root.spec.template.metadata.labels += (
+        self.root.spec.template.metadata.setdefault("labels", {}).update(
             component.labels + self.root.metadata.labels
         )
         self.root.spec.template.spec.restartPolicy = component.get(
@@ -635,10 +634,11 @@ class Container(BaseObj):
 
     def process_envs(self, container):
         for name, value in sorted(container.env.items()):
-            self.root.setdefault("env", [])
             if isinstance(value, dict):
                 if "fieldRef" in value:
-                    self.root.env += [{"name": name, "valueFrom": value}]
+                    self.root.setdefault("env", []).append(
+                        {"name": name, "valueFrom": value}
+                    )
                 elif "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
                         config_name = self.find_key_in_config(
@@ -652,7 +652,9 @@ class Container(BaseObj):
                                 self.kwargs.name, config_name
                             )
 
-                    self.root.env += [{"name": name, "valueFrom": value}]
+                    self.root.setdefault("env", []).append(
+                        {"name": name, "valueFrom": value}
+                    )
                 if "configMapKeyRef" in value:
                     if "name" not in value["configMapKeyRef"]:
                         config_name = self.find_key_in_config(
@@ -666,9 +668,13 @@ class Container(BaseObj):
                                 self.kwargs.name, config_name
                             )
 
-                    self.root.env += [{"name": name, "valueFrom": value}]
+                    self.root.setdefault("env", []).append(
+                        {"name": name, "valueFrom": value}
+                    )
             else:
-                self.root.env += [{"name": name, "value": str(value)}]
+                self.root.setdefault("env", []).append(
+                    {"name": name, "value": str(value)}
+                )
 
     def add_volume_mounts_from_configs(self):
         name = self.kwargs.name
