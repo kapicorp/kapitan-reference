@@ -6,13 +6,8 @@ ABS_PATH=$(cd "${DIR}"; pwd)
 
 KAPITAN_IMAGE=kapicorp/kapitan:v0.30.0-rc.0
 
-if hash kapitan 2> /dev/null
-then
-  KAPITAN_BINARY=kapitan
-else
-  KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w /src \
-   -v $PWD:/src:delegated \
-   $KAPITAN_IMAGE"
-fi
+KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w /src \
+ -v $PWD:/src:delegated \
+ $KAPITAN_IMAGE"
 
 exec ${KAPITAN_BINARY} "$@"
