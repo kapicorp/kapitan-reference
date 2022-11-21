@@ -15,7 +15,7 @@ def j2(filename, ctx):
     return render_jinja2_file(filename, ctx, search_paths=search_paths)
 
 
-inv = inventory()
+inv = inventory(lazy=True)
 
 
 def merge(source, destination):
