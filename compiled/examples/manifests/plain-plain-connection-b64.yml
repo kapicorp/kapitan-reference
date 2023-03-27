@@ -6,5 +6,5 @@ metadata:
   name: plain-plain-connection-b64
   namespace: examples
 stringData:
-  CONNECTION: postgresql://myUser:myPass/database
+  CONNECTION: postgresql://myUser/database
 type: Opaque
