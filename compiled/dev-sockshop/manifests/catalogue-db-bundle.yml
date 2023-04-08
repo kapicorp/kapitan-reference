@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: catalogue-db
     app.kubernetes.io/part-of: sock-shop
     name: catalogue-db
   name: catalogue-db

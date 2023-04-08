@@ -15,6 +15,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
+      app.kapicorp.dev/component: echo-server
       name: echo-server
   policyTypes:
     - Ingress

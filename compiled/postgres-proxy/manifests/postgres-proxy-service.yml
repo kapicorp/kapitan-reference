@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kapicorp.dev/component: postgres-proxy
     name: postgres-proxy
     tier: db
   name: postgres-proxy

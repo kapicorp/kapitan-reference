@@ -7,7 +7,6 @@ metadata:
   labels:
     name: gke-managed-certificate
   name: gke-managed-certificate
-  namespace: prod-sockshop
 spec:
   backend:
     service:

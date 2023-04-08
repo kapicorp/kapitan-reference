@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kapicorp.dev/component: rabbit-mq
     app.kubernetes.io/part-of: sock-shop
     name: rabbit-mq
   name: rabbit-mq

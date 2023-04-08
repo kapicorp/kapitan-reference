@@ -4,7 +4,6 @@ metadata:
   labels:
     name: global
   name: global
-  namespace: echo-server
 spec:
   rules:
     - http:

@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kapicorp.dev/component: vault
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 1.7.3
     name: vault-internal
@@ -30,6 +31,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kapicorp.dev/component: vault
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 1.7.3
     name: vault-active
@@ -58,6 +60,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kapicorp.dev/component: vault
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 1.7.3
     name: vault-standby

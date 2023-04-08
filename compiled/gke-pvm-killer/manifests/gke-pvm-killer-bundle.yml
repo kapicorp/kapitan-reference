@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: gke-pvm-killer
     name: gke-pvm-killer
   name: gke-pvm-killer
   namespace: gke-pvm-killer
