@@ -34,18 +34,9 @@ class BaseGenerator:
         store = BaseStore()
         if isinstance(output, BaseStore):
             store.add(output)
-
-        elif isinstance(output, list):
-            store.add(output)
-
         elif isinstance(output, BaseContent):
             store.add(output)
 
-        elif isinstance(output.root, list):
-            store.add(output.root)
-
-        elif isinstance(output, BaseObj):
-            store.add([])
         else:
             raise CompileError(f"Unknown output type {output.__class__.__name__}")
         return store

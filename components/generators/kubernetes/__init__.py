@@ -434,9 +434,6 @@ class NamespaceGenerator(kgenlib.BaseStore):
 class Namespace(KubernetesResource):
     resource_type = ResourceTypes.NAMESPACE.value
 
-    def new(self):
-        super().new()
-
     def body(self):
         super().body()
         config = self.config
@@ -448,9 +445,6 @@ class Namespace(KubernetesResource):
 
 class Deployment(Workload):
     resource_type = ResourceTypes.DEPLOYMENT.value
-
-    def new(self):
-        super().new()
 
     def body(self):
         default_strategy = {
@@ -483,9 +477,6 @@ class Deployment(Workload):
 class StatefulSet(Workload):
     resource_type = ResourceTypes.STATEFUL_SET.value
 
-    def new(self):
-        super().new()
-        
     def body(self):
         default_strategy = {}
         update_strategy = {"rollingUpdate": {"partition": 0}, "type": "RollingUpdate"}
@@ -518,9 +509,6 @@ class StatefulSet(Workload):
 class DaemonSet(Workload):
     resource_type = ResourceTypes.DAEMON_SET.value
 
-    def new(self):
-        super().new()
-
     def body(self):
         super().body()
         config = self.config
@@ -546,12 +534,8 @@ class DaemonSet(Workload):
 class Job(Workload):
     resource_type = ResourceTypes.JOB.value
 
-    def new(self):
-        super().new()
-
     def body(self):
         super().body()
-        name = self.name
         config = self.config
         self.root.spec.template.metadata.setdefault("labels", {}).update(
             config.labels + self.root.metadata.labels
@@ -571,12 +555,8 @@ class Job(Workload):
 class CronJob(Workload):
     resource_type = ResourceTypes.CRON_JOB.value
 
-    def new(self):
-        super().new()
-
     def body(self):
         super().body()
-        name = self.name
         config = self.config
         job = self.job
         self.root.metadata = job.root.metadata
@@ -803,12 +783,9 @@ class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
 class PrometheusRule(KubernetesResource):
     resource_type = ResourceTypes.PROMETHEUS_RULE.value
 
-    def new(self):
-        super().new()
-
     def body(self):
-        name = self.name
         super().body()
+        name = self.name
         config = self.config
         self.root.spec.setdefault("groups", []).append(
             {"name": name, "rules": config.prometheus_rules.rules}
@@ -817,14 +794,10 @@ class PrometheusRule(KubernetesResource):
 
 class BackendConfig(KubernetesResource):
     resource_type = ResourceTypes.BACKEND_CONFIG.value
-    def new(self):
-        super().new()
 
     def body(self):
         super().body()
-        name = self.name
-        config = self.config
-        self.root.spec = config.backend_config
+        self.root.spec = self.config.backend_config
 
 
 class ServiceMonitor(KubernetesResource):
