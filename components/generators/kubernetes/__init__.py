@@ -59,16 +59,16 @@ class Workload(KubernetesResource):
                 config.service_account.get("name", name)
             )
 
-        container = Container(name=name, container=config)
+        container = Container(name=name, config=config)
         additional_containers = [
-            Container(name=name, container=component)
-            for name, component in config.additional_containers.items()
+            Container(name=name, config=config)
+            for name, config in config.additional_containers.items()
         ]
         workload.add_containers([container])
         workload.add_containers(additional_containers)
         init_containers = [
-            Container(name=name, container=component)
-            for name, component in config.init_containers.items()
+            Container(name=name, config=config)
+            for name, config in config.init_containers.items()
         ]
 
         workload.add_init_containers(init_containers)
@@ -564,10 +564,10 @@ class CronJob(Workload):
         self.root.spec.schedule = config.schedule
 
 
-class Container(BaseObj):
+class Container(BaseModel):
     def new(self):
-        self.need("name")
-        self.need("container")
+        name: str
+        config: dict
 
     @staticmethod
     def find_key_in_config(key, configs):
@@ -580,55 +580,58 @@ class Container(BaseObj):
             )
         )
 
-    def process_envs(self, container):
-        for name, value in sorted(container.env.items()):
+    def process_envs(self, config):
+        
+        name = self.name
+        
+        for env_name, value in sorted(config.env.items()):
             if isinstance(value, dict):
                 if "fieldRef" in value:
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
                 elif "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
                         config_name = self.find_key_in_config(
-                            value["secretKeyRef"]["key"], container.secrets
+                            value["secretKeyRef"]["key"], config.secrets
                         )
                         # TODO(ademaria) I keep repeating this logic. Refactor.
-                        if len(container.secrets.keys()) == 1:
-                            value["secretKeyRef"]["name"] = self.kwargs.name
+                        if len(config.secrets.keys()) == 1:
+                            value["secretKeyRef"]["name"] = name
                         else:
                             value["secretKeyRef"]["name"] = "{}-{}".format(
-                                self.kwargs.name, config_name
+                                name, config_name
                             )
 
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
                 if "configMapKeyRef" in value:
                     if "name" not in value["configMapKeyRef"]:
                         config_name = self.find_key_in_config(
-                            value["configMapKeyRef"]["key"], container.config_maps
+                            value["configMapKeyRef"]["key"], config.config_maps
                         )
                         # TODO(ademaria) I keep repeating this logic. Refactor.
-                        if len(container.config_maps.keys()) == 1:
-                            value["configMapKeyRef"]["name"] = self.kwargs.name
+                        if len(config.config_maps.keys()) == 1:
+                            value["configMapKeyRef"]["name"] = name
                         else:
                             value["configMapKeyRef"]["name"] = "{}-{}".format(
-                                self.kwargs.name, config_name
+                                name, config_name
                             )
 
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
             else:
                 self.root.setdefault("env", []).append(
-                    {"name": name, "value": str(value)}
+                    {"name": env_name, "value": str(value)}
                 )
 
     def add_volume_mounts_from_configs(self):
-        name = self.kwargs.name
-        container = self.kwargs.container
-        configs = container.config_maps.items()
-        secrets = container.secrets.items()
+        name = self.name
+        config = self.config
+        configs = config.config_maps.items()
+        secrets = config.secrets.items()
         for object_name, spec in configs:
             if spec is None:
                 raise CompileError(
@@ -690,29 +693,29 @@ class Container(BaseObj):
         return probe.root
 
     def body(self):
-        name = self.kwargs.name
-        container = self.kwargs.container
+        name = self.name
+        config = self.config
 
         self.root.name = name
-        self.root.image = container.image
-        self.root.imagePullPolicy = container.get("pull_policy", "IfNotPresent")
-        if container.lifecycle:
-            self.root.lifecycle = container.lifecycle
-        self.root.resources = container.resources
-        self.root.args = container.args
-        self.root.command = container.command
+        self.root.image = config.image
+        self.root.imagePullPolicy = config.get("pull_policy", "IfNotPresent")
+        if config.lifecycle:
+            self.root.lifecycle = config.lifecycle
+        self.root.resources = config.resources
+        self.root.args = config.args
+        self.root.command = config.command
         # legacy container.security
-        if container.security:
+        if config.security:
             self.root.securityContext.allowPrivilegeEscalation = (
-                container.security.allow_privilege_escalation
+                config.security.allow_privilege_escalation
             )
-            self.root.securityContext.runAsUser = container.security.user_id
+            self.root.securityContext.runAsUser = config.security.user_id
         else:
-            self.root.securityContext = container.security_context
+            self.root.securityContext = config.security_context
         self.add_volume_mounts_from_configs()
-        self.add_volume_mounts(container.volume_mounts)
+        self.add_volume_mounts(config.volume_mounts)
 
-        for name, port in sorted(container.ports.items()):
+        for name, port in sorted(config.ports.items()):
             self.root.setdefault("ports", [])
             self.root.ports.append(
                 {
@@ -722,10 +725,10 @@ class Container(BaseObj):
                 }
             )
 
-        self.root.startupProbe = self.create_probe(container.healthcheck.startup)
-        self.root.livenessProbe = self.create_probe(container.healthcheck.liveness)
-        self.root.readinessProbe = self.create_probe(container.healthcheck.readiness)
-        self.process_envs(container)
+        self.root.startupProbe = self.create_probe(config.healthcheck.startup)
+        self.root.livenessProbe = self.create_probe(config.healthcheck.liveness)
+        self.root.readinessProbe = self.create_probe(config.healthcheck.readiness)
+        self.process_envs(config)
 
 
 
