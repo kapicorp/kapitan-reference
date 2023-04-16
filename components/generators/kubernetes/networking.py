@@ -1,12 +1,14 @@
 from kapitan.inputs.kadet import load_from_search_paths
 
-from .common import KubernetesResource, ResourceTypes
+from .common import KubernetesResource, ResourceType
 
 kgenlib = load_from_search_paths("generators")
 
 
 class NetworkPolicy(KubernetesResource):
-    resource_type = ResourceTypes.NETWORK_POLICY.value
+    resource_type = ResourceType(
+        kind="NetworkPolicy", api_version="networking.k8s.io/v1", id="network_policy"
+    )
 
     def new(self):
         super().new()

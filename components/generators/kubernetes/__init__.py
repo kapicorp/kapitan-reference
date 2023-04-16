@@ -10,10 +10,10 @@ from kapitan.inputs.kadet import (
     load_from_search_paths,
 )
 
-from .common import KubernetesResource, ResourceTypes, ResourceType
+from .common import KubernetesResource, ResourceType
 from .networking import NetworkPolicy
 from .rbac import ClusterRole, ClusterRoleBinding, Role, RoleBinding
-from .storage import ConfigMap, Secret, SharedConfig
+from .storage import ConfigMap, Secret
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +195,7 @@ class Workload(KubernetesResource):
 
 
 class ServiceAccount(KubernetesResource):
-    resource_type = ResourceTypes.SERVICE_ACCOUNT.value
+    resource_type = ResourceType(kind="ServiceAccount", api_version="v1", id="service_account")
 
     def new(self):
         super().new()
@@ -268,7 +268,7 @@ class SecretGenerator(kgenlib.BaseStore):
 
 class Service(KubernetesResource):
     
-    resource_type = ResourceTypes.SERVICE.value
+    resource_type = ResourceType(kind="Service", api_version="v1", id="service")
     workload: Workload
     service_spec: dict
     
@@ -327,7 +327,7 @@ class Service(KubernetesResource):
 
 
 class Ingress(KubernetesResource):
-    resource_type = ResourceTypes.INGRESS.value
+    resource_type = ResourceType(kind="Ingress", api_version="networking.k8s.io/v1", id="ingress")
 
     def new(self):
         super().new()
@@ -356,7 +356,7 @@ class Ingress(KubernetesResource):
 
 
 class GoogleManagedCertificate(KubernetesResource):
-    resource_type = ResourceTypes.GOOGLE_MANAGED_CERTIFICATE.value
+    resource_type = ResourceType(kind="ManagedCertificate", api_version="networking.gke.io/v1beta1", id="google_managed_certificate")
 
     def body(self):
         super().body()
@@ -414,7 +414,7 @@ class NamespaceGenerator(kgenlib.BaseStore):
 
 
 class Namespace(KubernetesResource):
-    resource_type = ResourceTypes.NAMESPACE.value
+    resource_type = ResourceType(kind="Namespace", api_version="v1", id="namespace")
 
     def body(self):
         super().body()
@@ -426,7 +426,7 @@ class Namespace(KubernetesResource):
 
 
 class Deployment(Workload):
-    resource_type = ResourceTypes.DEPLOYMENT.value
+    resource_type = ResourceType(kind="Deployment", api_version="apps/v1", id="deployment")
 
     def body(self):
         default_strategy = {
@@ -457,7 +457,7 @@ class Deployment(Workload):
 
 
 class StatefulSet(Workload):
-    resource_type = ResourceTypes.STATEFUL_SET.value
+    resource_type = ResourceType(kind="StatefulSet", api_version="apps/v1", id="stateful_set")
 
     def body(self):
         default_strategy = {}
@@ -489,7 +489,7 @@ class StatefulSet(Workload):
 
 
 class DaemonSet(Workload):
-    resource_type = ResourceTypes.DAEMON_SET.value
+    resource_type = ResourceType(kind="DaemonSet", api_version="apps/v1", id="daemon_set")
 
     def body(self):
         super().body()
@@ -514,7 +514,7 @@ class DaemonSet(Workload):
 
 
 class Job(Workload):
-    resource_type = ResourceTypes.JOB.value
+    resource_type = ResourceType(kind="Job", api_version="batch/v1", id="job")
 
     def body(self):
         super().body()
@@ -535,7 +535,8 @@ class Job(Workload):
 
 
 class CronJob(Workload):
-    resource_type = ResourceTypes.CRON_JOB.value
+    resource_type = ResourceType(kind="Job", api_version="batch/v1beta1", id="cronjob")
+    job: Job
 
     def body(self):
         super().body()
@@ -761,7 +762,7 @@ class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
 
 
 class PrometheusRule(KubernetesResource):
-    resource_type = ResourceTypes.PROMETHEUS_RULE.value
+    resource_type = ResourceType(kind="PrometheusRule", api_version="monitoring.coreos.com/v1", id="prometheus_rule")
 
     def body(self):
         super().body()
@@ -773,7 +774,7 @@ class PrometheusRule(KubernetesResource):
 
 
 class BackendConfig(KubernetesResource):
-    resource_type = ResourceTypes.BACKEND_CONFIG.value
+    resource_type = ResourceType(kind="BackendConfig", api_version="cloud.google.com/v1", id="backend_config")
 
     def body(self):
         super().body()
@@ -781,7 +782,7 @@ class BackendConfig(KubernetesResource):
 
 
 class ServiceMonitor(KubernetesResource):
-    resource_type = ResourceTypes.SERVICE_MONITOR.value
+    resource_type = ResourceType(kind="ServiceMonitor", api_version="monitoring.coreos.com/v1", id="service_monitor")
     workload: Workload 
 
     def new(self):
@@ -804,7 +805,7 @@ class ServiceMonitor(KubernetesResource):
 
 
 class MutatingWebhookConfiguration(KubernetesResource):
-    resource_type = ResourceTypes.MUTATING_WEBHOOK_CONFIGURATION.value
+    resource_type = ResourceType(kind="MutatingWebhookConfiguration", api_version="admissionregistration.k8s.io/v1", id="mutating_webhook_configuration")
     
     def new(self):
         super().new()
@@ -817,7 +818,7 @@ class MutatingWebhookConfiguration(KubernetesResource):
 
 
 class PodDisruptionBudget(KubernetesResource):
-    resource_type = ResourceTypes.POD_DISRUPTION_BUDGET.value
+    resource_type = ResourceType(kind="PodDisruptionBudget", api_version="policy/v1beta1", id="pod_disruption_budget")
     workload: Workload
 
     def new(self):
@@ -836,7 +837,7 @@ class PodDisruptionBudget(KubernetesResource):
 
 
 class VerticalPodAutoscaler(KubernetesResource):
-    resource_type = ResourceTypes.VERTICAL_POD_AUTOSCALER.value
+    resource_type = ResourceType(kind="VerticalPodAutoscaler", api_version="autoscaling.k8s.io/v1beta2", id="vertical_pod_autoscaler")
     workload: Workload
 
     def new(self):
@@ -859,7 +860,7 @@ class VerticalPodAutoscaler(KubernetesResource):
 
 
 class HorizontalPodAutoscaler(KubernetesResource):
-    resource_type = ResourceTypes.HORIZONTAL_POD_AUTOSCALER.value
+    resource_type = ResourceType(kind="HorizontalPodAutoscaler", api_version="autoscaling.k8s.io/v2beta2", id="horizontal_pod_autoscaler")
     workload: Workload
 
     def new(self):
@@ -880,7 +881,7 @@ class HorizontalPodAutoscaler(KubernetesResource):
 
 
 class PodSecurityPolicy(KubernetesResource):
-    resource_type = ResourceTypes.POD_SECURITY_POLICY.value
+    resource_type = ResourceType(kind="PodSecurityPolicy", api_version="policy/v1beta1", id="pod_security_policy")
     workload: Workload
 
     def new(self):

@@ -3,9 +3,9 @@ import hashlib
 import logging
 import os
 
-from kapitan.inputs.kadet import BaseModel, Dict, load_from_search_paths
+from kapitan.inputs.kadet import Dict, load_from_search_paths
 
-from .common import KubernetesResource, ResourceTypes, ResourceType
+from .common import KubernetesResource, ResourceType
 
 logger = logging.getLogger(__name__)
 kgenlib = load_from_search_paths("generators")

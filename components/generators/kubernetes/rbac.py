@@ -1,12 +1,14 @@
 from kapitan.inputs.kadet import load_from_search_paths
 
-from .common import KubernetesResource, ResourceTypes
+from .common import KubernetesResource, ResourceType
 
 kgenlib = load_from_search_paths("generators")
 
 
 class Role(KubernetesResource):
-    resource_type = ResourceTypes.ROLE.value
+    resource_type = ResourceType(
+        kind="Role", api_version="rbac.authorization.k8s.io/v1", id="role"
+    )
 
     def new(self):
         super().new()
@@ -18,7 +20,11 @@ class Role(KubernetesResource):
 
 
 class RoleBinding(KubernetesResource):
-    resource_type = ResourceTypes.ROLE_BINDING.value
+    resource_type = ResourceType(
+        kind="RoleBinding",
+        api_version="rbac.authorization.k8s.io/v1",
+        id="role_binding",
+    )
 
     def new(self):
         super().new()
@@ -44,7 +50,11 @@ class RoleBinding(KubernetesResource):
 
 
 class ClusterRole(KubernetesResource):
-    resource_type = ResourceTypes.CLUSTER_ROLE.value
+    resource_type = ResourceType(
+        kind="ClusterRole",
+        api_version="rbac.authorization.k8s.io/v1",
+        id="cluster_role",
+    )
 
     def new(self):
         super().new()
@@ -56,7 +66,11 @@ class ClusterRole(KubernetesResource):
 
 
 class ClusterRoleBinding(KubernetesResource):
-    resource_type = ResourceTypes.CLUSTER_ROLE_BINDING.value
+    resource_type = ResourceType(
+        kind="ClusterRoleBinding",
+        api_version="rbac.authorization.k8s.io/v1",
+        id="cluster_role_binding",
+    )
 
     def new(self):
         super().new()
