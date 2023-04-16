@@ -5,13 +5,13 @@ import os
 
 from kapitan.inputs.kadet import BaseModel, Dict, load_from_search_paths
 
-from .common import KubernetesResource, ResourceTypes
+from .common import KubernetesResource, ResourceTypes, ResourceType
 
 logger = logging.getLogger(__name__)
 kgenlib = load_from_search_paths("generators")
 
 
-class SharedConfig(BaseModel):
+class SharedConfig(KubernetesResource):
     """Shared class to use for both Secrets and ConfigMaps classes.
 
     containt anything needed by both classes, so that their behavious is basically the same.
@@ -105,22 +105,8 @@ class SharedConfig(BaseModel):
             self.root.metadata.name = self.rendered_name
 
 
-class ConfigMap(KubernetesResource):
-    resource_type = ResourceTypes.CONFIG_MAP.value
+class ConfigMap(SharedConfig):
+    resource_type = ResourceType(kind="ConfigMap", api_version="v1", id="config_map")
 
-    def new(self):
-        super().new()
-
-    def body(self):
-        super().body()
-
-class Secret(KubernetesResource):
-    resource_type = ResourceTypes.SECRET.value
-
-    def new(self):
-        super().new()
-
-    def body(self):
-        super().body()
-
-
+class Secret(SharedConfig):
+    resource_type = ResourceType(kind="Secret", api_version="v1", id="secret")

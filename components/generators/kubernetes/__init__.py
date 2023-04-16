@@ -10,7 +10,7 @@ from kapitan.inputs.kadet import (
     load_from_search_paths,
 )
 
-from .common import Base, KubernetesResource, ResourceTypes
+from .common import KubernetesResource, ResourceTypes, ResourceType
 from .networking import NetworkPolicy
 from .rbac import ClusterRole, ClusterRoleBinding, Role, RoleBinding
 from .storage import ConfigMap, Secret, SharedConfig
@@ -214,7 +214,7 @@ class ServiceAccount(KubernetesResource):
             ]
 
 
-class ComponentConfig(ConfigMap, SharedConfig):
+class ComponentConfig(ConfigMap):
     config: Dict
 
     def new(self):
@@ -228,6 +228,8 @@ class ComponentConfig(ConfigMap, SharedConfig):
             self.add_label("name", self.workload.root.metadata.name)
         self.add_data(self.config.data)
         self.add_directory(self.config.directory, encode=False)
+        if getattr(self, "workload", None):
+            self.workload.add_volumes_for_object(self)
 
 
 @kgenlib.register_generator(path="generators.kubernetes.config_maps")
@@ -236,7 +238,7 @@ class ConfigGenerator(kgenlib.BaseStore):
         self.add(ComponentConfig(name=self.name, config=self.config))
 
 
-class ComponentSecret(Secret, SharedConfig):
+class ComponentSecret(Secret):
     config: Dict
 
     def new(self):
@@ -254,6 +256,8 @@ class ComponentSecret(Secret, SharedConfig):
         if self.config.string_data:
             self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
+        if getattr(self, "workload", None):
+            self.workload.add_volumes_for_object(self)
 
 
 @kgenlib.register_generator(path="generators.kubernetes.secrets")
@@ -353,73 +357,51 @@ class Ingress(KubernetesResource):
 
 class GoogleManagedCertificate(KubernetesResource):
     resource_type = ResourceTypes.GOOGLE_MANAGED_CERTIFICATE.value
-    
-    def new(self):
-        super().new()
 
     def body(self):
         super().body()
-        name = self.name
         config= self.config
         self.root.spec.domains = config.get("domains", [])
 
 
 @kgenlib.register_generator(path="certmanager.issuer")
-class CertManagerIssuer(Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "Issuer"
-        super().new()
+class CertManagerIssuer(KubernetesResource):
+    resource_type = ResourceType(kind="Issuer", api_version="cert-manager.io/v1", id="cert_manager_issuer")
 
     def body(self):
-        config_spec = self.kwargs.config_spec
+        config = self.config
         super().body()
-        self.root.spec = config_spec.get("spec")
+        self.root.spec = config.get("spec")
 
 
 @kgenlib.register_generator(path="certmanager.cluster_issuer")
-class CertManagerClusterIssuer(Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "ClusterIssuer"
-        super().new()
+class CertManagerClusterIssuer(KubernetesResource):
+    resource_type = ResourceType(kind="ClusterIssuer", api_version="cert-manager.io/v1", id="cert_manager_cluster_issuer")
 
     def body(self):
+        config = self.config
         super().body()
-        config_spec = self.kwargs.config_spec
-        self.root.spec = config_spec.get("spec")
+        self.root.spec = config.get("spec")
 
 
 @kgenlib.register_generator(path="certmanager.certificate")
-class CertManagerCertificate(Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "Certificate"
-        super().new()
+class CertManagerCertificate(KubernetesResource):
+    resource_type = ResourceType(kind="Certificate", api_version="cert-manager.io/v1", id="cert_manager_certificate")
 
     def body(self):
-        config_spec = self.kwargs.config_spec
+        config = self.config
         super().body()
-        self.root.spec = config_spec.get("spec")
+        self.root.spec = config.get("spec")
 
 
-class IstioPolicy(Base):
-    def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "authentication.istio.io/v1alpha1"
-        self.kwargs.kind = "Policy"
-        super().new()
+class IstioPolicy(KubernetesResource):
+    resource_type = ResourceType(kind="IstioPolicy", api_version="authentication.istio.io/v1alpha1", id="istio_policy")
 
     def body(self):
-        config_spec = self.kwargs.config_spec
         super().body()
-        component = self.kwargs.component
-        name = self.kwargs.name
-        self.root.spec.origins = component.istio_policy.policies.origins
+        config = self.config
+        name = self.name
+        self.root.spec.origins = config.istio_policy.policies.origins
         self.root.spec.principalBinding = "USE_ORIGIN"
         self.root.spec.targets = [{"name": name}]
 
@@ -775,11 +757,6 @@ class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
                 workload=workload,
             )
 
-            if generated_object.resource_type in (
-                ResourceTypes.CONFIG_MAP.value,
-                ResourceTypes.SECRET.value,
-            ):
-                workload.add_volumes_for_object(generated_object)
             self.add(generated_object)
 
 

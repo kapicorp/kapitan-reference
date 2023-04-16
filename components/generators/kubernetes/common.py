@@ -12,7 +12,6 @@ class ResourceType(BaseModel):
 
 
 class ResourceTypes(Enum):
-    CONFIG_MAP = ResourceType(kind="ConfigMap", api_version="v1", id="config_map")
     VERTICAL_POD_AUTOSCALER = ResourceType(kind="VerticalPodAutoscaler", api_version="autoscaling.k8s.io/v1beta2", id="vertical_pod_autoscaler")
     MUTATING_WEBHOOK_CONFIGURATION = ResourceType(kind="MutatingWebhookConfiguration", api_version="admissionregistration.k8s.io/v1", id="mutating_webhook_configuration")
     BACKEND_CONFIG = ResourceType(kind="BackendConfig", api_version="cloud.google.com/v1", id="backend_config")
@@ -30,7 +29,6 @@ class ResourceTypes(Enum):
     CRON_JOB = ResourceType(kind="Job", api_version="batch/v1beta1", id="cronjob")
     STATEFUL_SET = ResourceType(kind="StatefulSet", api_version="apps/v1", id="stateful_set")
     SERVICE_ACCOUNT = ResourceType(kind="ServiceAccount", api_version="v1", id="service_account")
-    SECRET = ResourceType(kind="Secret", api_version="v1", id="secret")
     SERVICE = ResourceType(kind="Service", api_version="v1", id="service")
     CLUSTER_ROLE_BINDING = ResourceType(
         kind="ClusterRoleBinding",
