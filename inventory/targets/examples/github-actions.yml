@@ -1,0 +1,7 @@
+---
+classes:
+  - common
+  - components.github-runners
+parameters:
+  name: GitHub Runners
+  namespace: actions-runner-system

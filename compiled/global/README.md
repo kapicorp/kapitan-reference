@@ -4,6 +4,7 @@
 |[dev-sockshop](../dev-sockshop/docs/README.md)|
 |[echo-server](../echo-server/docs/README.md)|
 |[examples](../examples/docs/README.md)|
+|[github-actions](../github-actions/docs/README.md)|
 |[gke-pvm-killer](../gke-pvm-killer/docs/README.md)|
 |[global](../global/docs/README.md)|
 |[guestbook-argocd](../guestbook-argocd/docs/README.md)|
