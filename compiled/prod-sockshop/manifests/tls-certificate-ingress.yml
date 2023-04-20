@@ -6,7 +6,6 @@ metadata:
   labels:
     name: tls-certificate
   name: tls-certificate
-  namespace: prod-sockshop
 spec:
   backend:
     service:

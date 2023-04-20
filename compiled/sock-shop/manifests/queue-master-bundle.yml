@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: queue-master
     app.kubernetes.io/part-of: sock-shop
     name: queue-master
   name: queue-master

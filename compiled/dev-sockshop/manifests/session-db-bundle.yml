@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: session-db
     name: session-db
   name: session-db
   namespace: dev-sockshop

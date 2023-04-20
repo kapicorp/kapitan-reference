@@ -12,25 +12,48 @@ parameters:
       output_type: yml
       input_paths:
         - components/generators/kubernetes
-    - output_path: docs
-      input_type: kadet
-      output_type: plain
       input_params:
-        function: generate_docs
-        template_path: templates/docs/service_component.md.j2
-      input_paths:
-        - components/generators/kubernetes
-    - output_path: pre-deploy
-      input_type: kadet
-      output_type: yml
-      input_params:
-        function: generate_pre_deploy
-      input_paths:
-        - components/generators/kubernetes
+        mutations:
+          bundle:
+            - conditions:
+                kind: [Ingress]
+              filename: '{content.component_name}-ingress'
+            - conditions:
+                kind: [Namespace]
+              filename: '{content.component_name}-namespace'
+            - conditions:
+                kind: [Secret]
+              filename: '{content.component_name}-secret'
+            - conditions:
+                kind: [ConfigMap]
+              filename: '{content.component_name}-config'
+            - conditions:
+                kind: [Service]
+              filename: '{content.component_name}-service'
+            - conditions:
+                kind: [ServiceAccount, ClusterRole, ClusterRoleBinding, Role, RoleBinding]
+              filename: '{content.component_name}-rbac'
+            - conditions:
+                kind: [NetworkPolicy]
+              filename: '{content.component_name}-security'
+            - conditions:
+                kind: [ManagedCertificate]
+              filename: 'gke-managed-certificate-managed-certificate'
+            - conditions:
+                kind: [HorizontalPodAutoscaler, PodDisruptionBudget, VerticalPodAutoscaler]
+              filename: '{content.component_name}-scaling'
+            - conditions:
+                kind: ["*"]
+              filename: '{content.component_name}-bundle'
 
   generators:
+    kubernetes:
+      namespace:
+        name:
+          name: ${namespace}
     manifest:
       default_config:
+        namespace: ${namespace}
         type: deployment
         service_account:
           create: false

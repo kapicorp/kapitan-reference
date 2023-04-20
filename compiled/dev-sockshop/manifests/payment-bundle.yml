@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: payment
     app.kubernetes.io/part-of: sock-shop
     name: payment
   name: payment

@@ -4,6 +4,7 @@ metadata:
   annotations:
     manifests.kapicorp.com/generated: 'true'
   labels:
+    app.kapicorp.dev/component: trivy
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 0.18.1
     name: trivy

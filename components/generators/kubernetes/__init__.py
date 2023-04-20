@@ -1,37 +1,143 @@
-import base64
-import hashlib
-import os
+import logging
+from typing import Any
 
-from kapitan.cached import args
-from kapitan.inputs.kadet import BaseObj, CompileError, inventory
-from kapitan.utils import render_jinja2_file
+from kapitan.inputs.kadet import (
+    BaseModel,
+    BaseObj,
+    CompileError,
+    Dict,
+    inventory,
+    load_from_search_paths,
+)
 
-from . import k8s
+from .common import KubernetesResource, ResourceType
+from .networking import NetworkPolicy
+from .rbac import ClusterRole, ClusterRoleBinding, Role, RoleBinding
+from .storage import ConfigMap, Secret
 
-search_paths = args.get("search_paths")
+logger = logging.getLogger(__name__)
+
+kgenlib = load_from_search_paths("generators")
 
 inv = inventory(lazy=True)
 
 
-def j2(filename, ctx):
-    return render_jinja2_file(filename, ctx, search_paths=search_paths)
-
-
-def merge(source, destination):
-    for key, value in source.items():
-        if isinstance(value, dict):
-            node = destination.setdefault(key, value)
-            if node is None:
-                destination[key] = value
-            else:
-                merge(value, node)
+class Workload(KubernetesResource):
+    @classmethod
+    def create_workflow(cls, name, config):
+        config = config
+        name = name
+        if config.type == "deployment":
+            workload = Deployment(name=name, config=config)
+        elif config.type == "statefulset":
+            workload = StatefulSet(name=name, config=config)
+        elif config.type == "daemonset":
+            workload = DaemonSet(name=name, config=config)
+        elif config.type == "job":
+            workload = Job(name=name, config=config)
         else:
-            destination[key] = destination.setdefault(key, value)
+            raise ()
 
-    return destination
+        if config.get("namespace") or inv.parameters.get("namespace"):
+            workload.root.metadata.namespace = config.setdefault(
+                "namespace", inv.parameters.namespace
+            )
+        workload.add_annotations(config.setdefault("annotations", {}))
+        workload.root.spec.template.metadata.annotations = config.get(
+            "pod_annotations", {}
+        )
+        workload.add_labels(config.setdefault("labels", {}))
+        workload.add_volumes(config.setdefault("volumes", {}))
+        workload.add_volume_claims(config.setdefault("volume_claims", {}))
+        workload.root.spec.template.spec.securityContext = (
+            config.workload_security_context
+        )
+        workload.root.spec.minReadySeconds = config.min_ready_seconds
+        if config.service_account.enabled:
+            workload.root.spec.template.spec.serviceAccountName = (
+                config.service_account.get("name", name)
+            )
 
+        container = Container(name=name, config=config)
+        additional_containers = [
+            Container(name=name, config=config)
+            for name, config in config.additional_containers.items()
+        ]
+        workload.add_containers([container])
+        workload.add_containers(additional_containers)
+        init_containers = [
+            Container(name=name, config=config)
+            for name, config in config.init_containers.items()
+        ]
 
-class WorkloadCommon(BaseObj):
+        workload.add_init_containers(init_containers)
+        if config.image_pull_secrets or inv.parameters.image_pull_secrets:
+            workload.root.spec.template.spec.imagePullSecrets = config.get(
+                "image_pull_secrets", inv.parameters.image_pull_secrets
+            )
+        workload.root.spec.template.spec.dnsPolicy = config.dns_policy
+        workload.root.spec.template.spec.terminationGracePeriodSeconds = config.get(
+            "grace_period", 30
+        )
+
+        if config.node_selector:
+            workload.root.spec.template.spec.nodeSelector = config.node_selector
+
+        if config.tolerations:
+            workload.root.spec.template.spec.tolerations = config.tolerations
+
+        affinity = workload.root.spec.template.spec.affinity
+        if config.prefer_pods_in_node_with_expression and not config.node_selector:
+            affinity.nodeAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecutio", []
+            )
+            affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
+                {
+                    "preference": {
+                        "matchExpressions": [config.prefer_pods_in_node_with_expression]
+                    },
+                    "weight": 1,
+                }
+            )
+
+        if config.prefer_pods_in_different_nodes:
+            affinity.podAntiAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecution", []
+            )
+            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
+                {
+                    "podAffinityTerm": {
+                        "labelSelector": {
+                            "matchExpressions": [
+                                {"key": "app", "operator": "In", "values": [name]}
+                            ]
+                        },
+                        "topologyKey": "kubernetes.io/hostname",
+                    },
+                    "weight": 1,
+                }
+            )
+
+        if config.prefer_pods_in_different_zones:
+            affinity.podAntiAffinity.setdefault(
+                "preferredDuringSchedulingIgnoredDuringExecution", []
+            )
+            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
+                {
+                    "podAffinityTerm": {
+                        "labelSelector": {
+                            "matchExpressions": [
+                                {"key": "app", "operator": "In", "values": [name]}
+                            ]
+                        },
+                        "topologyKey": "failure-domain.beta.kubernetes.io/zone",
+                    },
+                    "weight": 1,
+                }
+            )
+
+        return workload
+
     def set_replicas(self, replicas):
         self.root.spec.replicas = replicas
 
@@ -47,265 +153,134 @@ class WorkloadCommon(BaseObj):
 
     def add_volumes(self, volumes):
         for key, value in volumes.items():
-            merge({"name": key}, value)
+            kgenlib.merge({"name": key}, value)
             self.root.spec.template.spec.setdefault("volumes", []).append(value)
 
     def add_volume_claims(self, volume_claims):
         self.root.spec.setdefault("volumeClaimTemplates", [])
         for key, value in volume_claims.items():
-            merge({"metadata": {"name": key, "labels": {"name": key}}}, value)
+            kgenlib.merge({"metadata": {"name": key, "labels": {"name": key}}}, value)
             self.root.spec.volumeClaimTemplates += [value]
 
-    def add_volumes_for_objects(self, objects):
-        for object in objects.root:
-            object_name = object.name
-            rendered_name = object.root.metadata.name
+    def add_volumes_for_object(self, object):
+        object_name = object.object_name
+        rendered_name = object.rendered_name
 
-            if type(object) == ComponentConfig:
-                key = "configMap"
-                name_key = "name"
-            else:
-                key = "secret"
-                name_key = "secretName"
+        if type(object) == ComponentConfig:
+            key = "configMap"
+            name_key = "name"
+        else:
+            key = "secret"
+            name_key = "secretName"
 
-            template = self.root.spec.template
-            if isinstance(self, CronJob):
-                template = self.root.spec.jobTemplate.spec.template
+        template = self.root.spec.template
+        if isinstance(self, CronJob):
+            template = self.root.spec.jobTemplate.spec.template
 
-            template.spec.setdefault("volumes", []).append(
-                {
-                    "name": object_name,
-                    key: {
-                        "defaultMode": object.config.get("default_mode", 420),
-                        name_key: rendered_name,
-                        "items": [
-                            {"key": value, "path": value} for value in object.items
-                        ],
-                    },
-                }
-            )
+        template.spec.setdefault("volumes", []).append(
+            {
+                "name": object_name,
+                key: {
+                    "defaultMode": object.config.get("default_mode", 420),
+                    name_key: rendered_name,
+                    "items": [{"key": value, "path": value} for value in object.items],
+                },
+            }
+        )
 
 
-class NetworkPolicy(k8s.Base):
+class ServiceAccount(KubernetesResource):
+    resource_type = ResourceType(
+        kind="ServiceAccount", api_version="v1", id="service_account"
+    )
+
     def new(self):
-        self.need("config")
-        self.need("workload")
-        self.kwargs.apiVersion = "networking.k8s.io/v1"
-        self.kwargs.kind = "NetworkPolicy"
         super().new()
 
     def body(self):
         super().body()
-        policy = self.kwargs.config
-        workload = self.kwargs.workload
-        self.root.spec.podSelector.matchLabels = workload.metadata.labels
-        self.root.spec.ingress = policy.ingress
-        self.root.spec.egress = policy.egress
-        if self.root.spec.ingress:
-            self.root.spec.setdefault("policyTypes", []).append("Ingress")
-
-        if self.root.spec.egress:
-            self.root.spec.setdefault("policyTypes", []).append("Egress")
-
-
-class ServiceAccount(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "v1"
-        self.kwargs.kind = "ServiceAccount"
-        super().new()
-
-    def body(self):
-        super().body()
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.add_annotations(component.service_account.annotations)
-        if component.image_pull_secrets or inv.parameters.pull_secret.name:
+        config = self.config
+        self.add_annotations(config.service_account.annotations)
+        if config.image_pull_secrets or inv.parameters.pull_secret.name:
             self.root.imagePullSecrets = [
                 {
-                    "name": component.get(
+                    "name": config.get(
                         "image_pull_secrets", inv.parameters.pull_secret.name
                     )
                 }
             ]
 
 
-class SharedConfig:
-    """Shared class to use for both Secrets and ConfigMaps classes.
+class ComponentConfig(ConfigMap):
+    config: Dict
 
-    containt anything needed by both classes, so that their behavious is basically the same.
-    Each subclass will then implement its own way of adding the data depending on their implementation.
-    """
-
-    @staticmethod
-    def encode_string(unencoded_string):
-        return base64.b64encode(unencoded_string.encode("ascii")).decode("ascii")
-
-    def setup_metadata(self):
-        self.add_namespace(
-            self.config.get(
-                "namespace",
-                self.kwargs.component.get("namespace", inv.parameters.namespace),
-            )
-        )
-
-        self.add_annotations(self.config.annotations)
-        self.add_labels(self.config.labels)
-
-        self.items = self.config["items"]
-        try:
-            if isinstance(self, ConfigMap):
-                globals = (
-                    inv.parameters.generators.manifest.default_config.globals.config_maps
-                )
-            else:
-                globals = (
-                    inv.parameters.generators.manifest.default_config.globals.secrets
-                )
-            self.add_annotations(globals.get("annotations", {}))
-            self.add_labels(globals.get("labels", {}))
-        except AttributeError:
-            pass
-
-    def add_directory(self, directory, encode=False):
-        stringdata = inv.parameters.get("use_tesoro", False)
-        if directory and os.path.isdir(directory):
-            for filename in os.listdir(directory):
-                with open(f"{directory}/{filename}", "r") as f:
-                    file_content = f.read()
-                    self.add_item(
-                        filename,
-                        file_content,
-                        request_encode=encode,
-                        stringdata=stringdata,
-                    )
-
-    def add_data(self, data):
-        stringdata = inv.parameters.get("use_tesoro", False)
-
-        for key, spec in data.items():
-            encode = spec.get("b64_encode", False)
-
-            if "value" in spec:
-                value = spec.get("value")
-            if "template" in spec:
-                value = j2(spec.template, spec.get("values", {}))
-            if "file" in spec:
-                with open(spec.file, "r") as f:
-                    value = f.read()
-
-            self.add_item(key, value, request_encode=encode, stringdata=stringdata)
-
-    def add_string_data(self, string_data, encode=False):
-        stringdata = True
-
-        for key, spec in string_data.items():
-
-            if "value" in spec:
-                value = spec.get("value")
-            if "template" in spec:
-                value = j2(spec.template, spec.get("values", {}))
-            if "file" in spec:
-                with open(spec.file, "r") as f:
-                    value = f.read()
-
-            self.add_item(key, value, request_encode=encode, stringdata=stringdata)
-
-    def versioning(self, enabled=False):
-        if enabled:
-            keys_of_interest = ["data", "binaryData", "stringData"]
-            subset = {
-                key: value
-                for key, value in self.root.to_dict().items()
-                if key in keys_of_interest
-            }
-            self.hash = hashlib.sha256(str(subset).encode()).hexdigest()[:8]
-            self.root.metadata.name += f"-{self.hash}"
-
-
-class ConfigMap(k8s.Base, SharedConfig):
     def new(self):
-        self.kwargs.apiVersion = "v1"
-        self.kwargs.kind = "ConfigMap"
         super().new()
 
     def body(self):
         super().body()
-
-    def add_item(self, key, value, request_encode=False, stringdata=False):
-        encode = request_encode
-
-        self.root["data"][key] = self.encode_string(value) if encode else value
-
-
-class ComponentConfig(ConfigMap, SharedConfig):
-    def new(self):
-        self.need("config")
-        super().new()
-
-    def body(self):
-        super().body()
-        self.config = self.kwargs.config
-
-        self.setup_metadata()
+        self.versioning_enabled = self.config.get("versioned", False)
+        self.setup_metadata(inventory=inv)
+        if getattr(self, "workload", None) and self.workload.root.metadata.name:
+            self.add_label("name", self.workload.root.metadata.name)
         self.add_data(self.config.data)
         self.add_directory(self.config.directory, encode=False)
-        self.versioning(self.config.get("versioned", False))
+        if getattr(self, "workload", None):
+            self.workload.add_volumes_for_object(self)
 
 
-class Secret(k8s.Base):
+@kgenlib.register_generator(path="generators.kubernetes.config_maps")
+class ConfigGenerator(kgenlib.BaseStore):
+    def body(self):
+        self.add(ComponentConfig(name=self.name, config=self.config))
+
+
+class ComponentSecret(Secret):
+    config: Dict
+
     def new(self):
-        self.kwargs.apiVersion = "v1"
-        self.kwargs.kind = "Secret"
         super().new()
 
     def body(self):
         super().body()
-
-    def add_item(self, key, value, request_encode=False, stringdata=False):
-        encode = not stringdata and request_encode
-        field = "stringData" if stringdata else "data"
-        self.root[field][key] = self.encode_string(value) if encode else value
-
-
-class ComponentSecret(Secret, SharedConfig):
-    def new(self):
-        self.need("config")
-        super().new()
-
-    def body(self):
-        super().body()
-        self.config = self.kwargs.config
         self.root.type = self.config.get("type", "Opaque")
-
-        self.setup_metadata()
+        self.versioning_enabled = self.config.get("versioned", False)
+        if getattr(self, "workload", None) and self.workload.root.metadata.name:
+            self.add_label("name", self.workload.root.metadata.name)
+        self.setup_metadata(inventory=inv)
         if self.config.data:
             self.add_data(self.config.data)
         if self.config.string_data:
             self.add_string_data(self.config.string_data)
         self.add_directory(self.config.directory, encode=True)
-        self.versioning(self.config.get("versioned", False))
+        if getattr(self, "workload", None):
+            self.workload.add_volumes_for_object(self)
 
 
-class Service(k8s.Base):
+@kgenlib.register_generator(path="generators.kubernetes.secrets")
+class SecretGenerator(kgenlib.BaseStore):
+    def body(self):
+        self.add(ComponentSecret(name=self.name, config=self.config))
+
+
+class Service(KubernetesResource):
+
+    resource_type = ResourceType(kind="Service", api_version="v1", id="service")
+    workload: Workload
+    service_spec: dict
+
     def new(self):
-        self.need("component")
-        self.need("workload")
-        self.need("service_spec")
-        self.kwargs.apiVersion = "v1"
-        self.kwargs.kind = "Service"
         super().new()
 
     def body(self):
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        service_spec = self.kwargs.service_spec
+        config = self.config
+        workload = self.workload.root
+        service_spec = self.service_spec
 
-        self.kwargs.name = service_spec.get("service_name", self.kwargs.name)
+        self.name = service_spec.get("service_name", self.name)
         super().body()
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
 
-        self.add_labels(component.get("labels", {}))
+        self.add_labels(config.get("labels", {}))
         self.add_annotations(service_spec.annotations)
         self.root.spec.setdefault("selector", {}).update(
             workload.spec.template.metadata.labels
@@ -318,9 +293,9 @@ class Service(k8s.Base):
             self.root.spec.clusterIP = "None"
         self.root.spec.clusterIP
         self.root.spec.sessionAffinity = service_spec.get("session_affinity", "None")
-        all_ports = [component.ports] + [
+        all_ports = [config.ports] + [
             container.ports
-            for container in component.additional_containers.values()
+            for container in config.additional_containers.values()
             if "ports" in container
         ]
 
@@ -337,144 +312,139 @@ class Service(k8s.Base):
         for port_name in sorted(exposed_ports):
             self.root.spec.setdefault("ports", [])
             port_spec = exposed_ports[port_name]
-            if "service_port" in port_spec:
+            service_port = port_spec.get("service_port", None)
+            if service_port:
                 self.root.spec.setdefault("ports", []).append(
                     {
                         "name": port_name,
-                        "port": port_spec.service_port,
+                        "port": service_port,
                         "targetPort": port_name,
                         "protocol": port_spec.get("protocol", "TCP"),
                     }
                 )
 
 
-class Ingress(k8s.Base):
+class Ingress(KubernetesResource):
+    resource_type = ResourceType(
+        kind="Ingress", api_version="networking.k8s.io/v1", id="ingress"
+    )
+
     def new(self):
-        self.need("name")
-        self.need("ingress")
-        self.kwargs.apiVersion = "networking.k8s.io/v1"
-        self.kwargs.kind = "Ingress"
         super().new()
 
     def body(self):
         super().body()
-        ingress = self.kwargs.ingress
-        self.add_namespace(ingress.get("namespace", inv.parameters.namespace))
-        import json
+        config = self.config
 
-        self.add_annotations(ingress.get("annotations", {}))
-        self.add_labels(ingress.get("labels", {}))
-        if "default_backend" in ingress:
-            self.root.spec.backend.service.name = ingress.default_backend.get("name")
-            self.root.spec.backend.service.port = ingress.default_backend.get(
-                "port", 80
+        self.add_annotations(config.get("annotations", {}))
+        self.add_labels(config.get("labels", {}))
+        if "default_backend" in config:
+            self.root.spec.backend.service.name = config.default_backend.get("name")
+            self.root.spec.backend.service.port = config.default_backend.get("port", 80)
+        if "paths" in config:
+            host = config.host
+            paths = config.paths
+            self.root.spec.setdefault("rules", []).extend(
+                [{"host": host, "http": {"paths": paths}}]
             )
-        if "paths" in ingress:
-            host = ingress.host
-            paths = ingress.paths
-            self.root.spec.rules = [{"host": host, "http": {"paths": paths}}]
-        if ingress.tls:
-            self.root.spec.tls = ingress.tls
+        if "rules" in config:
+            self.root.spec.setdefault("rules", []).extend(config.rules)
+        if config.tls:
+            self.root.spec.tls = config.tls
 
 
-class ManagedCertificate(k8s.Base):
-    def new(self):
-        self.need("name")
-        self.need("domains")
-        self.kwargs.apiVersion = "networking.gke.io/v1beta1"
-        self.kwargs.kind = "ManagedCertificate"
-        super().new()
+class GoogleManagedCertificate(KubernetesResource):
+    resource_type = ResourceType(
+        kind="ManagedCertificate",
+        api_version="networking.gke.io/v1beta1",
+        id="google_managed_certificate",
+    )
 
     def body(self):
         super().body()
-        name = self.kwargs.name
-        domains = self.kwargs.domains
-        self.add_namespace(inv.parameters.namespace)
-        self.root.spec.domains = domains
+        config = self.config
+        self.root.spec.domains = config.get("domains", [])
 
 
-class CertManagerIssuer(k8s.Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "Issuer"
-        super().new()
+@kgenlib.register_generator(path="certmanager.issuer")
+class CertManagerIssuer(KubernetesResource):
+    resource_type = ResourceType(
+        kind="Issuer", api_version="cert-manager.io/v1", id="cert_manager_issuer"
+    )
 
     def body(self):
-        config_spec = self.kwargs.config_spec
-        self.add_namespace(config_spec.get("namespace", inv.parameters.namespace))
+        config = self.config
         super().body()
-        self.root.spec = config_spec.get("spec")
+        self.root.spec = config.get("spec")
 
 
-class CertManagerClusterIssuer(k8s.Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "ClusterIssuer"
-        super().new()
+@kgenlib.register_generator(path="certmanager.cluster_issuer")
+class CertManagerClusterIssuer(KubernetesResource):
+    resource_type = ResourceType(
+        kind="ClusterIssuer",
+        api_version="cert-manager.io/v1",
+        id="cert_manager_cluster_issuer",
+    )
+
+    def body(self):
+        config = self.config
+        super().body()
+        self.root.spec = config.get("spec")
+
+
+@kgenlib.register_generator(path="certmanager.certificate")
+class CertManagerCertificate(KubernetesResource):
+    resource_type = ResourceType(
+        kind="Certificate",
+        api_version="cert-manager.io/v1",
+        id="cert_manager_certificate",
+    )
+
+    def body(self):
+        config = self.config
+        super().body()
+        self.root.spec = config.get("spec")
+
+
+class IstioPolicy(KubernetesResource):
+    resource_type = ResourceType(
+        kind="IstioPolicy",
+        api_version="authentication.istio.io/v1alpha1",
+        id="istio_policy",
+    )
 
     def body(self):
         super().body()
-        config_spec = self.kwargs.config_spec
-        self.root.spec = config_spec.get("spec")
-
-
-class CertManagerCertificate(k8s.Base):
-    def new(self):
-        self.need("config_spec")
-        self.kwargs.apiVersion = "cert-manager.io/v1"
-        self.kwargs.kind = "Certificate"
-        super().new()
-
-    def body(self):
-        config_spec = self.kwargs.config_spec
-        self.add_namespace(config_spec.get("namespace", inv.parameters.namespace))
-        super().body()
-        self.root.spec = config_spec.get("spec")
-
-
-class IstioPolicy(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "authentication.istio.io/v1alpha1"
-        self.kwargs.kind = "Policy"
-        super().new()
-
-    def body(self):
-        config_spec = self.kwargs.config_spec
-        self.add_namespace(config_spec.get("namespace", inv.parameters.namespace))
-        super().body()
-        component = self.kwargs.component
-        name = self.kwargs.name
-        self.root.spec.origins = component.istio_policy.policies.origins
+        config = self.config
+        name = self.name
+        self.root.spec.origins = config.istio_policy.policies.origins
         self.root.spec.principalBinding = "USE_ORIGIN"
         self.root.spec.targets = [{"name": name}]
 
 
-class NameSpace(k8s.Base):
-    def new(self):
-        self.need("name")
-        self.kwargs.apiVersion = "v1"
-        self.kwargs.kind = "Namespace"
-        super().new()
+@kgenlib.register_generator(path="generators.kubernetes.namespace")
+class NamespaceGenerator(kgenlib.BaseStore):
+    def body(self):
+        name = self.config.get("name", self.name)
+        self.add(Namespace(name=name, config=self.config))
+
+
+class Namespace(KubernetesResource):
+    resource_type = ResourceType(kind="Namespace", api_version="v1", id="namespace")
 
     def body(self):
         super().body()
-        name = self.kwargs.name
-        labels = inv.parameters.generators.kubernetes.namespace.labels
-        annotations = inv.parameters.generators.kubernetes.namespace.annotations
+        config = self.config
+        labels = config.get("labels", {})
+        annotations = config.get("annotations", {})
         self.add_labels(labels)
         self.add_annotations(annotations)
 
 
-class Deployment(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "apps/v1"
-        self.kwargs.kind = "Deployment"
-        super().new()
+class Deployment(Workload):
+    resource_type = ResourceType(
+        kind="Deployment", api_version="apps/v1", id="deployment"
+    )
 
     def body(self):
         default_strategy = {
@@ -482,144 +452,125 @@ class Deployment(k8s.Base, WorkloadCommon):
             "rollingUpdate": {"maxSurge": "25%", "maxUnavailable": "25%"},
         }
         super().body()
-        component = self.kwargs.component
+        config = self.config
         self.root.spec.template.metadata.setdefault("labels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
         self.root.spec.selector.setdefault("matchLabels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
-        self.root.spec.template.spec.restartPolicy = component.get(
+        self.root.spec.template.spec.restartPolicy = config.get(
             "restart_policy", "Always"
         )
-        if "host_network" in component:
-            self.root.spec.template.spec.hostNetwork = component.host_network
-        if "host_pid" in component:
-            self.root.spec.template.spec.hostPID = component.host_pid
-        self.root.spec.strategy = component.get("update_strategy", default_strategy)
-        self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        if "host_network" in config:
+            self.root.spec.template.spec.hostNetwork = config.host_network
+        if "host_pid" in config:
+            self.root.spec.template.spec.hostPID = config.host_pid
+        self.root.spec.strategy = config.get("update_strategy", default_strategy)
+        self.root.spec.revisionHistoryLimit = config.revision_history_limit
         self.root.spec.progressDeadlineSeconds = (
-            component.deployment_progress_deadline_seconds
+            config.deployment_progress_deadline_seconds
         )
-        self.set_replicas(component.get("replicas", 1))
+        self.set_replicas(config.get("replicas", 1))
 
 
-class StatefulSet(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "apps/v1"
-        self.kwargs.kind = "StatefulSet"
-        super().new()
+class StatefulSet(Workload):
+    resource_type = ResourceType(
+        kind="StatefulSet", api_version="apps/v1", id="stateful_set"
+    )
 
     def body(self):
         default_strategy = {}
         update_strategy = {"rollingUpdate": {"partition": 0}, "type": "RollingUpdate"}
 
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
+        name = self.name
+        config = self.config
         self.root.spec.template.metadata.setdefault("labels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
         self.root.spec.selector.setdefault("matchLabels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
-        self.root.spec.template.spec.restartPolicy = component.get(
+        self.root.spec.template.spec.restartPolicy = config.get(
             "restart_policy", "Always"
         )
-        if "host_network" in component:
-            self.root.spec.template.spec.hostNetwork = component.host_network
-        if "host_pid" in component:
-            self.root.spec.template.spec.hostPID = component.host_pid
-        self.root.spec.revisionHistoryLimit = component.revision_history_limit
-        self.root.spec.strategy = component.get("strategy", default_strategy)
-        self.root.spec.updateStrategy = component.get(
-            "update_strategy", update_strategy
-        )
-        self.root.spec.serviceName = component.service.get("service_name", name)
-        self.set_replicas(component.get("replicas", 1))
+        if "host_network" in config:
+            self.root.spec.template.spec.hostNetwork = config.host_network
+        if "host_pid" in config:
+            self.root.spec.template.spec.hostPID = config.host_pid
+        self.root.spec.revisionHistoryLimit = config.revision_history_limit
+        self.root.spec.strategy = config.get("strategy", default_strategy)
+        self.root.spec.updateStrategy = config.get("update_strategy", update_strategy)
+        self.root.spec.serviceName = config.service.get("service_name", name)
+        self.set_replicas(config.get("replicas", 1))
 
 
-class DaemonSet(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "apps/v1"
-        self.kwargs.kind = "DaemonSet"
-        super().new()
+class DaemonSet(Workload):
+    resource_type = ResourceType(
+        kind="DaemonSet", api_version="apps/v1", id="daemon_set"
+    )
 
     def body(self):
-        default_strategy = {
-            "type": "RollingUpdate",
-            "rollingUpdate": {"maxSurge": "25%", "maxUnavailable": "25%"},
-        }
         super().body()
-        component = self.kwargs.component
+        config = self.config
         self.root.spec.template.metadata.setdefault("labels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
         self.root.spec.selector.setdefault("matchLabels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
-        self.root.spec.template.spec.restartPolicy = component.get(
+        self.root.spec.template.spec.restartPolicy = config.get(
             "restart_policy", "Always"
         )
-        if "host_network" in component:
-            self.root.spec.template.spec.hostNetwork = component.host_network
-        if "host_pid" in component:
-            self.root.spec.template.spec.hostPID = component.host_pid
-        self.root.spec.revisionHistoryLimit = component.revision_history_limit
+        if "host_network" in config:
+            self.root.spec.template.spec.hostNetwork = config.host_network
+        if "host_pid" in config:
+            self.root.spec.template.spec.hostPID = config.host_pid
+        self.root.spec.revisionHistoryLimit = config.revision_history_limit
         self.root.spec.progressDeadlineSeconds = (
-            component.deployment_progress_deadline_seconds
+            config.deployment_progress_deadline_seconds
         )
 
 
-class Job(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.kwargs.apiVersion = "batch/v1"
-        self.kwargs.kind = "Job"
-        super().new()
-        self.need("component")
+class Job(Workload):
+    resource_type = ResourceType(kind="Job", api_version="batch/v1", id="job")
 
     def body(self):
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
+        config = self.config
         self.root.spec.template.metadata.setdefault("labels", {}).update(
-            component.labels + self.root.metadata.labels
+            config.labels + self.root.metadata.labels
         )
-        self.root.spec.template.spec.restartPolicy = component.get(
+        self.root.spec.template.spec.restartPolicy = config.get(
             "restart_policy", "Never"
         )
-        if "host_network" in component:
-            self.root.spec.template.spec.hostNetwork = component.host_network
-        if "host_pid" in component:
-            self.root.spec.template.spec.hostPID = component.host_pid
-        self.root.spec.backoffLimit = component.get("backoff_limit", 1)
-        self.root.spec.completions = component.get("completions", 1)
-        self.root.spec.parallelism = component.get("parallelism", 1)
+        if "host_network" in config:
+            self.root.spec.template.spec.hostNetwork = config.host_network
+        if "host_pid" in config:
+            self.root.spec.template.spec.hostPID = config.host_pid
+        self.root.spec.backoffLimit = config.get("backoff_limit", 1)
+        self.root.spec.completions = config.get("completions", 1)
+        self.root.spec.parallelism = config.get("parallelism", 1)
 
 
-class CronJob(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.need("component")
-        self.need("job")
-        self.kwargs.apiVersion = "batch/v1beta1"
-        self.kwargs.kind = "CronJob"
-        super().new()
+class CronJob(Workload):
+    resource_type = ResourceType(kind="Job", api_version="batch/v1beta1", id="cronjob")
+    job: Job
 
     def body(self):
         super().body()
-        component = self.kwargs.component
-        job = self.kwargs.job
+        config = self.config
+        job = self.job
         self.root.metadata = job.root.metadata
         self.root.spec.jobTemplate.spec = job.root.spec
-        self.root.spec.schedule = component.schedule
+        self.root.spec.schedule = config.schedule
 
 
-class Container(BaseObj):
+class Container(BaseModel):
     def new(self):
-        self.need("name")
-        self.need("container")
+        name: str
+        config: dict
 
     @staticmethod
     def find_key_in_config(key, configs):
@@ -632,55 +583,58 @@ class Container(BaseObj):
             )
         )
 
-    def process_envs(self, container):
-        for name, value in sorted(container.env.items()):
+    def process_envs(self, config):
+
+        name = self.name
+
+        for env_name, value in sorted(config.env.items()):
             if isinstance(value, dict):
                 if "fieldRef" in value:
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
                 elif "secretKeyRef" in value:
                     if "name" not in value["secretKeyRef"]:
                         config_name = self.find_key_in_config(
-                            value["secretKeyRef"]["key"], container.secrets
+                            value["secretKeyRef"]["key"], config.secrets
                         )
                         # TODO(ademaria) I keep repeating this logic. Refactor.
-                        if len(container.secrets.keys()) == 1:
-                            value["secretKeyRef"]["name"] = self.kwargs.name
+                        if len(config.secrets.keys()) == 1:
+                            value["secretKeyRef"]["name"] = name
                         else:
                             value["secretKeyRef"]["name"] = "{}-{}".format(
-                                self.kwargs.name, config_name
+                                name, config_name
                             )
 
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
                 if "configMapKeyRef" in value:
                     if "name" not in value["configMapKeyRef"]:
                         config_name = self.find_key_in_config(
-                            value["configMapKeyRef"]["key"], container.config_maps
+                            value["configMapKeyRef"]["key"], config.config_maps
                         )
                         # TODO(ademaria) I keep repeating this logic. Refactor.
-                        if len(container.config_maps.keys()) == 1:
-                            value["configMapKeyRef"]["name"] = self.kwargs.name
+                        if len(config.config_maps.keys()) == 1:
+                            value["configMapKeyRef"]["name"] = name
                         else:
                             value["configMapKeyRef"]["name"] = "{}-{}".format(
-                                self.kwargs.name, config_name
+                                name, config_name
                             )
 
                     self.root.setdefault("env", []).append(
-                        {"name": name, "valueFrom": value}
+                        {"name": env_name, "valueFrom": value}
                     )
             else:
                 self.root.setdefault("env", []).append(
-                    {"name": name, "value": str(value)}
+                    {"name": env_name, "value": str(value)}
                 )
 
     def add_volume_mounts_from_configs(self):
-        name = self.kwargs.name
-        container = self.kwargs.container
-        configs = container.config_maps.items()
-        secrets = container.secrets.items()
+        name = self.name
+        config = self.config
+        configs = config.config_maps.items()
+        secrets = config.secrets.items()
         for object_name, spec in configs:
             if spec is None:
                 raise CompileError(
@@ -715,7 +669,7 @@ class Container(BaseObj):
 
     def add_volume_mounts(self, volume_mounts):
         for key, value in volume_mounts.items():
-            merge({"name": key}, value)
+            kgenlib.merge({"name": key}, value)
             self.root.setdefault("volumeMounts", []).append(value)
 
     @staticmethod
@@ -742,29 +696,29 @@ class Container(BaseObj):
         return probe.root
 
     def body(self):
-        name = self.kwargs.name
-        container = self.kwargs.container
+        name = self.name
+        config = self.config
 
         self.root.name = name
-        self.root.image = container.image
-        self.root.imagePullPolicy = container.get("pull_policy", "IfNotPresent")
-        if container.lifecycle:
-            self.root.lifecycle = container.lifecycle
-        self.root.resources = container.resources
-        self.root.args = container.args
-        self.root.command = container.command
+        self.root.image = config.image
+        self.root.imagePullPolicy = config.get("pull_policy", "IfNotPresent")
+        if config.lifecycle:
+            self.root.lifecycle = config.lifecycle
+        self.root.resources = config.resources
+        self.root.args = config.args
+        self.root.command = config.command
         # legacy container.security
-        if container.security:
+        if config.security:
             self.root.securityContext.allowPrivilegeEscalation = (
-                container.security.allow_privilege_escalation
+                config.security.allow_privilege_escalation
             )
-            self.root.securityContext.runAsUser = container.security.user_id
+            self.root.securityContext.runAsUser = config.security.user_id
         else:
-            self.root.securityContext = container.security_context
+            self.root.securityContext = config.security_context
         self.add_volume_mounts_from_configs()
-        self.add_volume_mounts(container.volume_mounts)
+        self.add_volume_mounts(config.volume_mounts)
 
-        for name, port in sorted(container.ports.items()):
+        for name, port in sorted(config.ports.items()):
             self.root.setdefault("ports", [])
             self.root.ports.append(
                 {
@@ -774,138 +728,13 @@ class Container(BaseObj):
                 }
             )
 
-        self.root.startupProbe = self.create_probe(container.healthcheck.startup)
-        self.root.livenessProbe = self.create_probe(container.healthcheck.liveness)
-        self.root.readinessProbe = self.create_probe(container.healthcheck.readiness)
-        self.process_envs(container)
+        self.root.startupProbe = self.create_probe(config.healthcheck.startup)
+        self.root.livenessProbe = self.create_probe(config.healthcheck.liveness)
+        self.root.readinessProbe = self.create_probe(config.healthcheck.readiness)
+        self.process_envs(config)
 
 
-class Workload(WorkloadCommon):
-    def new(self):
-        self.need("name")
-        self.need("component")
-
-    def body(self):
-        component = self.kwargs.component
-        name = self.kwargs.name
-        if component.type == "deployment":
-            workload = Deployment(name=name, component=self.kwargs.component)
-        elif component.type == "statefulset":
-            workload = StatefulSet(name=name, component=self.kwargs.component)
-        elif component.type == "daemonset":
-            workload = DaemonSet(name=name, component=self.kwargs.component)
-        elif component.type == "job":
-            workload = Job(name=name, component=self.kwargs.component)
-        else:
-            raise ()
-
-        if component.get("namespace") or inv.parameters.get("namespace"):
-            workload.root.metadata.namespace = component.setdefault(
-                "namespace", inv.parameters.namespace
-            )
-        workload.add_annotations(component.setdefault("annotations", {}))
-        workload.root.spec.template.metadata.annotations = component.get(
-            "pod_annotations", {}
-        )
-        workload.add_labels(component.setdefault("labels", {}))
-        workload.add_volumes(component.setdefault("volumes", {}))
-        workload.add_volume_claims(component.setdefault("volume_claims", {}))
-        workload.root.spec.template.spec.securityContext = (
-            component.workload_security_context
-        )
-        workload.root.spec.minReadySeconds = component.min_ready_seconds
-        if component.service_account.enabled:
-            workload.root.spec.template.spec.serviceAccountName = (
-                component.service_account.get("name", name)
-            )
-
-        container = Container(name=name, container=component)
-        additional_containers = [
-            Container(name=name, container=component)
-            for name, component in component.additional_containers.items()
-        ]
-        workload.add_containers([container])
-        workload.add_containers(additional_containers)
-        init_containers = [
-            Container(name=name, container=component)
-            for name, component in component.init_containers.items()
-        ]
-
-        workload.add_init_containers(init_containers)
-        if component.image_pull_secrets or inv.parameters.image_pull_secrets:
-            workload.root.spec.template.spec.imagePullSecrets = component.get(
-                "image_pull_secrets", inv.parameters.image_pull_secrets
-            )
-        workload.root.spec.template.spec.dnsPolicy = component.dns_policy
-        workload.root.spec.template.spec.terminationGracePeriodSeconds = component.get(
-            "grace_period", 30
-        )
-
-        if component.node_selector:
-            workload.root.spec.template.spec.nodeSelector = component.node_selector
-
-        if component.tolerations:
-            workload.root.spec.template.spec.tolerations = component.tolerations
-
-        affinity = workload.root.spec.template.spec.affinity
-        if (
-            component.prefer_pods_in_node_with_expression
-            and not component.node_selector
-        ):
-            affinity.nodeAffinity.setdefault(
-                "preferredDuringSchedulingIgnoredDuringExecutio", []
-            )
-            affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
-                {
-                    "preference": {
-                        "matchExpressions": [
-                            component.prefer_pods_in_node_with_expression
-                        ]
-                    },
-                    "weight": 1,
-                }
-            )
-
-        if component.prefer_pods_in_different_nodes:
-            affinity.podAntiAffinity.setdefault(
-                "preferredDuringSchedulingIgnoredDuringExecution", []
-            )
-            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
-                {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions": [
-                                {"key": "app", "operator": "In", "values": [name]}
-                            ]
-                        },
-                        "topologyKey": "kubernetes.io/hostname",
-                    },
-                    "weight": 1,
-                }
-            )
-
-        if component.prefer_pods_in_different_zones:
-            affinity.podAntiAffinity.setdefault(
-                "preferredDuringSchedulingIgnoredDuringExecution", []
-            )
-            affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
-                {
-                    "podAffinityTerm": {
-                        "labelSelector": {
-                            "matchExpressions": [
-                                {"key": "app", "operator": "In", "values": [name]}
-                            ]
-                        },
-                        "topologyKey": "failure-domain.beta.kubernetes.io/zone",
-                    },
-                    "weight": 1,
-                }
-            )
-
-        self.root = workload.root
-
-
-class GenerateMultipleObjectsForClass(BaseObj):
+class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
     """Helper to generate multiple classes
 
     As a convention for generators we have that if you define only one policy/config/secret configuration
@@ -916,243 +745,156 @@ class GenerateMultipleObjectsForClass(BaseObj):
     This class helps achieve that for policies/config/secrets to avoid duplication.
     """
 
-    def new(self):
-        self.need("name")
-        self.need("component")
-        self.need("objects")
-        self.need("generating_class")
-        self.need("workload")
-        self.root = []
+    component_config: dict
+    generating_class: Any
+    workload: Any
 
     def body(self):
-        objects = self.kwargs.objects
-        name = self.kwargs.name
-        component = self.kwargs.component
-        generating_class = self.kwargs.generating_class
-        workload = self.kwargs.workload
+        component_config = self.component_config
+        name = self.name
+        objects_configs = self.config
+        generating_class = self.generating_class
+        workload = self.workload
 
-        for object_name, object_config in objects.items():
+        for object_name, object_config in objects_configs.items():
             if object_config == None:
                 raise CompileError(
                     f"error with '{object_name}' for component {name}: configuration cannot be empty!"
                 )
 
-            if len(objects.items()) == 1:
-                rendered_name = f"{name}"
+            if len(objects_configs.items()) == 1:
+                name = f"{self.name}"
             else:
-                rendered_name = f"{name}-{object_name}"
+                name = f"{self.name}-{object_name}"
 
-            self.root.append(
-                generating_class(
-                    name=object_name,
-                    rendered_name=rendered_name,
-                    config=object_config,
-                    component=component,
-                    workload=workload,
-                )
+            generated_object = generating_class(
+                name=name,
+                object_name=object_name,
+                config=object_config,
+                component=component_config,
+                workload=workload,
             )
 
+            self.add(generated_object)
 
-class PrometheusRule(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "monitoring.coreos.com/v1"
-        self.kwargs.kind = "PrometheusRule"
-        super().new()
+
+class PrometheusRule(KubernetesResource):
+    resource_type = ResourceType(
+        kind="PrometheusRule",
+        api_version="monitoring.coreos.com/v1",
+        id="prometheus_rule",
+    )
 
     def body(self):
-        # TODO(ademaria) This name mangling is here just to simplify diff.
-        # Change it once done
-        component_name = self.kwargs.name
-        self.kwargs.name = "{}.rules".format(component_name)
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-
-        # TODO(ademaria): use `name` instead of `tesoro.rules`
+        name = self.name
+        config = self.config
         self.root.spec.setdefault("groups", []).append(
-            {"name": "tesoro.rules", "rules": component.prometheus_rules.rules}
+            {"name": name, "rules": config.prometheus_rules.rules}
         )
 
 
-class BackendConfig(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "cloud.google.com/v1"
-        self.kwargs.kind = "BackendConfig"
-        super().new()
+class BackendConfig(KubernetesResource):
+    resource_type = ResourceType(
+        kind="BackendConfig", api_version="cloud.google.com/v1", id="backend_config"
+    )
 
     def body(self):
-        component_name = self.kwargs.name
-        self.kwargs.name = f"{component_name}-backend-config"
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.root.spec = component.backend_config
+        self.root.spec = self.config.backend_config
 
 
-class ServiceMonitor(k8s.Base):
+class ServiceMonitor(KubernetesResource):
+    resource_type = ResourceType(
+        kind="ServiceMonitor",
+        api_version="monitoring.coreos.com/v1",
+        id="service_monitor",
+    )
+    workload: Workload
+
     def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "monitoring.coreos.com/v1"
-        self.kwargs.kind = "ServiceMonitor"
         super().new()
 
     def body(self):
         # TODO(ademaria) This name mangling is here just to simplify diff.
         # Change it once done
-        component_name = self.kwargs.name
-        workload = self.kwargs.workload
-        self.kwargs.name = "{}-metrics".format(component_name)
+        name = self.name
+        workload = self.workload
+        self.name = "{}-metrics".format(name)
 
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.root.spec.endpoints = component.service_monitors.endpoints
+        name = self.name
+        config = self.config
+        self.root.spec.endpoints = config.service_monitors.endpoints
         self.root.spec.jobLabel = name
-        self.root.spec.namespaceSelector.matchNames = [inv.parameters.namespace]
-        self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
+        self.root.spec.namespaceSelector.matchNames = [self.namespace]
+        self.root.spec.selector.matchLabels = (
+            workload.root.spec.template.metadata.labels
+        )
 
 
-class MutatingWebhookConfiguration(k8s.Base):
+class MutatingWebhookConfiguration(KubernetesResource):
+    resource_type = ResourceType(
+        kind="MutatingWebhookConfiguration",
+        api_version="admissionregistration.k8s.io/v1",
+        id="mutating_webhook_configuration",
+    )
+
     def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "admissionregistration.k8s.io/v1beta1"
-        self.kwargs.kind = "MutatingWebhookConfiguration"
         super().new()
 
     def body(self):
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.root.webhooks = component.webhooks
+        name = self.name
+        config = self.config
+        self.root.webhooks = config.webhooks
 
 
-class Role(k8s.Base):
+class PodDisruptionBudget(KubernetesResource):
+    resource_type = ResourceType(
+        kind="PodDisruptionBudget",
+        api_version="policy/v1beta1",
+        id="pod_disruption_budget",
+    )
+    workload: Workload
+
     def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "Role"
         super().new()
 
     def body(self):
         super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.root.rules = component.role.rules
-
-
-class RoleBinding(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "RoleBinding"
-        super().new()
-
-    def body(self):
-        super().body()
-        default_role_ref = {
-            "apiGroup": "rbac.authorization.k8s.io",
-            "kind": "Role",
-            "name": self.kwargs.component.name,
-        }
-        default_subject = [
-            {
-                "kind": "ServiceAccount",
-                "name": self.kwargs.component.name,
-            }
-        ]
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.root.roleRef = component.get("roleRef", default_role_ref)
-        self.root.subjects = component.get("subject", default_subject)
-
-
-class ClusterRole(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "ClusterRole"
-        super().new()
-
-    def body(self):
-        super().body()
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.root.rules = component.cluster_role.rules
-
-
-class ClusterRoleBinding(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.kwargs.apiVersion = "rbac.authorization.k8s.io/v1"
-        self.kwargs.kind = "ClusterRoleBinding"
-        super().new()
-
-    def body(self):
-        super().body()
-        default_role_ref = {
-            "apiGroup": "rbac.authorization.k8s.io",
-            "kind": "ClusterRole",
-            "name": self.kwargs.component.name,
-        }
-        default_subject = [
-            {
-                "kind": "ServiceAccount",
-                "name": self.kwargs.component.name,
-                "namespace": inv.parameters.namespace,
-            }
-        ]
-        name = self.kwargs.name
-        component = self.kwargs.component
-        self.root.roleRef = component.get("roleRef", default_role_ref)
-        self.root.subjects = component.get("subject", default_subject)
-
-
-class PodDisruptionBudget(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "policy/v1beta1"
-        self.kwargs.kind = "PodDisruptionBudget"
-        super().new()
-
-    def body(self):
-        super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        if component.auto_pdb:
+        config = self.config
+        workload = self.workload
+        self.add_namespace(config.get("namespace", inv.parameters.namespace))
+        if config.auto_pdb:
             self.root.spec.maxUnavailable = 1
         else:
-            self.root.spec.minAvailable = component.pdb_min_available
-        self.root.spec.selector.matchLabels = workload.spec.template.metadata.labels
+            self.root.spec.minAvailable = config.pdb_min_available
+        self.root.spec.selector.matchLabels = (
+            workload.root.spec.template.metadata.labels
+        )
 
 
-class VerticalPodAutoscaler(k8s.Base):
+class VerticalPodAutoscaler(KubernetesResource):
+    resource_type = ResourceType(
+        kind="VerticalPodAutoscaler",
+        api_version="autoscaling.k8s.io/v1beta2",
+        id="vertical_pod_autoscaler",
+    )
+    workload: Workload
+
     def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "autoscaling.k8s.io/v1beta2"
-        self.kwargs.kind = "VerticalPodAutoscaler"
         super().new()
 
     def body(self):
         super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        self.add_namespace(inv.parameters.namespace)
-        self.add_labels(workload.metadata.labels)
-        self.root.spec.targetRef.apiVersion = workload.apiVersion
+        config = self.config
+        workload = self.workload
+        self.add_labels(workload.root.metadata.labels)
+        self.root.spec.targetRef.apiVersion = workload.api_version
         self.root.spec.targetRef.kind = workload.kind
-        self.root.spec.targetRef.name = workload.metadata.name
-        self.root.spec.updatePolicy.updateMode = component.vpa
+        self.root.spec.targetRef.name = workload.name
+        self.root.spec.updatePolicy.updateMode = config.vpa
 
         # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
         self.root.spec.resourcePolicy.containerPolicies = [
@@ -1160,113 +902,54 @@ class VerticalPodAutoscaler(k8s.Base):
         ]
 
 
-class HorizontalPodAutoscaler(k8s.Base):
+class HorizontalPodAutoscaler(KubernetesResource):
+    resource_type = ResourceType(
+        kind="HorizontalPodAutoscaler",
+        api_version="autoscaling.k8s.io/v2beta2",
+        id="horizontal_pod_autoscaler",
+    )
+    workload: Workload
+
     def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "autoscaling/v2beta2"
-        self.kwargs.kind = "HorizontalPodAutoscaler"
         super().new()
 
     def body(self):
         super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
+        config = self.config
+        workload = self.workload
         self.add_namespace(inv.parameters.namespace)
-        self.add_labels(workload.metadata.labels)
-        self.root.spec.scaleTargetRef.apiVersion = workload.apiVersion
+        self.add_labels(workload.root.metadata.labels)
+        self.root.spec.scaleTargetRef.apiVersion = workload.api_version
         self.root.spec.scaleTargetRef.kind = workload.kind
-        self.root.spec.scaleTargetRef.name = workload.metadata.name
-        self.root.spec.minReplicas = component.hpa.min_replicas
-        self.root.spec.maxReplicas = component.hpa.max_replicas
-        self.root.spec.metrics = component.hpa.metrics
+        self.root.spec.scaleTargetRef.name = workload.name
+        self.root.spec.minReplicas = config.hpa.min_replicas
+        self.root.spec.maxReplicas = config.hpa.max_replicas
+        self.root.spec.metrics = config.hpa.metrics
 
 
-class VerticalPodAutoscaler(k8s.Base):
+class PodSecurityPolicy(KubernetesResource):
+    resource_type = ResourceType(
+        kind="PodSecurityPolicy", api_version="policy/v1beta1", id="pod_security_policy"
+    )
+    workload: Workload
+
     def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "autoscaling.k8s.io/v1beta2"
-        self.kwargs.kind = "VerticalPodAutoscaler"
         super().new()
 
     def body(self):
         super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        self.add_labels(workload.metadata.labels)
-        self.root.spec.targetRef.apiVersion = workload.apiVersion
-        self.root.spec.targetRef.kind = workload.kind
-        self.root.spec.targetRef.name = workload.metadata.name
-        self.root.spec.updatePolicy.updateMode = component.vpa
-
-        # TODO(ademaria) Istio blacklist is always desirable but add way to make it configurable.
-        self.root.spec.resourcePolicy.containerPolicies = [
-            {"containerName": "istio-proxy", "mode": "Off"}
-        ]
-
-
-class PodSecurityPolicy(k8s.Base):
-    def new(self):
-        self.need("component")
-        self.need("workload")
-        self.kwargs.apiVersion = "policy/v1beta1"
-        self.kwargs.kind = "PodSecurityPolicy"
-        super().new()
-
-    def body(self):
-        super().body()
-        component = self.kwargs.component
-        workload = self.kwargs.workload
-        self.add_namespace(component.get("namespace", inv.parameters.namespace))
-        # relativly RAW input here, there is not much to be automatically generated
-        self.root.spec = component.pod_security_policy.spec
+        config = self.config
+        self.root.spec = config.pod_security_policy.spec
         # Merge Dicts into PSP Annotations
         self.root.metadata.annotations = {
-            **component.get("annotations", {}),
-            **component.pod_security_policy.get("annotations", {}),
+            **config.get("annotations", {}),
+            **config.pod_security_policy.get("annotations", {}),
         }
         # Merge Dicts into PSP Labels
         self.root.metadata.labels = {
-            **component.get("labels", {}),
-            **component.pod_security_policy.get("labels", {}),
+            **config.get("labels", {}),
+            **config.pod_security_policy.get("labels", {}),
         }
-
-
-def get_components():
-    if "components" in inv.parameters:
-        generator_defaults = inv.parameters.generators.manifest.default_config
-
-        for name, component in inv.parameters.components.items():
-            if component.get("enabled", True):
-                if "application" in component:
-                    application_defaults = inv.parameters.applications.get(
-                        component.application, {}
-                    ).get("component_defaults", {})
-                    merge(generator_defaults, application_defaults)
-                    if component.get("type", "undefined") in component.globals:
-                        merge(
-                            application_defaults,
-                            component.globals.get(component.type, {}),
-                        )
-                    merge(application_defaults, component)
-
-                merge(generator_defaults, component)
-                component_type = component.get("type", generator_defaults.type)
-                if (
-                    component_type
-                    in inv.parameters.generators.manifest.resource_defaults
-                ):
-                    component_defaults = (
-                        inv.parameters.generators.manifest.resource_defaults[
-                            component_type
-                        ]
-                    )
-                    merge(component_defaults, component)
-
-                component.name = name
-                yield name, component
 
 
 def generate_docs(input_params):
@@ -1274,7 +957,7 @@ def generate_docs(input_params):
     template = input_params.get("template_path", None)
     if template:
         for name, component in get_components():
-            obj.root["{}-readme.md".format(name)] = j2(
+            obj.root["{}-readme.md".format(name)] = kgenlib.render_jinja(
                 template,
                 {
                     "service_component": component.to_dict(),
@@ -1284,244 +967,189 @@ def generate_docs(input_params):
     return obj
 
 
-def generate_resource_manifests(input_params):
-    obj = BaseObj()
-    namespace_name = inv.parameters.namespace
-    namespace = NameSpace(name=namespace_name)
-    if namespace_name != "":
-        obj.root["{}-namespace".format(namespace_name)] = namespace
+@kgenlib.register_generator(path="ingresses")
+class IngressComponent(kgenlib.BaseStore):
+    name: str
+    config: Any
 
-    for (
-        secret_name,
-        secret_spec,
-    ) in inv.parameters.generators.kubernetes.secrets.items():
-        name = secret_spec.get("name", secret_name)
-        secret = ComponentSecret(name=name, config=secret_spec)
-        obj.root[f"{name}"] = secret
+    def body(self):
+        name = self.name
+        config = self.config
+        ingress = Ingress(name=name, config=config)
+        self.add(ingress)
 
-    if inv.parameters.generators.kubernetes.cert_manager:
-        cert_manager = inv.parameters.generators.kubernetes.cert_manager
-
-        for cert_name, cert_spec in cert_manager.certs.items():
-            if cert_spec.get("type", "certmanager") == "certmanager":
-                name = cert_spec.get("name", cert_name)
-                cmc = CertManagerCertificate(name=name, config_spec=cert_spec)
-                obj.root[f"{name}-cm-cert"] = cmc
-
-        for issuer_name, issuer_spec in cert_manager.issuers.items():
-            if issuer_spec.get("type", "certmanager") == "certmanager":
-                name = issuer_spec.get("name", issuer_name)
-                cmi = CertManagerIssuer(name=name, config_spec=issuer_spec)
-                obj.root[f"{name}-cm-issuer"] = cmi
-
-        for issuer_name, issuer_spec in cert_manager.clusterissuers.items():
-            if issuer_spec.get("type", "certmanager") == "certmanager":
-                name = issuer_spec.get("name", issuer_name)
-                cmci = CertManagerClusterIssuer(name=name, config_spec=issuer_spec)
-                obj.root[f"{name}-cmc-issuer"] = cmci
-    return obj
-
-
-def generate_ingress(input_params):
-    # Only generate ingress manifest if istio not enabled
-    if not inv.parameters.istio.enabled:
-        obj = BaseObj()
-        bundle = list()
-        ingresses = inv.parameters.ingresses
-        for name in ingresses.keys():
-            ingress = Ingress(name=name, ingress=ingresses[name])
-
-            if "managed_certificate" in ingresses[name]:
-                certificate_spec = ingresses[name]
-                certificate_name = certificate_spec.managed_certificate
-                additional_domains = certificate_spec.get("additional_domains", [])
-                domains = [certificate_name] + additional_domains
-                ingress.add_annotations(
-                    {"networking.gke.io/managed-certificates": certificate_name}
+        if "managed_certificate" in config:
+            certificate_name = config.managed_certificate
+            additional_domains = config.get("additional_domains", [])
+            domains = [certificate_name] + additional_domains
+            ingress.add_annotations(
+                {"networking.gke.io/managed-certificates": certificate_name}
+            )
+            self.add(
+                GoogleManagedCertificate(
+                    name=certificate_name, config={"domains": domains}
                 )
-                certificate = ManagedCertificate(name=certificate_name, domains=domains)
-                obj.root["{}-managed-certificate".format(name)] = certificate
-
-            obj.root["{}-ingress".format(name)] = ingress
-
-        return obj
+            )
 
 
-def generate_component_manifests(input_params):
-    obj = BaseObj()
-    for name, component in get_components():
-        bundle_workload = []
-        bundle_configs = []
-        bundle_secrets = []
-        bundle_service = []
-        bundle_rbac = []
-        bundle_scaling = []
-        bundle_security = []
+@kgenlib.register_generator(
+    path="components",
+    apply_patches=[
+        "generators.manifest.default_config",
+        "applications.{application}.component_defaults",
+    ],
+)
+class Components(kgenlib.BaseStore):
+    def body(self):
+        name = self.name
+        config = self.config
+        workload = Workload.create_workflow(name=name, config=config)
 
-        workload = Workload(name=name, component=component)
+        logging.debug(f"Generating component {name} from {config}")
+        if config.schedule:
+            workload = CronJob(name=name, config=config, job=workload)
 
-        if component.schedule:
-            workload = CronJob(name=name, component=component, job=workload)
-
-        workload_spec = workload.root
-
-        bundle_workload += [workload_spec]
+        workload.add_label("app.kapicorp.dev/component", name)
 
         configs = GenerateMultipleObjectsForClass(
             name=name,
-            component=component,
+            component_config=config,
             generating_class=ComponentConfig,
-            objects=component.config_maps,
-            workload=workload_spec,
+            config=config.config_maps,
+            workload=workload,
         )
+
+        map(lambda x: x.add_label("app.kapicorp.dev/component", name), configs)
 
         secrets = GenerateMultipleObjectsForClass(
             name=name,
-            component=component,
+            component_config=config,
             generating_class=ComponentSecret,
-            objects=component.secrets,
-            workload=workload_spec,
+            config=config.secrets,
+            workload=workload,
         )
 
-        workload.add_volumes_for_objects(configs)
-        workload.add_volumes_for_objects(secrets)
+        map(lambda x: x.add_label("app.kapicorp.dev/component", name), secrets)
 
-        bundle_configs += configs.root
-        bundle_secrets += secrets.root
+        self.add(workload)
+        self.add(configs)
+        self.add(secrets)
 
         if (
-            component.vpa
+            config.vpa
             and inv.parameters.get("enable_vpa", True)
-            and component.type != "job"
+            and config.type != "job"
         ):
-            vpa = VerticalPodAutoscaler(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_scaling += [vpa]
+            vpa = VerticalPodAutoscaler(name=name, config=config, workload=workload)
+            vpa.add_label("app.kapicorp.dev/component", name)
+            self.add(vpa)
 
-        if component.pdb_min_available:
-            pdb = PodDisruptionBudget(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_scaling += [pdb]
+        if config.pdb_min_available:
+            pdb = PodDisruptionBudget(name=name, config=config, workload=workload)
+            pdb.add_label("app.kapicorp.dev/component", name)
+            self.add(pdb)
 
-        if component.hpa:
-            hpa = HorizontalPodAutoscaler(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_scaling += [hpa]
+        if config.hpa:
+            hpa = HorizontalPodAutoscaler(name=name, config=config, workload=workload)
+            hpa.add_label("app.kapicorp.dev/component", name)
+            self.add(hpa)
 
-        if component.type != "job":
-            if component.pdb_min_available or component.auto_pdb:
-                pdb = PodDisruptionBudget(
-                    name=name, component=component, workload=workload_spec
-                ).root
-                bundle_scaling += [pdb]
-        if component.istio_policy:
-            istio_policy = IstioPolicy(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_security += [istio_policy]
+        if config.type != "job":
+            if config.pdb_min_available or config.auto_pdb:
+                pdb = PodDisruptionBudget(name=name, config=config, workload=workload)
+                pdb.add_label("app.kapicorp.dev/component", name)
+                self.add(pdb)
 
-        if component.pod_security_policy:
-            psp = PodSecurityPolicy(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_security += [psp]
+        if config.istio_policy:
+            istio_policy = IstioPolicy(name=name, config=config, workload=workload)
+            istio_policy.add_label("app.kapicorp.dev/component", name)
+            self.add(istio_policy)
 
-        if component.service:
+        if config.pod_security_policy:
+            psp = PodSecurityPolicy(name=name, config=config, workload=workload)
+            psp.add_label("app.kapicorp.dev/component", name)
+            self.add(psp)
+
+        if config.service:
             service = Service(
                 name=name,
-                component=component,
-                workload=workload_spec,
-                service_spec=component.service,
-            ).root
-            bundle_service += [service]
+                config=config,
+                workload=workload,
+                service_spec=config.service,
+            )
+            service.add_label("app.kapicorp.dev/component", name)
+            self.add(service)
 
-        if component.additional_services:
-            for service_name, service_spec in component.additional_services.items():
+        if config.additional_services:
+            for service_name, service_spec in config.additional_services.items():
                 service = Service(
                     name=service_name,
-                    component=component,
-                    workload=workload_spec,
+                    config=config,
+                    workload=workload,
                     service_spec=service_spec,
-                ).root
-                bundle_service += [service]
+                )
+                service.add_label("app.kapicorp.dev/component", name)
+                self.add(service)
 
-        if component.network_policies:
+        if config.network_policies:
             policies = GenerateMultipleObjectsForClass(
                 name=name,
-                component=component,
+                component_config=config,
                 generating_class=NetworkPolicy,
-                objects=component.network_policies,
-                workload=workload_spec,
-            ).root
-            bundle_security += policies
+                config=config.network_policies,
+                workload=workload,
+            )
+            map(lambda x: x.add_label("app.kapicorp.dev/component", name), policies)
+            self.add(policies)
 
-        if component.webhooks:
-            webhooks = MutatingWebhookConfiguration(name=name, component=component).root
-            bundle_workload += [webhooks]
+        if config.webhooks:
+            webhooks = MutatingWebhookConfiguration(name=name, config=config)
+            webhooks.add_label("app.kapicorp.dev/component", name)
+            self.add(webhooks)
 
-        if component.service_monitors:
+        if config.service_monitors:
             service_monitor = ServiceMonitor(
-                name=name, component=component, workload=workload_spec
-            ).root
-            bundle_workload += [service_monitor]
+                name=name, config=config, workload=workload
+            )
+            service_monitor.add_label("app.kapicorp.dev/component", name)
+            self.add(service_monitor)
 
-        if component.prometheus_rules:
-            prometheus_rule = PrometheusRule(name=name, component=component).root
-            bundle_workload += [prometheus_rule]
+        if config.prometheus_rules:
+            prometheus_rule = PrometheusRule(name=name, config=config)
+            prometheus_rule.add_label("app.kapicorp.dev/component", name)
+            self.add(prometheus_rule)
 
-        if component.role:
-            role = Role(name=name, component=component).root
-            bundle_rbac += [role]
-            role_binding = RoleBinding(name=name, component=component).root
-            bundle_rbac += [role_binding]
+        if config.service_account.get("create", False):
+            sa_name = config.service_account.get("name", name)
+            sa = ServiceAccount(name=sa_name, config=config)
+            sa.add_label("app.kapicorp.dev/component", name)
+            self.add(sa)
 
-        if component.cluster_role:
-            cluster_role = ClusterRole(name=name, component=component).root
-            bundle_rbac += [cluster_role]
-            cluster_role_binding = ClusterRoleBinding(
-                name=name, component=component
-            ).root
-            bundle_rbac += [cluster_role_binding]
+        if config.role:
+            role = Role(name=name, config=config)
+            role.add_label("app.kapicorp.dev/component", name)
+            self.add(role)
+            role_binding = RoleBinding(name=name, config=config, sa=sa)
+            role_binding.add_label("app.kapicorp.dev/component", name)
+            self.add(role_binding)
 
-        if component.backend_config:
-            backend_config = BackendConfig(name=name, component=component).root
-            bundle_workload += [backend_config]
+        if config.cluster_role:
+            cluster_role = ClusterRole(name=name, config=config)
+            self.add(cluster_role)
+            cluster_role.add_label("app.kapicorp.dev/component", name)
+            cluster_role_binding = ClusterRoleBinding(name=name, config=config, sa=sa)
+            cluster_role_binding.add_label("app.kapicorp.dev/component", name)
+            self.add(cluster_role_binding)
 
-        if component.service_account.get("create", False):
-            sa_name = component.service_account.get("name", name)
-            sa = ServiceAccount(name=sa_name, component=component).root
-            bundle_rbac += [sa]
-
-        obj.root["{}-bundle".format(name)] = bundle_workload
-        obj.root["{}-config".format(name)] = bundle_configs
-        obj.root["{}-secret".format(name)] = bundle_secrets
-        obj.root["{}-service".format(name)] = bundle_service
-        obj.root["{}-rbac".format(name)] = bundle_rbac
-        obj.root["{}-scaling".format(name)] = bundle_scaling
-        obj.root["{}-security".format(name)] = bundle_security
-
-    return obj
-
-
-def generate_manifests(input_params):
-    all_manifests = BaseObj()
-
-    component_manifests = generate_component_manifests(input_params)
-    ingress_manifests = generate_ingress(input_params)
-    resource_manifests = generate_resource_manifests(input_params)
-
-    all_manifests.root = component_manifests.root
-    all_manifests.root.update(ingress_manifests.root)
-    all_manifests.root.update(resource_manifests.root)
-
-    return all_manifests
+        if config.backend_config:
+            backend_config = BackendConfig(name=name, config=config)
+            backend_config.add_label("app.kapicorp.dev/component", name)
+            self.add(backend_config)
 
 
 def main(input_params):
-    whitelisted_functions = ["generate_manifests", "generate_docs"]
-    function = input_params.get("function", "generate_manifests")
-    if function in whitelisted_functions:
-        return globals()[function](input_params)
+    kgenlib.BaseGenerator.inventory = inventory
+    store = kgenlib.BaseGenerator.generate()
+    store.process_mutations(input_params.get("mutations", {}))
+
+    return store.dump()
