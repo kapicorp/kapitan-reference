@@ -23,7 +23,6 @@ inv = inventory(lazy=True)
 
 
 class Workload(KubernetesResource):
-      
     @classmethod
     def create_workflow(cls, name, config):
         config = config
@@ -88,19 +87,14 @@ class Workload(KubernetesResource):
             workload.root.spec.template.spec.tolerations = config.tolerations
 
         affinity = workload.root.spec.template.spec.affinity
-        if (
-            config.prefer_pods_in_node_with_expression
-            and not config.node_selector
-        ):
+        if config.prefer_pods_in_node_with_expression and not config.node_selector:
             affinity.nodeAffinity.setdefault(
                 "preferredDuringSchedulingIgnoredDuringExecutio", []
             )
             affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution.append(
                 {
                     "preference": {
-                        "matchExpressions": [
-                            config.prefer_pods_in_node_with_expression
-                        ]
+                        "matchExpressions": [config.prefer_pods_in_node_with_expression]
                     },
                     "weight": 1,
                 }
@@ -143,6 +137,7 @@ class Workload(KubernetesResource):
             )
 
         return workload
+
     def set_replicas(self, replicas):
         self.root.spec.replicas = replicas
 
@@ -195,7 +190,9 @@ class Workload(KubernetesResource):
 
 
 class ServiceAccount(KubernetesResource):
-    resource_type = ResourceType(kind="ServiceAccount", api_version="v1", id="service_account")
+    resource_type = ResourceType(
+        kind="ServiceAccount", api_version="v1", id="service_account"
+    )
 
     def new(self):
         super().new()
@@ -267,11 +264,11 @@ class SecretGenerator(kgenlib.BaseStore):
 
 
 class Service(KubernetesResource):
-    
+
     resource_type = ResourceType(kind="Service", api_version="v1", id="service")
     workload: Workload
     service_spec: dict
-    
+
     def new(self):
         super().new()
 
@@ -315,11 +312,12 @@ class Service(KubernetesResource):
         for port_name in sorted(exposed_ports):
             self.root.spec.setdefault("ports", [])
             port_spec = exposed_ports[port_name]
-            if "service_port" in port_spec:
+            service_port = port_spec.get("service_port", None)
+            if service_port:
                 self.root.spec.setdefault("ports", []).append(
                     {
                         "name": port_name,
-                        "port": port_spec.service_port,
+                        "port": service_port,
                         "targetPort": port_name,
                         "protocol": port_spec.get("protocol", "TCP"),
                     }
@@ -327,7 +325,9 @@ class Service(KubernetesResource):
 
 
 class Ingress(KubernetesResource):
-    resource_type = ResourceType(kind="Ingress", api_version="networking.k8s.io/v1", id="ingress")
+    resource_type = ResourceType(
+        kind="Ingress", api_version="networking.k8s.io/v1", id="ingress"
+    )
 
     def new(self):
         super().new()
@@ -340,9 +340,7 @@ class Ingress(KubernetesResource):
         self.add_labels(config.get("labels", {}))
         if "default_backend" in config:
             self.root.spec.backend.service.name = config.default_backend.get("name")
-            self.root.spec.backend.service.port = config.default_backend.get(
-                "port", 80
-            )
+            self.root.spec.backend.service.port = config.default_backend.get("port", 80)
         if "paths" in config:
             host = config.host
             paths = config.paths
@@ -356,17 +354,23 @@ class Ingress(KubernetesResource):
 
 
 class GoogleManagedCertificate(KubernetesResource):
-    resource_type = ResourceType(kind="ManagedCertificate", api_version="networking.gke.io/v1beta1", id="google_managed_certificate")
+    resource_type = ResourceType(
+        kind="ManagedCertificate",
+        api_version="networking.gke.io/v1beta1",
+        id="google_managed_certificate",
+    )
 
     def body(self):
         super().body()
-        config= self.config
+        config = self.config
         self.root.spec.domains = config.get("domains", [])
 
 
 @kgenlib.register_generator(path="certmanager.issuer")
 class CertManagerIssuer(KubernetesResource):
-    resource_type = ResourceType(kind="Issuer", api_version="cert-manager.io/v1", id="cert_manager_issuer")
+    resource_type = ResourceType(
+        kind="Issuer", api_version="cert-manager.io/v1", id="cert_manager_issuer"
+    )
 
     def body(self):
         config = self.config
@@ -376,7 +380,11 @@ class CertManagerIssuer(KubernetesResource):
 
 @kgenlib.register_generator(path="certmanager.cluster_issuer")
 class CertManagerClusterIssuer(KubernetesResource):
-    resource_type = ResourceType(kind="ClusterIssuer", api_version="cert-manager.io/v1", id="cert_manager_cluster_issuer")
+    resource_type = ResourceType(
+        kind="ClusterIssuer",
+        api_version="cert-manager.io/v1",
+        id="cert_manager_cluster_issuer",
+    )
 
     def body(self):
         config = self.config
@@ -386,7 +394,11 @@ class CertManagerClusterIssuer(KubernetesResource):
 
 @kgenlib.register_generator(path="certmanager.certificate")
 class CertManagerCertificate(KubernetesResource):
-    resource_type = ResourceType(kind="Certificate", api_version="cert-manager.io/v1", id="cert_manager_certificate")
+    resource_type = ResourceType(
+        kind="Certificate",
+        api_version="cert-manager.io/v1",
+        id="cert_manager_certificate",
+    )
 
     def body(self):
         config = self.config
@@ -395,7 +407,11 @@ class CertManagerCertificate(KubernetesResource):
 
 
 class IstioPolicy(KubernetesResource):
-    resource_type = ResourceType(kind="IstioPolicy", api_version="authentication.istio.io/v1alpha1", id="istio_policy")
+    resource_type = ResourceType(
+        kind="IstioPolicy",
+        api_version="authentication.istio.io/v1alpha1",
+        id="istio_policy",
+    )
 
     def body(self):
         super().body()
@@ -426,7 +442,9 @@ class Namespace(KubernetesResource):
 
 
 class Deployment(Workload):
-    resource_type = ResourceType(kind="Deployment", api_version="apps/v1", id="deployment")
+    resource_type = ResourceType(
+        kind="Deployment", api_version="apps/v1", id="deployment"
+    )
 
     def body(self):
         default_strategy = {
@@ -457,7 +475,9 @@ class Deployment(Workload):
 
 
 class StatefulSet(Workload):
-    resource_type = ResourceType(kind="StatefulSet", api_version="apps/v1", id="stateful_set")
+    resource_type = ResourceType(
+        kind="StatefulSet", api_version="apps/v1", id="stateful_set"
+    )
 
     def body(self):
         default_strategy = {}
@@ -481,15 +501,15 @@ class StatefulSet(Workload):
             self.root.spec.template.spec.hostPID = config.host_pid
         self.root.spec.revisionHistoryLimit = config.revision_history_limit
         self.root.spec.strategy = config.get("strategy", default_strategy)
-        self.root.spec.updateStrategy = config.get(
-            "update_strategy", update_strategy
-        )
+        self.root.spec.updateStrategy = config.get("update_strategy", update_strategy)
         self.root.spec.serviceName = config.service.get("service_name", name)
         self.set_replicas(config.get("replicas", 1))
 
 
 class DaemonSet(Workload):
-    resource_type = ResourceType(kind="DaemonSet", api_version="apps/v1", id="daemon_set")
+    resource_type = ResourceType(
+        kind="DaemonSet", api_version="apps/v1", id="daemon_set"
+    )
 
     def body(self):
         super().body()
@@ -564,9 +584,9 @@ class Container(BaseModel):
         )
 
     def process_envs(self, config):
-        
+
         name = self.name
-        
+
         for env_name, value in sorted(config.env.items()):
             if isinstance(value, dict):
                 if "fieldRef" in value:
@@ -714,9 +734,6 @@ class Container(BaseModel):
         self.process_envs(config)
 
 
-
-
-
 class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
     """Helper to generate multiple classes
 
@@ -762,7 +779,11 @@ class GenerateMultipleObjectsForClass(kgenlib.BaseStore):
 
 
 class PrometheusRule(KubernetesResource):
-    resource_type = ResourceType(kind="PrometheusRule", api_version="monitoring.coreos.com/v1", id="prometheus_rule")
+    resource_type = ResourceType(
+        kind="PrometheusRule",
+        api_version="monitoring.coreos.com/v1",
+        id="prometheus_rule",
+    )
 
     def body(self):
         super().body()
@@ -774,7 +795,9 @@ class PrometheusRule(KubernetesResource):
 
 
 class BackendConfig(KubernetesResource):
-    resource_type = ResourceType(kind="BackendConfig", api_version="cloud.google.com/v1", id="backend_config")
+    resource_type = ResourceType(
+        kind="BackendConfig", api_version="cloud.google.com/v1", id="backend_config"
+    )
 
     def body(self):
         super().body()
@@ -782,8 +805,12 @@ class BackendConfig(KubernetesResource):
 
 
 class ServiceMonitor(KubernetesResource):
-    resource_type = ResourceType(kind="ServiceMonitor", api_version="monitoring.coreos.com/v1", id="service_monitor")
-    workload: Workload 
+    resource_type = ResourceType(
+        kind="ServiceMonitor",
+        api_version="monitoring.coreos.com/v1",
+        id="service_monitor",
+    )
+    workload: Workload
 
     def new(self):
         super().new()
@@ -801,12 +828,18 @@ class ServiceMonitor(KubernetesResource):
         self.root.spec.endpoints = config.service_monitors.endpoints
         self.root.spec.jobLabel = name
         self.root.spec.namespaceSelector.matchNames = [self.namespace]
-        self.root.spec.selector.matchLabels = workload.root.spec.template.metadata.labels
+        self.root.spec.selector.matchLabels = (
+            workload.root.spec.template.metadata.labels
+        )
 
 
 class MutatingWebhookConfiguration(KubernetesResource):
-    resource_type = ResourceType(kind="MutatingWebhookConfiguration", api_version="admissionregistration.k8s.io/v1", id="mutating_webhook_configuration")
-    
+    resource_type = ResourceType(
+        kind="MutatingWebhookConfiguration",
+        api_version="admissionregistration.k8s.io/v1",
+        id="mutating_webhook_configuration",
+    )
+
     def new(self):
         super().new()
 
@@ -818,7 +851,11 @@ class MutatingWebhookConfiguration(KubernetesResource):
 
 
 class PodDisruptionBudget(KubernetesResource):
-    resource_type = ResourceType(kind="PodDisruptionBudget", api_version="policy/v1beta1", id="pod_disruption_budget")
+    resource_type = ResourceType(
+        kind="PodDisruptionBudget",
+        api_version="policy/v1beta1",
+        id="pod_disruption_budget",
+    )
     workload: Workload
 
     def new(self):
@@ -833,11 +870,17 @@ class PodDisruptionBudget(KubernetesResource):
             self.root.spec.maxUnavailable = 1
         else:
             self.root.spec.minAvailable = config.pdb_min_available
-        self.root.spec.selector.matchLabels = workload.root.spec.template.metadata.labels
+        self.root.spec.selector.matchLabels = (
+            workload.root.spec.template.metadata.labels
+        )
 
 
 class VerticalPodAutoscaler(KubernetesResource):
-    resource_type = ResourceType(kind="VerticalPodAutoscaler", api_version="autoscaling.k8s.io/v1beta2", id="vertical_pod_autoscaler")
+    resource_type = ResourceType(
+        kind="VerticalPodAutoscaler",
+        api_version="autoscaling.k8s.io/v1beta2",
+        id="vertical_pod_autoscaler",
+    )
     workload: Workload
 
     def new(self):
@@ -860,7 +903,11 @@ class VerticalPodAutoscaler(KubernetesResource):
 
 
 class HorizontalPodAutoscaler(KubernetesResource):
-    resource_type = ResourceType(kind="HorizontalPodAutoscaler", api_version="autoscaling.k8s.io/v2beta2", id="horizontal_pod_autoscaler")
+    resource_type = ResourceType(
+        kind="HorizontalPodAutoscaler",
+        api_version="autoscaling.k8s.io/v2beta2",
+        id="horizontal_pod_autoscaler",
+    )
     workload: Workload
 
     def new(self):
@@ -881,7 +928,9 @@ class HorizontalPodAutoscaler(KubernetesResource):
 
 
 class PodSecurityPolicy(KubernetesResource):
-    resource_type = ResourceType(kind="PodSecurityPolicy", api_version="policy/v1beta1", id="pod_security_policy")
+    resource_type = ResourceType(
+        kind="PodSecurityPolicy", api_version="policy/v1beta1", id="pod_security_policy"
+    )
     workload: Workload
 
     def new(self):
@@ -937,7 +986,9 @@ class IngressComponent(kgenlib.BaseStore):
                 {"networking.gke.io/managed-certificates": certificate_name}
             )
             self.add(
-                GoogleManagedCertificate(name=certificate_name, config={"domains": domains})
+                GoogleManagedCertificate(
+                    name=certificate_name, config={"domains": domains}
+                )
             )
 
 
@@ -959,7 +1010,7 @@ class Components(kgenlib.BaseStore):
             workload = CronJob(name=name, config=config, job=workload)
 
         workload.add_label("app.kapicorp.dev/component", name)
-        
+
         configs = GenerateMultipleObjectsForClass(
             name=name,
             component_config=config,
@@ -977,7 +1028,7 @@ class Components(kgenlib.BaseStore):
             config=config.secrets,
             workload=workload,
         )
-        
+
         map(lambda x: x.add_label("app.kapicorp.dev/component", name), secrets)
 
         self.add(workload)
@@ -999,17 +1050,13 @@ class Components(kgenlib.BaseStore):
             self.add(pdb)
 
         if config.hpa:
-            hpa = HorizontalPodAutoscaler(
-                name=name, config=config, workload=workload
-            )
+            hpa = HorizontalPodAutoscaler(name=name, config=config, workload=workload)
             hpa.add_label("app.kapicorp.dev/component", name)
             self.add(hpa)
 
         if config.type != "job":
             if config.pdb_min_available or config.auto_pdb:
-                pdb = PodDisruptionBudget(
-                    name=name, config=config, workload=workload
-                )
+                pdb = PodDisruptionBudget(name=name, config=config, workload=workload)
                 pdb.add_label("app.kapicorp.dev/component", name)
                 self.add(pdb)
 
@@ -1077,7 +1124,7 @@ class Components(kgenlib.BaseStore):
             sa = ServiceAccount(name=sa_name, config=config)
             sa.add_label("app.kapicorp.dev/component", name)
             self.add(sa)
-            
+
         if config.role:
             role = Role(name=name, config=config)
             role.add_label("app.kapicorp.dev/component", name)
@@ -1098,8 +1145,6 @@ class Components(kgenlib.BaseStore):
             backend_config = BackendConfig(name=name, config=config)
             backend_config.add_label("app.kapicorp.dev/component", name)
             self.add(backend_config)
-
-
 
 
 def main(input_params):

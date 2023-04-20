@@ -17,7 +17,6 @@ class KubernetesResource(kgenlib.BaseContent):
     rendered_name: str = None
     id: str = None
 
-    
     @property
     def component_name(self):
         return self.root.metadata.labels.get("app.kapicorp.dev/component", self.name)

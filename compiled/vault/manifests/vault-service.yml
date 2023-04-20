@@ -15,9 +15,6 @@ spec:
       port: 8200
       protocol: TCP
       targetPort: http
-    - name: http-rep
-      protocol: TCP
-      targetPort: http-rep
     - name: https-internal
       port: 8201
       protocol: TCP
@@ -46,9 +43,6 @@ spec:
       port: 8200
       protocol: TCP
       targetPort: http
-    - name: http-rep
-      protocol: TCP
-      targetPort: http-rep
     - name: https-internal
       port: 8201
       protocol: TCP
@@ -78,9 +72,6 @@ spec:
       port: 8200
       protocol: TCP
       targetPort: http
-    - name: http-rep
-      protocol: TCP
-      targetPort: http-rep
     - name: https-internal
       port: 8201
       protocol: TCP

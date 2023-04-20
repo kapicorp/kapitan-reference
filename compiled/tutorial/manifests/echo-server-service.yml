@@ -8,12 +8,6 @@ metadata:
   namespace: tutorial
 spec:
   ports:
-    - name: http
-      protocol: TCP
-      targetPort: http
-    - name: internal
-      protocol: TCP
-      targetPort: internal
     - name: nginx
       port: 80
       protocol: TCP

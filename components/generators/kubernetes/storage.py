@@ -73,9 +73,9 @@ class SharedConfig(KubernetesResource):
     def add_item(self, key, value, request_encode=False, stringdata=False):
         encode = not stringdata and request_encode
         field = "stringData" if stringdata else "data"
-        
+
         self.root[field][key] = self.encode_string(value) if encode else value
-    
+
     def add_string_data(self, string_data, encode=False, stringdata=True):
 
         for key, spec in string_data.items():
@@ -89,7 +89,7 @@ class SharedConfig(KubernetesResource):
                     value = f.read()
 
             self.add_item(key, value, request_encode=encode, stringdata=stringdata)
-        
+
         self.versioning(enabled=self.versioning_enabled)
 
     def versioning(self, enabled=False):
@@ -107,6 +107,7 @@ class SharedConfig(KubernetesResource):
 
 class ConfigMap(SharedConfig):
     resource_type = ResourceType(kind="ConfigMap", api_version="v1", id="config_map")
+
 
 class Secret(SharedConfig):
     resource_type = ResourceType(kind="Secret", api_version="v1", id="secret")
