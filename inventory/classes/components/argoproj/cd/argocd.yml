@@ -15,6 +15,7 @@ parameters:
   argocd:
     chart_name: argo-cd
     chart_version: "3.32.0"
+    chart_dir: components/charts/${argocd:chart_name}/${argocd:chart_name}/${argocd:chart_version}/${argocd:application_version}
     application_version: "v2.2.3"
     namespace: ${namespace}
     external_url: ${external_url}
