@@ -103,7 +103,7 @@ metadata:
   labels:
     app.kapicorp.dev/component: tesoro
     name: tesoro-metrics
-  name: tesoro-metrics
+  name: tesoro
   namespace: tesoro
 spec:
   endpoints:

@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from kapitan.inputs.helm import HelmChart
 from kapitan.inputs.kadet import (
     BaseModel,
     BaseObj,
@@ -10,6 +11,8 @@ from kapitan.inputs.kadet import (
     load_from_search_paths,
 )
 
+kgenlib = load_from_search_paths("generators")
+
 from .common import KubernetesResource, ResourceType
 from .networking import NetworkPolicy
 from .rbac import ClusterRole, ClusterRoleBinding, Role, RoleBinding
@@ -17,7 +20,6 @@ from .storage import ConfigMap, Secret
 
 logger = logging.getLogger(__name__)
 
-kgenlib = load_from_search_paths("generators")
 
 inv = inventory(lazy=True)
 
@@ -187,6 +189,17 @@ class Workload(KubernetesResource):
                 },
             }
         )
+
+
+@kgenlib.register_generator(path="generators.kubernetes.service_accounts")
+class ServiceAccountGenerator(kgenlib.BaseStore):
+    def body(self):
+        config = self.config
+        name = config.get("name", self.name)
+        sa = ServiceAccount(name=name, config=config)
+        sa.add_annotations(config.annotations)
+        sa.add_labels(config.labels)
+        self.add(sa)
 
 
 class ServiceAccount(KubernetesResource):
@@ -952,21 +965,6 @@ class PodSecurityPolicy(KubernetesResource):
         }
 
 
-def generate_docs(input_params):
-    obj = BaseObj()
-    template = input_params.get("template_path", None)
-    if template:
-        for name, component in get_components():
-            obj.root["{}-readme.md".format(name)] = kgenlib.render_jinja(
-                template,
-                {
-                    "service_component": component.to_dict(),
-                    "inventory": inv.parameters.to_dict(),
-                },
-            )
-    return obj
-
-
 @kgenlib.register_generator(path="ingresses")
 class IngressComponent(kgenlib.BaseStore):
     name: str
@@ -1147,9 +1145,35 @@ class Components(kgenlib.BaseStore):
             self.add(backend_config)
 
 
+class MyHelmChart(HelmChart):
+    def new(self):
+        for obj in self.load_chart():
+            if obj:
+                self.root[
+                    f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"
+                ] = BaseObj.from_dict(obj)
+
+
+@kgenlib.register_generator(path="charts")
+class HelmChartGenerator(kgenlib.BaseStore):
+    name: str
+    config: Any
+
+    def body(self):
+        helm_config = self.config.to_dict()
+        chart_name = self.config.helm_params.name
+
+        rendered_chart = MyHelmChart(**helm_config)
+
+        for helm_resource in rendered_chart.root.values():
+            resource = KubernetesResource.from_baseobj(helm_resource)
+            resource.add_label("app.kapicorp.dev/component", chart_name)
+            self.add(resource)
+
+
 def main(input_params):
-    kgenlib.BaseGenerator.inventory = inventory
-    store = kgenlib.BaseGenerator.generate()
+    generator = kgenlib.BaseGenerator(inventory=inv)
+    store = generator.generate()
     store.process_mutations(input_params.get("mutations", {}))
 
     return store.dump()
