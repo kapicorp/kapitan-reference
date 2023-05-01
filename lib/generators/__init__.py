@@ -1,3 +1,4 @@
+import contextvars
 import functools
 import logging
 from enum import Enum
@@ -8,50 +9,27 @@ import yaml
 from box.exceptions import BoxValueError
 from kapitan.cached import args
 from kapitan.inputs.helm import HelmChart
-from kapitan.inputs.kadet import (
-    BaseModel,
-    BaseObj,
-    CompileError,
-    Dict,
-    inventory,
-    inventory_global,
-)
+from kapitan.inputs.kadet import BaseModel, BaseObj, CompileError, Dict, current_target
 from kapitan.utils import render_jinja2_file
 
 logger = logging.getLogger(__name__)
-inventory = inventory(lazy=True)
-inventory_global = inventory_global(lazy=True)
 
 search_paths = args.get("search_paths")
+registered_generators = contextvars.ContextVar(
+    "current registered_generators in thread"
+)
+
+target = current_target.get()
+registered_generators.set({})
 
 
-class BaseGenerator:
-    inventory: Dict
-    functions: List[FunctionType] = []
-
-    @classmethod
-    def run(cls, output):
-        store = BaseStore()
-        if isinstance(output, BaseStore):
-            store.add(output)
-        elif isinstance(output, BaseContent):
-            store.add(output)
-
-        else:
-            raise CompileError(f"Unknown output type {output.__class__.__name__}")
-        return store
-
-    @classmethod
-    def generate(cls):
-        store = BaseStore()
-        logging.debug(f"{len(cls.functions)} functions registered as generators")
-        for func in cls.functions:
-            store.add(cls.run(func()))
-        return store
-
-    @classmethod
-    def register_function(cls, func):
-        cls.functions.append(func)
+def register_function(func, params):
+    logging.debug(
+        f"Registering generator {func.__name__} with params {params} for target {target}"
+    )
+    my_dict = registered_generators.get()
+    my_dict.setdefault(target, []).append((func, params))
+    registered_generators.set(my_dict)
 
 
 def merge(source, destination):
@@ -72,14 +50,19 @@ def render_jinja(filename, ctx):
     return render_jinja2_file(filename, ctx, search_paths=search_paths)
 
 
-def findpath(obj, path, default=None):
-    path_parts = path.split(".")
+def findpath(obj, path, default={}):
+    value = default
+    if path:
+        path_parts = path.split(".")
+    else:
+        return value
+
     try:
         value = getattr(obj, path_parts[0])
     except KeyError as e:
-        if default is not None:
-            return default
-        raise CompileError(f"Key {e} not found in {obj}")
+        if value is not None:
+            return value
+        logging.info(f"Key {e} not found in {obj}: ignoring")
 
     if len(path_parts) == 1:
         return value
@@ -89,40 +72,11 @@ def findpath(obj, path, default=None):
 
 def register_generator(*args, **kwargs):
     def wrapper(func):
-        @functools.wraps(func)
+        register_function(func, kwargs)
+
         def wrapped_func():
-            path = kwargs.get("path")
-            configs = findpath(inventory.parameters, path)
+            return func
 
-            store = BaseStore()
-            for name, config in configs.items():
-                patched_config = Dict(config)
-                apply_patches_paths = kwargs.get("apply_patches", [])
-                patches_applied = []
-                for path in apply_patches_paths:
-                    try:
-                        path = path.format(**config)
-                    except KeyError:
-                        # Silently ignore missing keys
-                        continue
-                    patch = findpath(inventory.parameters, path, {})
-                    patches_applied.append(patch)
-
-                    patched_config = merge(patch, patched_config)
-
-                store.add(
-                    BaseGenerator.run(
-                        func(
-                            name=name,
-                            config=patched_config,
-                            patches_applied=patches_applied,
-                            original_config=config,
-                        )
-                    )
-                )
-            return store
-
-        BaseGenerator.register_function(wrapped_func)
         return wrapped_func
 
     return wrapper
@@ -158,7 +112,7 @@ class BaseContent(BaseModel):
 
     @classmethod
     def from_dict(cls, dict_value):
-        """Return a KubernetesResource initialise with dict_value."""
+        """Return a BaseContent initialised with dict_value."""
 
         if dict_value:
             try:
@@ -273,21 +227,79 @@ class BaseStore(BaseModel):
     def get_content_list(self):
         return self.content_list
 
-    def dump(self, output_filename=None):
+    def dump(self, output_filename=None, already_processed=False):
         """Return object dict/list."""
         logging.debug(f"Dumping {len(self.get_content_list())} items")
-        for content in self.get_content_list():
-            if output_filename:
-                output_format = output_filename
-            else:
-                output_format = getattr(content, "filename", "output")
+        if not already_processed:
+            for content in self.get_content_list():
+                if output_filename:
+                    output_format = output_filename
+                else:
+                    output_format = getattr(content, "filename", "output")
 
-            filename = output_format.format(content=content)
-            self.root.setdefault(filename, []).append(content)
+                filename = output_format.format(content=content)
+                self.root.setdefault(filename, []).append(content)
 
         return super().dump()
 
 
-class KubernetesGenerator(BaseStore):
-    name: str
-    config: Dict
+class BaseGenerator:
+    def __init__(
+        self, inventory: Dict, store: BaseStore = None, defaults_path: str = None
+    ) -> None:
+        self.inventory = inventory
+        self.generator_defaults = findpath(self.inventory, defaults_path)
+        logging.debug(f"Setting {self.generator_defaults} as generator defaults")
+
+        if store == None:
+            self.store = BaseStore()
+        else:
+            self.store = store()
+
+    def expand_and_run(self, func, params):
+        inventory = self.inventory
+        path = params.get("path")
+        patches = params.get("apply_patches", [])
+        configs = findpath(inventory.parameters, path)
+        if configs:
+            logging.debug(
+                f"Found {len(configs)} configs to generate at {path} for target {target}"
+            )
+
+        for name, config in configs.items():
+            patched_config = Dict(config)
+            patch_paths_to_apply = patches
+            patches_applied = []
+            for path in patch_paths_to_apply:
+                try:
+                    path = path.format(**config)
+                except KeyError:
+                    # Silently ignore missing keys
+                    continue
+                patch = findpath(inventory.parameters, path, {})
+                patches_applied.append(patch)
+
+                patched_config = merge(patch, patched_config)
+
+            local_params = {
+                "name": name,
+                "config": patched_config,
+                "patches_applied": patches_applied,
+                "original_config": config,
+                "defaults": self.generator_defaults,
+            }
+            logging.debug(
+                f"Running class {func.__name__} with params {local_params.keys()} and name {name}"
+            )
+            self.store.add(func(**local_params))
+
+    def generate(self):
+        generators = registered_generators.get().get(target, [])
+        logging.debug(
+            f"{len(generators)} classes registered as generators for target {target}"
+        )
+        for func, params in generators:
+
+            logging.debug(f"Expanding {func.__name__} with params {params}")
+            self.expand_and_run(func=func, params=params)
+        return self.store

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 1.7.3
     name: vault-internal
-  name: vault-internal
+  name: vault
   namespace: vault
 spec:
   clusterIP: None
