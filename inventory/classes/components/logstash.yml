@@ -20,14 +20,14 @@ parameters:
           mount: /usr/share/logstash/config/
           data:
             logstash.yml:
-              template: components/logstash/templates/logstash.yml.j2
+              template: system/sources/templates/logstash/templates/logstash.yml.j2
               values: {}
             pipelines.yml:
-              template: components/logstash/templates/pipelines.yml.j2
+              template: system/sources/templates/logstash/templates/pipelines.yml.j2
               values: {}
         pipelines:
           mount: /usr/share/logstash/pipeline/
           data:
             example.conf:
-              template: components/logstash/templates/example.conf.j2
+              template: system/sources/templates/logstash/templates/example.conf.j2
               values: {}

@@ -4,4 +4,4 @@ classes:
 
 parameters:
   target_name: postgres-proxy
-  google_project: example-project
+  gcp_project_id: example-project

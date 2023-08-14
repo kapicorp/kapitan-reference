@@ -27,5 +27,8 @@ jobs:
         with:
           cluster_name: kind
 
+      - name: Check connectivity to the cluster
+        run: ./compiled/tutorial/scripts/kubectl get pods
+
       - name: Run chart-testing (install)
-        run: ./compiled/tutorial/scripts/apply.sh
+        run: ./compiled/tutorial/scripts/apply

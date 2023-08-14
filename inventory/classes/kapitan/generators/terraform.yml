@@ -2,18 +2,16 @@ parameters:
   kapitan:
     dependencies:
     - type: git
-      source: https://github.com/kapicorp/kapitan-reference.git
-      ref: master
-      subdir: components/generators/terraform
-      output_path: components/generators/terraform
+      source: https://github.com/kapicorp/generators.git
+      ref: main
+      subdir: terraform
+      output_path: system/generators/terraform
     compile:
     - output_path: terraform
       input_type: kadet
       output_type: json
-      input_params:
-        generator_root: resources.tf
       input_paths:
-        - components/generators/terraform
+        - system/generators/terraform
     - input_type: copy
       ignore_missing: true
       input_paths:

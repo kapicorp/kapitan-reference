@@ -1,0 +1,10 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+TERRAFORM_COMMAND=${SCRIPT_RELATIVE_DIR}/terraform
+
+${TERRAFORM_COMMAND} init
+${TERRAFORM_COMMAND} import github_repository.repository ${TARGET_NAME}
+${TERRAFORM_COMMAND} import github_branch_protection.repository_main ${TARGET_NAME}:main

@@ -1,0 +1,60 @@
+#!/bin/bash -e
+{% set params = input_params %}
+
+RUN_ARGS=""
+POSTGRES_DOCKER_IMAGE="postgres:14"
+SQL_PROXY_IMAGE="{{params.sqlproxy_image}}"
+POSTGRESQL_INSTANCE={{params.instance_name}}
+
+DOCKER_NETWORK=${POSTGRESQL_INSTANCE}
+SQL_PROXY_DOCKER_NAME={{params.docker_name}}
+PGPORT={{params.port}}
+CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json
+
+SQL_INSTANCE_ACTUAL_INSTANCE=$(echo ${POSTGRESQL_INSTANCE} | cut -d: -f3)
+SQL_INSTANCE_ACTUAL_PROJECT=$(echo ${POSTGRESQL_INSTANCE} | cut -d: -f1)
+SQL_PROXY_COMMAND="docker run -d --name=${SQL_PROXY_DOCKER_NAME} -u $(id -u ${USER}):$(id -g ${USER}) --rm --net=${DOCKER_NETWORK} -v ${CREDENTIALS}:/credentials.json -e GOOGLE_APPLICATION_CREDENTIALS=/credentials.json ${SQL_PROXY_IMAGE} /cloud_sql_proxy"
+
+psql_command() {
+  POSTGRES_UTILS="docker run --rm --net=${DOCKER_NETWORK} -i ${RUN_ARGS} ${POSTGRES_DOCKER_IMAGE}"
+  ${POSTGRES_UTILS} psql "$@"
+}
+
+function is_container_running {
+  local name="$1"
+  [[ "$(docker container ls --quiet --filter "name=${name}")" != "" ]]
+}
+
+# Kill the docker container on exit
+function cleanup {
+  if is_container_running "${SQL_PROXY_DOCKER_NAME}"; then
+    docker kill "${SQL_PROXY_DOCKER_NAME}" >> /dev/null
+  fi
+}
+
+
+
+pull_images() {
+  docker pull ${POSTGRES_DOCKER_IMAGE} >/dev/null &
+  docker pull ${SQL_PROXY_IMAGE} > /dev/null &
+}
+
+setup_docker() {
+  if [[ ! -f ${CREDENTIALS} ]]
+  then
+    echo Credentials not found. Please run:
+    echo gcloud auth application-default login
+    exit 1
+  fi
+
+  pull_images
+
+  # Creates ad-hoc network to avoid conflicts with other instances.
+  docker network create --driver=bridge --opt=com.docker.network.bridge.enable_ip_masquerade=true ${DOCKER_NETWORK} 2> /dev/null \
+    || true
+
+
+  # Setup cloud_sql_proxy
+  echo "Connecting to ${POSTGRESQL_INSTANCE} on project ${SQL_INSTANCE_ACTUAL_PROJECT} using docker/cloud_sql_proxy"
+  $SQL_PROXY_COMMAND -enable_iam_login -instances=${POSTGRESQL_INSTANCE}=tcp:0.0.0.0:${PGPORT} > /dev/null || true
+}

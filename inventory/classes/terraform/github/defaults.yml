@@ -1,0 +1,56 @@
+---
+parameters:
+  github:
+    deploy_key:
+      # ssh-keygen -t rsa -b 4096 -C "deploy_ke"
+      # cat deploy_key | ./compiled/github/.../scripts/set_reference gkms:shared/github/deploy_key_private
+      private: ?{gkms:shared/github/deploy_key_private}
+
+      # cat deploy_key.pub | ./compiled/github/.../scripts/set_reference plain:shared/github/deploy_key_public
+      public: ?{plain:shared/github/deploy_key_public}
+
+  terraform:
+    gen_locals:
+      github_deploy_key_private:
+        value: ${github:deploy_key:private}
+      github_deploy_key_public:
+        value: ${github:deploy_key:public}
+  generators:
+    terraform:
+      defaults:
+        gen_github_repository:
+          branch_protection:
+            main: {}
+
+        github_repository:
+          # Default settings for repositories
+          # Documentation: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository
+          allow_auto_merge: true
+          allow_merge_commit: false
+          allow_rebase_merge: false
+          allow_squash_merge: true
+          allow_update_branch: true
+          delete_branch_on_merge: true
+          has_downloads: false
+          has_issues: true
+          has_projects: false
+          has_wiki: false
+          visibility: private
+          vulnerability_alerts: true
+
+        github_branch_protection:
+          # Default settings for branch protection
+          # Documentation: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection
+          allows_deletions: false
+          enforce_admins: true
+          pattern: main
+          required_linear_history: true
+          required_status_checks:
+            strict: false
+          required_pull_request_reviews:
+            dismiss_stale_reviews: false
+            dismissal_restrictions: []
+            require_code_owner_reviews: false
+            require_last_push_approval: false
+            required_approving_review_count: 1
+            restrict_dismissals: false

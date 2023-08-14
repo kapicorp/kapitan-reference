@@ -15,7 +15,7 @@ parameters:
   argocd:
     chart_name: argo-cd
     chart_version: "3.32.0"
-    chart_dir: components/charts/${argocd:chart_name}/${argocd:chart_name}/${argocd:chart_version}/${argocd:application_version}
+    chart_dir: system/sources/charts/${argocd:chart_name}/${argocd:chart_name}/${argocd:chart_version}/${argocd:application_version}
     application_version: "v2.2.3"
     namespace: ${namespace}
     external_url: ${external_url}
@@ -58,14 +58,14 @@ parameters:
   kapitan:
     dependencies:
       - type: helm
-        output_path: components/charts/${argocd:chart_name}/${argocd:chart_version}/${argocd:application_version}
+        output_path: ${argocd:chart_dir}
         source: https://argoproj.github.io/argo-helm
         version: ${argocd:chart_version}
         chart_name: ${argocd:chart_name}
     compile:
       - input_type: helm
         input_paths:
-          - components/charts/${argocd:chart_name}/${argocd:chart_version}/${argocd:application_version}
+          - ${argocd:chart_dir}
         output_path: manifests
         helm_params:
           namespace: ${argocd:namespace}

@@ -1,0 +1,14 @@
+---
+parameters:
+  gcp_default_network_name: kapicorp
+  terraform:
+    resources:
+      generic:
+        google_compute_network:
+          default:
+            name: ${gcp_default_network_name}
+            description: Default network for the project maintained by terraform
+            auto_create_subnetworks: true
+            depends_on:
+              - gcp_project_id.main
+              - gcp_project_id_service.compute

@@ -11,5 +11,5 @@ parameters:
         mysql:
           service_port: 3306
       env:
-        MYSQL_ROOT_PASSWORD: ?{plain:targets/${target_name}/mysql_password||randomstr}
+        MYSQL_ROOT_PASSWORD: ?{plain:targets/${target_name}/mysql_password||random:str}
         MYSQL_DATABASE: socksdb

@@ -1,27 +1,41 @@
 classes:
-  - kapitan.kube
+  - kapitan.kgenlib
   - kapitan.generators.kubernetes
-  - kapitan.generators.argocd
   - kapitan.generators.terraform
-  - kapitan.generators.rabbitmq
-
 
 parameters:
-  scripts: []
+  init_scripts: []
+  scripts:
+    - templates/scripts/includes/
+    - templates/scripts/gcloud/
+    - templates/scripts/kapitan/
+
+  scripts_params:
+    gcp_project_id: ${gcp_project_id}
+
+
   docs:
     - templates/docs/README.md
   manifests: []
   kapitan:
     compile:
-      - output_path: docs
+      - output_path: .
         input_type: jinja2
         input_paths: ${docs}
+
       - output_path: scripts
         input_type: jinja2
         input_paths: ${scripts}
+        input_params: ${scripts_params}
+
+      - input_type: external
+        input_paths: ${init_scripts}
+        output_path: .
+        env_vars:
+          HOME: /
       - output_path: manifests
         input_type: jsonnet
         output_type: yml
         input_paths: ${manifests}
     vars:
-      target: ${target_name}
+      target: ${target}

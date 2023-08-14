@@ -1,0 +1,28 @@
+---
+classes:
+  - common
+  - terraform.gcp.services.common
+
+
+parameters:
+  gcp_project_id: ${target_name}
+  gcp_display_name: ${target_name}
+  gcp_organization_id: ?{plain:shared/gcp_organization_id||random:str}
+  gcp_billing_account: ?{plain:shared/gcp_billing_account||random:str}
+
+  generators:
+    terraform:
+      defaults:
+        gcp_project_id:
+          org_id: ${gcp_organization_id}
+          auto_create_network: false
+          project_id: ${gcp_project_id}
+          billing_account: ${gcp_billing_account}
+
+  terraform:
+    resources:
+      generic:
+        gcp_project_id:
+          main:
+            project:
+            name: ${gcp_display_name}

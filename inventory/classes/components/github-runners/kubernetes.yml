@@ -10,7 +10,7 @@ parameters:
     dependencies:
       - type: https
         source: https://github.com/actions/actions-runner-controller/releases/download/v0.25.2/actions-runner-controller.yaml
-        output_path: components/actions-runner-controller.yaml
+        output_path: system/sources/manifests/actions-runner-controller.yaml
 
     # Compiles and mutates some fields to setup service account
     compile:
@@ -19,7 +19,7 @@ parameters:
         output_type: yml
         prune: false
         input_params:
-          files: [components/actions-runner-controller.yaml]
+          files: [system/sources/manifests/actions-runner-controller.yaml]
           mutations:
             bundle:
               - conditions:
@@ -38,4 +38,4 @@ parameters:
                     annotations:
                       argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
         input_paths:
-          - components/kstmz
+          - system/generators/kstmz

@@ -1,0 +1,46 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+########################################################################################
+# Check required binaries are installed
+
+error(){
+  echo "${@}"
+}
+
+DOCKER_ROOT=/src
+TF_DIR=${TARGET_RELATIVE_PATH_FROM_KAPITAN_BASEDIR}/terraform
+TF_DATA_DIR="${DOCKER_ROOT}/.TF_DATA_DIR/${TARGET_PATH}"
+OUTPUT_DIR="output/${TARGET_PATH}"
+LOCK_FILE=${TF_DIR}/.terraform.lock.hcl
+STATE_DIR=${KAPITAN_BASEDIR_RELATIVE_PATH_FROM_PWD}/system/resources/state/${TARGET_PATH}
+
+DEBUG=${DEBUG:-0}
+TERRAFORM_IMAGE=hashicorp/terraform:1.4
+
+# if running in a tty
+TTY_FLAG=""
+
+if [ -t 0 ]; then TTY_FLAG="-t"; fi
+
+TERRAFORM_BINARY="docker \
+  run --rm -i -u $UID \
+  ${TTY_FLAG} \
+  --network host \
+  -e TF_DATA_DIR=${TF_DATA_DIR} \
+  -e TF_LOG \
+  -w ${DOCKER_ROOT}/${TF_DIR} \
+  -v ${KAPITAN_ABSOLUTE_BASEDIR}:${DOCKER_ROOT}:delegated \
+  -v $HOME/.config/gcloud:/.config/gcloud:delegated \
+  ${TERRAFORM_IMAGE}"
+
+${TERRAFORM_BINARY} "$@"
+
+
+if [[ -f ${LOCK_FILE} ]]
+then
+  mkdir -p ${STATE_DIR}
+  cp ${LOCK_FILE} ${STATE_DIR}/.terraform.lock.hcl
+fi

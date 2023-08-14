@@ -1,13 +1,14 @@
 {
   "terraform": {
-    "required_providers": {
-      "google": {
-        "version": "3.46.0"
+    "backend": {
+      "gcs": {
+        "bucket": "kapicorp-terraform-state",
+        "prefix": "terraform/state/kapicorp-terraform-admin"
       }
     },
-    "backend": {
-      "local": {
-        "path": "../../../state/terraform.tfstate"
+    "required_providers": {
+      "google": {
+        "version": "4.64.0"
       }
     }
   }

@@ -1,0 +1,23 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+source $(dirname ${BASH_SOURCE[0]})/postgres.include
+
+trap cleanup EXIT SIGINT SIGTERM
+
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+PGDATABASE=${1:-postgres}
+PGUSER=${USER}@google.com
+PGOPTIONS="--search_path=${PGDATABASE},public"
+
+
+setup_docker
+
+(umask 077 ; touch $HOME/.psql_history)
+
+
+export RUN_ARGS="-u $(id -u ${USER}):$(id -g ${USER}) -v $HOME/.psql_history:/tmp/psql_history -t -e PSQL_HISTORY=/tmp/psql_history -e PGOPTIONS=${PGOPTIONS} -e PGDATABASE=${PGDATABASE}"
+psql_command -h ${SQL_PROXY_DOCKER_NAME} -p ${PGPORT} -U ${PGUSER} "$@"

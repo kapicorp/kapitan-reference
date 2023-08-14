@@ -1,0 +1,48 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+{% set p = inventory.parameters %}
+
+FILE=${1:-}
+
+{% if p.use_tesoro | default(false)%}
+## if tesoro is enabled, no need to reveal
+apply () {
+  FILEPATH=${1?}
+  ${KUBECTL_SCRIPT} apply --recursive -f "${FILEPATH}"
+}
+{% else %}
+apply () {
+  FILEPATH=${1?}
+  ${KAPITAN_COMMAND} refs --reveal -f "${FILEPATH}" | ${KUBECTL_SCRIPT} apply -f -
+}
+{% endif %}
+
+if [[ ! -z $FILE ]]
+then
+  # Apply files passed at the command line
+  for FILEPATH in "$@"
+  do
+    [[ -e ${FILEPATH} ]] || ( echo Invalid file ${FILEPATH} && exit 1 )
+    echo "## run kubectl apply for ${FILEPATH}"
+    apply "${FILEPATH}"
+  done
+else
+
+  if [[ -f ${DIR}/../manifests/{{p.namespace}}-namespace.yml ]]
+  then
+    apply "${DIR}/../manifests/{{p.namespace}}-namespace.yml"
+  fi
+
+  # Apply files in specific order
+  for SECTION in manifests
+  do
+    echo "## run kubectl apply for ${SECTION}"
+    DEPLOY_PATH=${DIR}/../${SECTION}
+    if [[ -d ${DEPLOY_PATH} ]]
+    then
+      apply "${DEPLOY_PATH}"
+    fi
+  done
+fi

@@ -1,0 +1,13 @@
+{
+  "resource": {
+    "gcp_project_id": {
+      "main": {
+        "name": "kapicorp-terraform-admin",
+        "org_id": "az1oDhA50eU5d2ToHhNFrSaWNqAa1iaosXyZfd6SZQ2",
+        "auto_create_network": false,
+        "project_id": "kapicorp-terraform-admin",
+        "billing_account": "jpzaR_ArxEkpIIljqRpFstsP_yw34RR07D6lAynfwIw"
+      }
+    }
+  }
+}

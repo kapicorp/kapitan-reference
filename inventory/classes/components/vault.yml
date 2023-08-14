@@ -319,5 +319,5 @@ parameters:
           subPath: extraconfig-from-values.hcl
           data:
             extraconfig-from-values.hcl:
-              template: components/vault/extraconfig-from-values.hcl.j2
+              template: system/sources/templates/vault/extraconfig-from-values.hcl.j2
               values: {}

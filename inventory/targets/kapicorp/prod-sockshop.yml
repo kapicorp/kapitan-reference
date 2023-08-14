@@ -16,10 +16,10 @@ parameters:
           data:
             tls.crt:
               # just an example, not a real certificate
-              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.crt||randomstr|base64}
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.crt||random:str|base64}
             tls.key:
               # just an example, not a real key
-              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.key||randomstr|base64}
+              value: ?{plain:targets/${target_name}/sockshop.kapicorp.com.key||random:str|base64}
   ingresses:
     tls-certificate:
       annotations:

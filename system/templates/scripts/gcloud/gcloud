@@ -1,0 +1,12 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+{% set project = input_params.gcp_project_id | default(inventory.parameters.gcp_project_id) %}
+{% if project != "undefined" %}
+  ${GCLOUD_BINARY} --project {{project}} "$@"
+{% else %}
+  >&2 echo "gcp_project_id not defined in kapitan. Using system default"
+  ${GCLOUD_BINARY} "$@"
+{% endif %}

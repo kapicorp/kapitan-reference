@@ -1,0 +1,6 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+get_project_number ${TARGET_NAME}  | set_reference_name project_number

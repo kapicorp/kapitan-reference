@@ -3507,7 +3507,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations: null
+  annotations:
   labels:
     app: redis-ha
     chart: redis-ha-4.12.17
@@ -3539,7 +3539,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations: null
+  annotations:
   labels:
     app: redis-ha
     chart: redis-ha-4.12.17
@@ -3812,7 +3812,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
       serviceAccountName: argo-cd-redis-ha-haproxy
-      tolerations: null
+      tolerations:
       volumes:
         - configMap:
             name: argo-cd-redis-ha-configmap
@@ -4538,7 +4538,7 @@ spec:
               name: data
             - mountPath: /health
               name: health
-        - args: null
+        - args:
           env:
             - name: REDIS_ADDR
               value: redis://localhost:6379
@@ -4563,7 +4563,7 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 3
           resources: {}
-          volumeMounts: null
+          volumeMounts:
       initContainers:
         - args:
             - /readonly-config/init.sh
@@ -4604,7 +4604,7 @@ spec:
     type: RollingUpdate
   volumeClaimTemplates:
     - metadata:
-        annotations: null
+        annotations:
         name: data
       spec:
         accessModes:

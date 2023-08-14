@@ -1,8 +1,7 @@
+---
 parameters:
-  resources:
-    tf:
-      terraform:
-        backend:
-          gcs:
-            bucket: ${state_bucket_name}
-            prefix: terraform/state/${target_name}
+  terraform:
+    gen_backend:
+      gcs:
+        bucket: ${state_bucket_name}
+        prefix: terraform/state/${target}

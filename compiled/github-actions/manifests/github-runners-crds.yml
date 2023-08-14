@@ -4,6 +4,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
     controller-gen.kubebuilder.io/version: v0.7.0
+  creationTimestamp:
   name: horizontalrunnerautoscalers.actions.summerwind.dev
 spec:
   group: actions.summerwind.dev
@@ -306,11 +307,14 @@ spec:
           type: object
       served: true
       storage: true
-      subresources: {}
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ''
     plural: ''
+  conditions: []
+  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -318,6 +322,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
     controller-gen.kubebuilder.io/version: v0.7.0
+  creationTimestamp:
   name: runnerdeployments.actions.summerwind.dev
 spec:
   group: actions.summerwind.dev
@@ -9337,11 +9342,14 @@ spec:
           type: object
       served: true
       storage: true
-      subresources: {}
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ''
     plural: ''
+  conditions: []
+  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -9349,6 +9357,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
     controller-gen.kubebuilder.io/version: v0.7.0
+  creationTimestamp:
   name: runnerreplicasets.actions.summerwind.dev
 spec:
   group: actions.summerwind.dev
@@ -18355,11 +18364,14 @@ spec:
           type: object
       served: true
       storage: true
-      subresources: {}
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ''
     plural: ''
+  conditions: []
+  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -18367,6 +18379,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
     controller-gen.kubebuilder.io/version: v0.7.0
+  creationTimestamp:
   name: runners.actions.summerwind.dev
 spec:
   group: actions.summerwind.dev
@@ -26642,11 +26655,14 @@ spec:
           type: object
       served: true
       storage: true
-      subresources: {}
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ''
     plural: ''
+  conditions: []
+  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -26654,6 +26670,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
     controller-gen.kubebuilder.io/version: v0.7.0
+  creationTimestamp:
   name: runnersets.actions.summerwind.dev
 spec:
   group: actions.summerwind.dev
@@ -34599,8 +34616,11 @@ spec:
           type: object
       served: true
       storage: true
-      subresources: {}
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ''
     plural: ''
+  conditions: []
+  storedVersions: []

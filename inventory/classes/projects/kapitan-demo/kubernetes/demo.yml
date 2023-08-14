@@ -1,11 +1,11 @@
 classes:
 - kapitan.templates.kubernetes
 parameters:
-  google_project: kapitan-demo
+  gcp_project_id: kapitan-demo
   cluster: ${demo}
   demo:
     name: demo
-    google_project: kapitan-demo
+    gcp_project_id: kapitan-demo
     zone: europe-west1-b
     type: gke
     cluster: demo

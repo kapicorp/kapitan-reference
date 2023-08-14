@@ -1,0 +1,55 @@
+---
+parameters:
+  google:
+    project: ${gcp_project_id}
+    region: europe-west1
+    zone: europe-west1-b
+  terraform:
+    gen_required_providers:
+      google:
+        version: 4.64.0
+    gen_provider:
+      google: ${google}
+
+  generators:
+    terraform:
+      defaults:
+        provider:
+          google:
+            resource:
+              project: ${gcp_project_id}
+
+        google_dns_record_set:
+          managed_zone: platform
+          type: "A"
+
+        google_container_node_pool:
+          node_count: 1
+          node_config:
+            preemptible: true
+            machine_type: e2-medium
+            oauth_scopes: [https://www.googleapis.com/auth/cloud-platform]
+        google_container_cluster:
+          remove_default_node_pool: true
+          initial_node_count: 1
+          enable_shielded_nodes: true
+          cost_management_config:
+            enabled: true
+          monitoring_config:
+            enable_components:
+              - SYSTEM_COMPONENTS
+              - APISERVER
+              - CONTROLLER_MANAGER
+              - SCHEDULER
+            managed_prometheus:
+              enabled: true
+          vertical_pod_autoscaling:
+            enabled: true
+          gateway_api_config:
+            channel: CHANNEL_STANDARD
+          workload_identity_config:
+            workload_pool: ${gcp_project_id}.svc.id.goog
+          private_cluster_config:
+            enable_private_nodes: true
+            enable_private_endpoint: false
+            master_ipv4_cidr_block: 172.16.200.16/28

@@ -2,11 +2,8 @@ parameters:
   service_accounts:
     gke-pvm-killer:
       ref: plain:targets/${target_name}/gke-pvm-killer-service-account
-      secret: ?{plain:targets/${target_name}/gke-pvm-killer-service-account||randomstr}
-      name: gke-pvm-killer@${google_project}.iam.gserviceaccount.com
-
-  scripts:
-    - templates/scripts/generate_sa_secrets.sh
+      secret: ?{plain:targets/${target_name}/gke-pvm-killer-service-account||random:str}
+      name: gke-pvm-killer@${gcp_project_id}.iam.gserviceaccount.com
 
   components:
     gke-pvm-killer:

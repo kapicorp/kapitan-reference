@@ -1,0 +1,21 @@
+
+KAPITAN_COMMAND=${KAPITAN_BASEDIR_RELATIVE_PATH_FROM_PWD}/kapitan
+
+function set_reference() {
+  REFERENCE=${1? please pass full reference name}
+  shift
+
+  ${KAPITAN_COMMAND} refs  -f - -t ${TARGET} --write "${REFERENCE}" "$@"
+}
+
+function set_reference_name() {
+  NAME=${1? please pass reference name}
+  shift
+  REFERENCE="plain:targets/${TARGET_PATH}/${NAME}"
+  set_reference ${REFERENCE} "$@"
+}
+
+function reveal_reference_tag() {
+  REFERENCE_TAG=${1? please reference tag }
+  ${KAPITAN_COMMAND} refs --reveal --tag ${REFERENCE_TAG} -t ${TARGET}
+}
