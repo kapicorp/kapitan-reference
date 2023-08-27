@@ -1,0 +1,13 @@
+#!/bin/bash
+# generated with Kapitan
+{% set p = inventory.parameters %}
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+
+
+if [[ -p /dev/stdin ]]
+then
+    cat | ${KUBECTL_COMMAND} "$@"
+else
+    ${KUBECTL_COMMAND} "$@"
+fi

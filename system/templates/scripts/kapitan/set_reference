@@ -1,0 +1,10 @@
+#!/bin/bash
+# generated with Kapitan
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+{% set p = inventory.parameters %}
+
+REFERENCE=${1? "Pass a reference as first argument: e.g. gkms:targets/{{p.target_path}}/reference_name"}
+shift
+
+set_reference ${REFERENCE} "$@"

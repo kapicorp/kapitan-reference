@@ -11,9 +11,9 @@ parameters:
         private_key: plain:targets/${target_name}/kapicorp-tesoro-cert-key
         cacert: plain:targets/${target_name}/kapicorp-tesoro-cacert-pem
       ssl:
-        certificate: ?{${kapicorp:tesoro:refs:certificate}||randomstr}
-        private_key: ?{${kapicorp:tesoro:refs:private_key}||randomstr}
-        cacert: ?{${kapicorp:tesoro:refs:cacert}||randomstr}
+        certificate: ?{${kapicorp:tesoro:refs:certificate}||random:str}
+        private_key: ?{${kapicorp:tesoro:refs:private_key}||random:str}
+        cacert: ?{${kapicorp:tesoro:refs:cacert}||random:str}
 
   components:
     tesoro:

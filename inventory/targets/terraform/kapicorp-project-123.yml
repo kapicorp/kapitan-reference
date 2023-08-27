@@ -1,7 +1,7 @@
 classes:
   - common
   - terraform.common
-  - terraform.project-type.generic
+  - terraform.gcp.organization.kapicorp
 
 parameters:
   name: Example Terraform Project

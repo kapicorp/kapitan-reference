@@ -1,5 +1,0 @@
-classes:
-  - terraform.gcp.billing
-  - terraform.gcp.services
-  - terraform.remote-state
-  - terraform.providers.gcp-impersonate

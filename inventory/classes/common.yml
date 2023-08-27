@@ -4,3 +4,8 @@ classes:
 parameters:
   namespace: ${target_name}
   target_name: ${_reclass_:name:short}
+  target_path: ${_reclass_:name:path}
+  target_secret: targets/${target_path}
+  target: ${_reclass_:name:full}
+  gcp_project_id: ${target_name}
+  terraform_version: 1.4

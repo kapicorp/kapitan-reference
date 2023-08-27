@@ -5,6 +5,7 @@ parameters:
   cert-manager:
     chart_name: cert-manager
     chart_version: "v1.4.0"
+    chart_dir: system/sources/charts/${cert-manager:chart_name}
     application_version: "v1.4.0"
     namespace: ${namespace}
 
@@ -39,14 +40,14 @@ parameters:
   kapitan:
     dependencies:
     - type: helm
-      output_path: components/charts/${cert-manager:chart_name}
+      output_path: ${cert-manager:chart_dir}
       source: https://charts.jetstack.io/
       version: ${cert-manager:chart_version}
       chart_name: ${cert-manager:chart_name}
     compile:
     - input_type: helm
       input_paths:
-        - components/charts/${cert-manager:chart_name}
+        - ${cert-manager:chart_dir}
       output_path: .
       helm_params:
         namespace: ${cert-manager:namespace}

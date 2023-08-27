@@ -86,7 +86,7 @@ parameters:
               value: my_secret
               b64_encode: true
             better_secret:
-              value: ?{base64:targets/${target_name}/password||randomstr|base64}
+              value: ?{base64:targets/${target_name}/password||random:str|base64}
 
       config_maps:
         config:
@@ -96,7 +96,7 @@ parameters:
           versioned: true
           data:
             echo-service.conf:
-              template: "components/echo-server/echo-server.conf.j2"
+              template: "system/sources/templates/echo-server/echo-server.conf.j2"
               values:
                 example: true
             nginx.conf:

@@ -1,0 +1,24 @@
+---
+parameters:
+  github:
+    app:
+      pem_file: ?{gkms:shared/github_kapitan_app_pem}
+      id: 305325
+      installation_id: 35247134
+
+  terraform:
+    gen_locals:
+      github_pem:
+        value: ${github:app:pem_file}
+
+    gen_required_providers:
+      github:
+        source: integrations/github
+        version: ~> 5.0
+    gen_provider:
+      github:
+        owner: kapicorp
+        app_auth:
+          pem_file: \${local.github_pem}
+          id: ${github:app:id}
+          installation_id: ${github:app:installation_id}

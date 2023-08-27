@@ -11,23 +11,30 @@ $ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
 $ cd kapitan-templates
 
 $ ./kapitan compile
-Compiled postgres-proxy (1.51s)
-Compiled tesoro (1.70s)
-Compiled echo-server (1.64s)
-Compiled mysql (1.67s)
-Compiled gke-pvm-killer (1.17s)
-Compiled prod-sockshop (4.74s)
-Compiled dev-sockshop (4.74s)
-Compiled tutorial (1.68s)
-Compiled global (0.76s)
-Compiled examples (2.60s)
-Compiled pritunl (2.03s)
-Compiled sock-shop (4.36s)
+Rendered inventory (3.45s)
+Compiled pritunl (0.23s)
+Compiled vault (0.27s)
+Compiled examples (0.28s)
+Compiled gke-pvm-killer (0.10s)
+Compiled mysql (0.10s)
+Compiled postgres-proxy (0.11s)
+Compiled sock-shop (0.23s)
+Compiled echo-server (0.11s)
+Compiled global (0.09s)
+Compiled guestbook-argocd (0.12s)
+Compiled tutorial (0.15s)
+Compiled kapicorp-project-123 (0.09s)
+Compiled kapicorp-terraform-admin (0.10s)
+Compiled tesoro (0.13s)
+Compiled dev-sockshop (0.24s)
+Compiled prod-sockshop (0.27s)
+Compiled argocd (0.99s)
+Compiled github-actions (6.99s)
 ```
 
-## Slow walk-through
+## Generators documentation (IN PROGRESS)
 
-[Manifest Generator Documentation](components/generators/kubernetes/README.md)
+[generators.kapitan.dev](https://generators.kapitan.dev/)
 
 ### Tools
 
@@ -37,11 +44,10 @@ For now, you can see that the [`./kapitan`](kapitan) file is a wrapper script th
 
 *Note*: For speed, if kapitan is already installed, it will prefer the non-docker version.
 
-| Script | Description |
-| ------ | ----------- |
+| Script    | Description                      |
+|-----------|----------------------------------|
 | ./kapitan | Wrapper script to invoke kapitan |
-| [generate_sa_secrets.sh](templates/scripts/generate_sa_secrets.sh) | Templated script to automatically inject service accounts into refs |
-| [import_kubernetes_clusters](scripts/import_kubernetes_clusters) | Helper scripts that looks for GKE cluster and automatically imports them into the inventory |
+
 
 ### Libraries
 
@@ -49,83 +55,46 @@ This repo already packs some important libraries that you will want to have when
 
 | Name | Description | Inventory file |
 | ---- | ----------- | -------------- |
-| [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet) | bitnami-labs kube library | [kube.yml](inventory/classes/kapitan/kube.yml) |
-| [kubernetes-generator](components/generators/kubernetes) | [Synthace](www.synthace.com) manifests generator | [generators/kubernetes.yml](inventory/classes/kapitan/generators/kubernetes.yml)|
-| [ingresses-generator](components/generators/ingresses) | [Synthace](www.synthace.com) ingresses generator | [generators/ingresses.yml](inventory/classes/kapitan/generators/ingresses.yml)|
-| [utils](lib/utils.libsonnet) | helpful utilites ||
-| [kap](lib/kap.libsonnet) | Kapitan boilerplate in one file ||
+|kgenlib| Kapitan Generators SKD | [kgenlib.yml](inventory/classes/kapitan/kgenlib.yml)
+
 
 Kapitan allows you to manage external dependencies like the above libraries.
-For instance, in the  [spinnaker.yml](inventory/classes/kapitan/spinnaker.yml) file, the "dependencies" directive tells Kapitan where to find the library.
 
-To update them, run:
+This repo enables fetching by default through the ``.kapitan` file, which only fetches non existing dependencies.
 
-```shell script
-./kapitan compile --fetch
-Dependency lib/kube.libjsonnet : already exists. Ignoring
-./kapitan compiledd
-Compiled tesoro (1.70s)
-Compiled echo-server (1.64s)
-Compiled mysql (1.67s)
-Compiled gke-pvm-killer (1.17s)
-Compiled prod-sockshop (4.74s)
-Compiled dev-sockshop (4.74s)
-Compiled tutorial (1.68s)
-Compiled global (0.76s)
-Compiled examples (2.60s)
-Compiled pritunl (2.03s)
-Compiled sock-shop (4.36s)
+```
+version: 0.32
+compile:
+  prune: true
+  embed-refs: true
+  fetch: true
 ```
 
-## Generators
+To update them from the upstream version, force fetch by running:
 
-As explained in the blog post [Keep your ship together with Kapitan](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7). generators are a
-powerful idea to simplify the management your setup.
-
-We will release initially generators for kubernetes manifests, terraform and spinnaker pipelines.
-
-For now, only the `manifests` and `ingresses` generators are available
-
-### Manifests generator
-
-The `manifests` generator allows you to quickly generate Kubernetes manifests from a much simpler yaml configuration.
-
-The aim for this approach is to allow you to cover the vast majority of the needs you will have for your components.
-More complex scenarios can also be achieved by expanding the library, or implementing your own template.
-
-### Examples
-To help you get started, please look at the following examples:
-
-| source | description | output |
-| ------ | ----------- | ------ |
-|[mysql](inventory/classes/components/mysql.yml)| Example MySQL statefulset | [manifests](compiled/mysql/manifests)|
-|[echo-server](inventory/classes/components/echo-server.yml)| Example using [echo-server](https://github.com/jmalloc/echo-server) | [manifests](compiled/echo-server/manifests)|
-|[gke-pvm-killer](inventory/classes/components/gke-pvm-killer.yml)| Example using [estafette-gke-preemptible-killer](https://github.com/estafette/estafette-gke-preemptible-killer)| [manifests](compiled/gke-pvm-killer/manifests)|
-|[postgres-proxy](inventory/classes/components/postgres-proxy.yml)| Example using [cloud-sql-proxy](https://github.com/GoogleCloudPlatform/cloudsql-proxy) to connect to a Cloud SQL Postgres instance| [manifests](compiled/postgres-proxy/manifests)|
-|[logstash](inventory/classes/components/logstash.yml)| Example of [Logstash](https://www.elastic.co/logstash) configuration | [manifests](compiled/examples/manifests)
-|[tesoro](inventory/classes/components/kapicorp/tesoro.yml)| Example of [tesoro](https://github.com/kapicorp/tesoro) configuration | [manifests](compiled/tesoro/manifests)
-|[pritunl](inventory/classes/components/pritunl/pritunl.yml)| Example of [pritunl](https://pritunl.com/) configuration | [manifests](compiled/pritunl/manifests)
-
-
-
-Please find the generated manifests in the [compiled](compiled) folder
-
-
-### Ingresses generator
-
-The `ingresses` generator adds to the `manifests` generator the ability to easily define ingress resources.
-
-### Examples
-To help you get started, please look at the following examples:
-
-| source | description | output |
-| ------ | ----------- | ------ |
-|[echo-server](inventory/classes/components/echo-server.yml)| Defining ingress paths using [echo-server](https://github.com/jmalloc/echo-server) | [manifests](compiled/echo-server/manifests)|
-
-[Documentation](components/generators/kubernetes/README.md)
-
-### Request or submit your examples
-We have used this generator extensively, and we know it covers the majority of the use cases.
-If you want a specific example, please let us know (or submit your PR)
-
-By adding more example we will be able to stress test the library to make sure we really satisfy all the most common use cases.
+```shell script
+./kapitan compile --force-fetch
+Dependency https://github.com/kapicorp/generators.git: saved to system/lib
+Dependency https://github.com/kapicorp/generators.git: saved to system/generators/kubernetes
+Dependency https://github.com/kapicorp/generators.git: saved to system/generators/terraform
+Dependency argo-cd: saved to system/sources/charts/argo-cd/argo-cd/3.32.0/v2.2.3
+Rendered inventory (3.45s)
+Compiled vault (0.27s)
+Compiled pritunl (0.27s)
+Compiled examples (0.32s)
+Compiled gke-pvm-killer (0.10s)
+Compiled mysql (0.10s)
+Compiled postgres-proxy (0.10s)
+Compiled sock-shop (0.23s)
+Compiled echo-server (0.11s)
+Compiled global (0.09s)
+Compiled tutorial (0.14s)
+Compiled guestbook-argocd (0.11s)
+Compiled kapicorp-project-123 (0.09s)
+Compiled kapicorp-terraform-admin (0.09s)
+Compiled tesoro (0.13s)
+Compiled dev-sockshop (0.24s)
+Compiled prod-sockshop (0.27s)
+Compiled argocd (0.97s)
+Compiled github-actions (7.13s)
+```

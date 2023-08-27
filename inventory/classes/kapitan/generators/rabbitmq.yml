@@ -1,8 +1,0 @@
-parameters:
-  kapitan:
-    compile:
-      - output_path: rabbitmq
-        input_type: kadet
-        output_type: yml
-        input_paths:
-          - components/generators/rabbitmq

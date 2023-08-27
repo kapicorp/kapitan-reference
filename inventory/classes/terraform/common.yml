@@ -1,11 +1,22 @@
+---
 classes:
-- terraform.providers.gcp
+  - terraform.providers.google
+  - terraform.remote-state
+  - terraform.providers.gcp-impersonate
 
 parameters:
-  state_bucket_name: state-kapicorp-terraform-admin
+  terraform_templates: []
+  name: ${gcp_project_id}
+  state_bucket_name: kapicorp-terraform-state
   scripts:
     - templates/scripts/terraform
+
 
   kapitan:
     labels:
       type: terraform
+
+    compile:
+      - output_path: terraform
+        input_type: jinja2
+        input_paths: ${terraform_templates}

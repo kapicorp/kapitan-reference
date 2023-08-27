@@ -44,7 +44,7 @@ parameters:
               value: |-
                 ignore-db-dir=lost+found
             mytemplate.cnf:
-              template: components/mysql/mytemplate.cnf.j2
+              template: system/sources/templates/mysql/mytemplate.cnf.j2
               values:
                 mysql: ${mysql:settings}
 
@@ -54,7 +54,7 @@ parameters:
           versioned: true
           data:
             mysql-root-password:
-              value: ?{plain:targets/${target_name}/mysql-root-password||randomstr:32|base64}
+              value: ?{plain:targets/${target_name}/mysql-root-password||random:str:32|base64}
             mysql-password:
-              value: ?{plain:targets/${target_name}/mysql-password||randomstr|base64}
+              value: ?{plain:targets/${target_name}/mysql-password||random:str|base64}
 

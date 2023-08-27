@@ -1,0 +1,8 @@
+parameters:
+  kapitan:
+    dependencies:
+    - type: git
+      source: https://github.com/kapicorp/generators.git
+      ref: main
+      subdir: lib/
+      output_path: system/lib/

@@ -1,0 +1,10 @@
+---
+parameters:
+  terraform:
+    resources:
+      generic:
+        gcp_project_id_service:
+          cloudbilling:
+            service: cloudbilling.googleapis.com
+          iam:
+            service: iam.googleapis.com

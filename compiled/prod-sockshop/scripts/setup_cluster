@@ -1,0 +1,21 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+setup_kubectl() {
+  ${DIR}/setup_cluster >/dev/null
+  ${DIR}/setup_context >/dev/null
+}
+
+
+CLUSTER_INFO=$(${KUBECTL_COMMAND} cluster-info || (setup_kubectl && ${KUBECTL_COMMAND} cluster-info))
+
+CLUSTER_PUBLIC_IP=$(echo ${CLUSTER_INFO} | egrep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" | head -n 1 | iconv -f utf-8 -t ascii//translit)
+INVENTORY_CLUSTER_PUBLIC_IP="UNKNOWN"
+
+# Check if the cluster public IP has changed
+if [[ "${CLUSTER_PUBLIC_IP}" != "${INVENTORY_CLUSTER_PUBLIC_IP}" ]]
+then
+  setup_kubectl
+fi
+${GCLOUD_COMMAND} container clusters get-credentials demo --zone europe-west1-b --project kapitan-demo

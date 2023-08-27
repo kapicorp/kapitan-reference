@@ -1,0 +1,29 @@
+---
+parameters:
+  database:
+    master:
+      admin_user: admin
+  terraform:
+    gen_locals:
+      admin_password:
+        value: ?{gkms:targets/${target_path}/psql-admin-password||random:str}
+    gen_required_providers:
+      postgresql:
+        source: cyrilgdn/postgresql
+        version: 1.20.0
+    gen_provider:
+      postgresql:
+        scheme: gcppostgres
+        host: \${google_sql_database_instance.database.connection_name}
+        database: "postgres"
+        username: ${database:master:admin_user}
+        password: \${local.admin_password}
+        sslmode: "require"
+        connect_timeout: 15
+    resources:
+      generic:
+        google_sql_user:
+          admin:
+            name: ${database:master:admin_user}
+            instance: \${google_sql_database_instance.database.name}
+            password: \${local.admin_password}

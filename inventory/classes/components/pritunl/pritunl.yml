@@ -6,7 +6,7 @@ parameters:
       connection_string: mongodb://${pritunl:auth:username}:${pritunl:auth:password}@pritunl-mongo:27017/${pritunl:database:name}
     auth:
       username: pritunl
-      password: ?{plain:targets/${target_name}/pritunl_password||randomstr}
+      password: ?{plain:targets/${target_name}/pritunl_password||random:str}
 
   components:
     pritunl:

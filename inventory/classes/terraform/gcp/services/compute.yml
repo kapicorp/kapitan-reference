@@ -1,0 +1,17 @@
+---
+classes:
+  - .common
+
+parameters:
+  terraform:
+    resources:
+      generic:
+        gcp_project_id_service:
+          compute:
+            service: compute.googleapis.com
+          storage-component:
+            service: storage-component.googleapis.com
+          container:
+            service: container.googleapis.com
+            depends_on:
+              - gcp_project_id_service.compute

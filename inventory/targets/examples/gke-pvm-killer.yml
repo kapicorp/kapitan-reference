@@ -4,4 +4,4 @@ classes:
 
 parameters:
   target_name: gke-pvm-killer
-  google_project: example-gce-project
+  gcp_project_id: example-gce-project

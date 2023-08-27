@@ -1,7 +1,6 @@
+---
 parameters:
-  resources:
-    tf:
-      terraform:
-        backend:
-          local:
-            path: "../../../state/terraform.tfstate"
+  terraform:
+    gen_backend:
+      local:
+        path: ../../../state/terraform.tfstate

@@ -57,4 +57,4 @@ parameters:
         secrets:
           data:
             mongodb-root-password:
-              value: ?{plain:targets/${target_name}/mongodb_password||randomstr|base64}
+              value: ?{plain:targets/${target_name}/mongodb_password||random:str|base64}

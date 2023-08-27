@@ -1,0 +1,40 @@
+#!/bin/bash
+# generated with Kapitan
+
+# Imports cluster config from GKE clusters into Kapitan inventory
+# Usage: ./gke_import [project1] [project2] ...
+# If no projects are specified, all projects will be discovered and imported
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+{% set p = inventory.parameters %}
+
+{% raw %}
+PROJECTS_LIST=()
+if [[ ${#@} -gt 0 ]]
+then
+  PROJECTS_LIST+=${@}
+else
+  echo "No projects specified, discovering all projects"
+  PROJECTS_LIST+=$(get_all_projects)
+fi
+
+
+for PROJECT in ${PROJECTS_LIST}
+do
+  echo "Processing project ${PROJECT}"
+  for CLUSTER_NAME_ZONE_PAIR in $(get_clusters_for_project ${PROJECT})
+  do
+    CLUSTER_NAME=$(echo ${CLUSTER_NAME_ZONE_PAIR} | cut -d':' -f1)
+    ZONE=$(echo ${CLUSTER_NAME_ZONE_PAIR} | cut -d':' -f2)
+    ID="gke_${PROJECT}_${ZONE}_${CLUSTER_NAME}"
+
+    echo "..Discovered Kubernetes cluster $CLUSTER_NAME on project $PROJECT..."
+    echo "....Fetching config"
+
+    get_cluster_config ${CLUSTER_NAME} --zone ${ZONE} --project ${PROJECT} | set_reference  plain:resources/${ID}/config
+    echo "....Config saved to plain:resources/${ID}/config"
+    echo
+  done
+done
+{% endraw %}

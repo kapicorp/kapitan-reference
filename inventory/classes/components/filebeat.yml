@@ -114,5 +114,5 @@ parameters:
           subPath: filebeat.yml
           data:
             filebeat.yml:
-              template: components/filebeat/templates/filebeat.yml.j2
+              template: system/sources/templates/filebeat/templates/filebeat.yml.j2
               values: {}

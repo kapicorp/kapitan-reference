@@ -1,0 +1,9 @@
+---
+classes:
+  - common
+  - terraform.github.defaults
+  - terraform.providers.github
+
+parameters:
+  scripts:
+    - system/templates/scripts/github

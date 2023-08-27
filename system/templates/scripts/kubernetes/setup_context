@@ -1,0 +1,9 @@
+#!/bin/bash
+# generated with Kapitan
+
+source $(dirname ${BASH_SOURCE[0]})/bash.include
+
+{% set p = inventory.parameters %}
+{% set cluster = p.cluster %}
+
+${KUBECTL_COMMAND} config set-context ${KUBECTL_CONTEXT} --cluster {{cluster.id}} --user {{cluster.user}} --namespace {{p.namespace}}
