@@ -2,10 +2,9 @@ import logging
 
 from kapitan.inputs.kadet import inventory
 
-from .common import *
-from .github import *
-from .google import *
-from .terraform import *
+from .common import TerraformStore, kgenlib
+
+kgenlib.load_generators(__name__, __file__)
 
 logger = logging.getLogger(__name__)
 
