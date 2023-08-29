@@ -34,3 +34,5 @@ class HelmChartGenerator(kgenlib.BaseStore):
             resource = KubernetesResource.from_baseobj(helm_resource)
             resource.add_label("app.kapicorp.dev/component", chart_name)
             self.add(resource)
+        mutations = self.config.get("mutations", {})
+        self.process_mutations(mutations)

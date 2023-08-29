@@ -165,7 +165,7 @@ class ContentType(Enum):
 
 class BaseContent(BaseModel):
     content_type: ContentType = ContentType.YAML
-    filename: str = "output"
+    filename: str = None
 
     def body(self):
         pass
@@ -227,12 +227,15 @@ class BaseContent(BaseModel):
             if action == "bundle":
                 for condition in conditions:
                     if self.match(condition["conditions"]):
-                        try:
-                            self.filename = condition["filename"].format(content=self)
-                        except (AttributeError, KeyError):
-                            pass
-                        if condition.get("break", True):
-                            break
+                        if self.filename is None:
+                            try:
+                                self.filename = condition["filename"].format(
+                                    content=self
+                                )
+                            except (AttributeError, KeyError):
+                                pass
+                            if condition.get("break", True):
+                                break
 
     def match(self, match_conditions):
         for key, values in match_conditions.items():
@@ -320,6 +323,9 @@ class BaseStore(BaseModel):
                     output_format = output_filename
                 else:
                     output_format = getattr(content, "filename", "output")
+                    if output_format is None:
+                        output_format = "output"
+
                 filename = output_format.format(content=content)
                 file_content_list = self.root.get(filename, [])
                 if content in file_content_list:

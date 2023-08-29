@@ -10,6 +10,7 @@
 |[guestbook-argocd](../guestbook-argocd/docs/README.md)|
 |[kapicorp-project-123](../kapicorp-project-123/docs/README.md)|
 |[kapicorp-terraform-admin](../kapicorp-terraform-admin/docs/README.md)|
+|[keda](../keda/docs/README.md)|
 |[mysql](../mysql/docs/README.md)|
 |[postgres-proxy](../postgres-proxy/docs/README.md)|
 |[pritunl](../pritunl/docs/README.md)|
