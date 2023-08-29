@@ -171,19 +171,15 @@ class HTTPRoute(KubernetesResource):
 )
 class GatewayGenerator(kgenlib.BaseStore):
     def body(self):
-        filename = f"{self.name}-gateway.yaml"
         gateway = Gateway(name=self.name, config=self.config)
-        gateway.filename = filename
         self.add(gateway)
 
         policy = GCPGatewayPolicy(name=self.name, config=self.config, gateway=gateway)
-        policy.filename = filename
         self.add(policy)
 
         for route_id, route_config in self.config.get("routes", {}).items():
             route_name = f"{self.name}-{route_id}"
             route = HTTPRoute(name=route_name, config=route_config, gateway=gateway)
-            route.filename = filename
             self.add(route)
 
             for service_id, service_config in route_config.get("services", {}).items():
