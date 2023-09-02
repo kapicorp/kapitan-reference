@@ -4,6 +4,9 @@ This repository is meant to be a way to bootstrap your [Kapitan](https://kapitan
 
 It is meant to help you make use of best practices and libraries that can make Kapitan the ultimate tool for all your configuration needs.
 
+Look at the branch [`init`](https://github.com/kapicorp/kapitan-reference/tree/init) for a clean setup with only the basics enabled.
+
+
 ## Quickstart
 
 ```shell script
@@ -42,7 +45,6 @@ This repo comes already with some helper tools. We will expand it as the time go
 
 For now, you can see that the [`./kapitan`](kapitan) file is a wrapper script that allows you to run kapitan without installing any binary (it does depends on docker!)
 
-*Note*: For speed, if kapitan is already installed, it will prefer the non-docker version.
 
 | Script    | Description                      |
 |-----------|----------------------------------|
@@ -53,21 +55,22 @@ For now, you can see that the [`./kapitan`](kapitan) file is a wrapper script th
 
 This repo already packs some important libraries that you will want to have when working with kapitan.
 
-| Name | Description | Inventory file |
-| ---- | ----------- | -------------- |
-|kgenlib| Kapitan Generators SKD | [kgenlib.yml](inventory/classes/kapitan/kgenlib.yml)
+| Name    | Description            | Inventory file                                       |
+|---------|------------------------|------------------------------------------------------|
+| kgenlib | Kapitan Generators SKD | [kgenlib.yml](inventory/classes/kapitan/kgenlib.yml) |
 
+
+### External Dependencies
 
 Kapitan allows you to manage external dependencies like the above libraries.
+This repo enables fetching by default through the `.kapitan` file, which only fetches missing dependencies.
 
-This repo enables fetching by default through the ``.kapitan` file, which only fetches non existing dependencies.
-
-```
+```yaml
 version: 0.32
 compile:
   prune: true
   embed-refs: true
-  fetch: true
+  fetch: true    # Automatically fetches missing dependencies.
 ```
 
 To update them from the upstream version, force fetch by running:
