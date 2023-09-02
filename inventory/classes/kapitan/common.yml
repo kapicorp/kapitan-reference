@@ -1,5 +1,5 @@
 classes:
-  - kapitan.kgenlib
+  - kapitan.generators.kgenlib
   - kapitan.generators.kubernetes
   - kapitan.generators.terraform
 
