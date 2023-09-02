@@ -1,5 +1,0 @@
-classes:
-  - common
-  - projects.localhost.kubernetes.kind
-  - components.pritunl.pritunl
-  - components.pritunl.pritunl-mongo

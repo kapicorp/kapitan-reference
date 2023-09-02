@@ -1,7 +1,0 @@
-#!/bin/bash
-# generated with Kapitan
-
-source $(dirname ${BASH_SOURCE[0]})/bash.include
-
-
-${KUBECTL_COMMAND} config set-context ${KUBECTL_CONTEXT} --cluster kind-kind --user kind-kind --namespace dev-sockshop

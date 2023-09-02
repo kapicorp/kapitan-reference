@@ -1,4 +1,0 @@
-classes:
-  - common
-  - projects.localhost.kubernetes.kind
-  - components.kapicorp.tesoro

@@ -1,7 +1,0 @@
-classes:
-  - common
-  - terraform.common
-  - terraform.gcp.organization.kapicorp
-
-parameters:
-  name: Terraform Admin Project

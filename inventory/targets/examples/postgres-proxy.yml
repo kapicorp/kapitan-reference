@@ -1,7 +1,0 @@
-classes:
-  - common
-  - components.postgres-proxy
-
-parameters:
-  target_name: postgres-proxy
-  gcp_project_id: example-project

@@ -1,9 +1,0 @@
-#!/bin/bash
-# generated with Kapitan
-source $(dirname ${BASH_SOURCE[0]})/bash.include
-
-
-REFERENCE=${1? "Pass a reference as first argument: e.g. gkms:targets/dev-sockshop/reference_name"}
-shift
-
-set_reference ${REFERENCE} "$@"

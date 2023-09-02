@@ -1,7 +1,0 @@
-classes:
-  - common
-  - components.guestbook-argocd
-
-
-parameters:
-  target_name: guestbook-argocd

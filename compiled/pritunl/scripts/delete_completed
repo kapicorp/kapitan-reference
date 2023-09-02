@@ -1,6 +1,0 @@
-#!/bin/bash
-# generated with Kapitan
-
-source $(dirname ${BASH_SOURCE[0]})/bash.include
-
-${KUBECTL_COMMAND} delete pod --field-selector=status.phase==Failed
