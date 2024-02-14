@@ -57,7 +57,7 @@ This repo already packs some important libraries that you will want to have when
 
 | Name    | Description            | Inventory file                                       |
 |---------|------------------------|------------------------------------------------------|
-| kgenlib | Kapitan Generators SKD | [kgenlib.yml](inventory/classes/kapitan/kgenlib.yml) |
+| kgenlib | Kapitan Generators SKD | [kgenlib.yml](inventory/classes/kapitan/generators/kgenlib.yml) |
 
 
 ### External Dependencies
