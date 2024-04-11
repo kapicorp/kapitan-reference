@@ -19,12 +19,12 @@ parameters:
         runAsUser: 10001
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           timeout_seconds: 3
         liveness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           timeout_seconds: 5

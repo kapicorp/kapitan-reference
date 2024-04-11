@@ -15,12 +15,12 @@ parameters:
           service_port: 9001
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: liveness
           path: /liveness
           timeout_seconds: 3
         liveness:
-          type: http
+          type: HTTP
           port: liveness
           path: /liveness
           timeout_seconds: 3
