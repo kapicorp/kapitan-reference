@@ -2,8 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   labels:
+    app.kapicorp.dev/component: echo-server
     name: echo-server
   name: echo-server
+  namespace: tutorial
 spec:
   ingress:
     - from:
@@ -15,7 +17,6 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      app.kapicorp.dev/component: echo-server
       name: echo-server
   policyTypes:
     - Ingress

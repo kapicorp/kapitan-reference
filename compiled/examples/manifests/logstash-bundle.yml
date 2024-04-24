@@ -42,7 +42,7 @@ spec:
                       operator: In
                       values:
                         - logstash
-                topologyKey: failure-domain.beta.kubernetes.io/zone
+                topologyKey: topology.kubernetes.io/zone
               weight: 1
       containers:
         - image: eu.gcr.io/antha-images/logstash:7.5.1

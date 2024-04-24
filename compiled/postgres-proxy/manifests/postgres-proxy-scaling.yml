@@ -1,9 +1,12 @@
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app.kapicorp.dev/component: postgres-proxy
     name: postgres-proxy
+    tier: db
   name: postgres-proxy
   namespace: postgres-proxy
 spec:
@@ -16,6 +19,8 @@ spec:
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app.kapicorp.dev/component: postgres-proxy
     name: postgres-proxy
