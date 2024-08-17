@@ -5,8 +5,10 @@ DIR=$(dirname ${BASH_SOURCE[0]})
 ABS_PATH=$(cd "${DIR}"; pwd)
 KAPITAN_IMAGE=kapicorp/kapitan:v{{ cookiecutter.kapitan_version }}
 
-KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w $PWD \
-  -v $PWD:$PWD:delegated \
+KAPITAN_BINARY="docker run \
+  --rm -i -u $(id -u):$(id -g) \
+  -w $PWD \
+  -v $ABS_PATH:$PWD:delegated \
   $KAPITAN_IMAGE"
 
 exec ${KAPITAN_BINARY} "$@"
