@@ -43,8 +43,20 @@ parameters:
                 kind: [HorizontalPodAutoscaler, PodDisruptionBudget, VerticalPodAutoscaler]
               filename: '{content.component_name}-scaling'
             - conditions:
+                # CRDs need to be setup separately
+                kind: [CustomResourceDefinition]
+              filename: '{content.component_name}-crds'
+            - conditions:
                 kind: ["*"]
               filename: '{content.component_name}-bundle'
+          patch:
+            - conditions:
+                kind: [CustomResourceDefinition]
+              patch:
+                metadata:
+                  annotations:
+                    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
+
 
   generators:
     kubernetes:
