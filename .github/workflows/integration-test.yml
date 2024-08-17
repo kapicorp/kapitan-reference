@@ -19,6 +19,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: compile
+        run: |
+          ./kapitan compile
+          
       - uses: azure/setup-kubectl@v3
         id: install
 
