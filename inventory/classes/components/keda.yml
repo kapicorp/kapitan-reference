@@ -28,16 +28,3 @@ parameters:
         namespace: ${keda:params:namespace}
         name: ${keda:params:chart_name}
       helm_values: ${keda:params:helm_values}
-      mutations:
-        bundle:
-          - conditions:
-              # CRDs need to be setup separately
-              kind: [CustomResourceDefinition]
-            filename: '{content.component_name}-crds'
-        patch:
-          - conditions:
-              kind: [CustomResourceDefinition]
-            patch:
-              metadata:
-                annotations:
-                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true

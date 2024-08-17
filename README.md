@@ -1,6 +1,7 @@
-# Kapitan Reference Setup
+# Kapitan Reference Setup 
 
 [![CI](https://github.com/kapicorp/kapitan-reference/actions/workflows/integration-test.yml/badge.svg?event=push)](https://github.com/kapicorp/kapitan-reference/actions/workflows/integration-test.yml)
+
 
 This repository is meant to be a way to bootstrap your [Kapitan](https://kapitan.dev) setup to get you up and running.
 
