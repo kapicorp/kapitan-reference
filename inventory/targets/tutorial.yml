@@ -1,6 +1,7 @@
 classes:
   - common
   - components.echo-server
+  - projects.localhost.kubernetes.kind
 
 
 parameters:

@@ -3,7 +3,7 @@ set -o nounset -o pipefail -o noclobber -o errexit
 
 DIR=$(dirname ${BASH_SOURCE[0]})
 ABS_PATH=$(cd "${DIR}"; pwd)
-KAPITAN_IMAGE=kapicorp/kapitan:v{{ cookiecutter.kapitan_version }}
+KAPITAN_IMAGE=kapicorp/kapitan:v{{ kapitan_version }}
 
 KAPITAN_BINARY="docker run \
   --rm -i -u $(id -u):$(id -g) \
