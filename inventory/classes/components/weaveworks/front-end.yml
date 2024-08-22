@@ -17,12 +17,12 @@ parameters:
             - all
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: http
           path: /
           timeout_seconds: 3
         liveness:
-          type: http
+          type: HTTP
           port: http
           path: /
           timeout_seconds: 5

@@ -214,7 +214,7 @@ parameters:
               - sleep 5 && kill -SIGTERM $(pidof vault)
       healthcheck:
         liveness:
-          type: command
+          type: EXEC
           command:
             - /bin/sh
             - -ec
@@ -225,7 +225,7 @@ parameters:
           success_threshold: 1
           timeout_seconds: 5
         readiness:
-          type: command
+          type: EXEC
           command:
             - /bin/sh
             - -ec

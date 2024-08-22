@@ -29,14 +29,14 @@ parameters:
         MONGODB_DATABASE: ${pritunl:database:name}
       healthcheck:
         readiness:
-          type: command
+          type: EXEC
           command:
             - mongo
             - --eval
             - "db.adminCommand('ping')"
           timeout_seconds: 5
         liveness:
-          type: command
+          type: EXEC
           command:
             - mongo
             - --eval

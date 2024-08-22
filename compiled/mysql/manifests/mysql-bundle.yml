@@ -57,7 +57,7 @@ spec:
         - name: secrets
           secret:
             defaultMode: 420
-            secretName: mysql-a61a1e7c
+            secretName: mysql-0fa06206
   updateStrategy:
     rollingUpdate:
       partition: 0

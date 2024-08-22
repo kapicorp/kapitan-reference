@@ -30,7 +30,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           image: jmalloc/echo-server
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -94,7 +94,7 @@ spec:
       volumes:
         - configMap:
             defaultMode: 360
-            name: echo-server-caa935ba
+            name: echo-server-88d0d989
           name: config
         - name: secret
           secret:

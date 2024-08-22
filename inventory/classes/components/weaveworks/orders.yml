@@ -10,13 +10,13 @@ parameters:
           service_port: 80
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           timeout_seconds: 3
           initial_delay_seconds: 120
         liveness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           timeout_seconds: 5

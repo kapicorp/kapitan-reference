@@ -8,6 +8,7 @@ data:
 kind: ConfigMap
 metadata:
   labels:
+    app.kapicorp.dev/component: mysql
     name: mysql
   name: mysql
   namespace: examples

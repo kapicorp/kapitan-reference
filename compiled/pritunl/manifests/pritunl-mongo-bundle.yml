@@ -13,7 +13,6 @@ spec:
   selector:
     matchLabels:
       name: pritunl-mongo
-  serviceName: pritunl-mongo
   template:
     metadata:
       labels:
