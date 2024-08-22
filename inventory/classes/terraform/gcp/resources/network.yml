@@ -10,5 +10,5 @@ parameters:
             description: Default network for the project maintained by terraform
             auto_create_subnetworks: true
             depends_on:
-              - gcp_project_id.main
-              - gcp_project_id_service.compute
+              - google_project.main
+              - google_project_service.compute
