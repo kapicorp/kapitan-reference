@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "google_project_service": {
+      "cloudbilling": {
+        "service": "cloudbilling.googleapis.com",
+        "project": "kapicorp-terraform-admin"
+      },
+      "iam": {
+        "service": "iam.googleapis.com",
+        "project": "kapicorp-terraform-admin"
+      }
+    }
+  }
+}

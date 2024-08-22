@@ -3,7 +3,7 @@ parameters:
   terraform:
     resources:
       generic:
-        gcp_project_id_service:
+        google_project_service:
           cloudbilling:
             service: cloudbilling.googleapis.com
           iam:

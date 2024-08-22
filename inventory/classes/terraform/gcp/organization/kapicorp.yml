@@ -13,7 +13,7 @@ parameters:
   generators:
     terraform:
       defaults:
-        gcp_project_id:
+        google_project:
           org_id: ${gcp_organization_id}
           auto_create_network: false
           project_id: ${gcp_project_id}
@@ -22,7 +22,7 @@ parameters:
   terraform:
     resources:
       generic:
-        gcp_project_id:
+        google_project:
           main:
             project:
             name: ${gcp_display_name}

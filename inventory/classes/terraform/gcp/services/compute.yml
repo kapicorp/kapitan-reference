@@ -6,7 +6,7 @@ parameters:
   terraform:
     resources:
       generic:
-        gcp_project_id_service:
+        google_project_service:
           compute:
             service: compute.googleapis.com
           storage-component:
@@ -14,4 +14,4 @@ parameters:
           container:
             service: container.googleapis.com
             depends_on:
-              - gcp_project_id_service.compute
+              - google_project_service.compute
