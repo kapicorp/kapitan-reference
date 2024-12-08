@@ -16,6 +16,7 @@ spec:
       port: 4954
       protocol: TCP
       targetPort: http
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/component: go
     app.kubernetes.io/version: 0.18.1

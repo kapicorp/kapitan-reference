@@ -19,6 +19,7 @@ spec:
       port: 5672
       protocol: TCP
       targetPort: rabbitmq
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/part-of: sock-shop
     name: rabbit-mq

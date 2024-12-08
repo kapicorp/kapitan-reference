@@ -11,7 +11,10 @@ metadata:
   name: trivy
   namespace: examples
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/component: go
@@ -24,14 +27,17 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/component: go
         app.kubernetes.io/version: 0.18.1
         name: trivy
     spec:
+      affinity: {}
       containers:
         - args:
             - server
+          command: []
           env:
             - name: GITHUB_TOKEN
               valueFrom:
@@ -54,6 +60,7 @@ spec:
               value: 'False'
           image: docker.io/aquasec/trivy:0.18.1
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: trivy
           ports:
             - containerPort: 4954
@@ -66,6 +73,7 @@ spec:
             requests:
               cpu: 200m
               memory: 512Mi
+          securityContext: {}
           volumeMounts:
             - mountPath: /home/scanner/.cache
               name: data
@@ -73,16 +81,26 @@ spec:
             - mountPath: /tmp
               name: tmp-data
               readOnly: false
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       serviceAccountName: trivy
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - hostPath:
             path: /tmp/trivy
             type: DirectoryOrCreate
           name: data
-        - name: tmp-data
+        - emptyDir: {}
+          name: tmp-data
         - name: trivy
           secret:
             defaultMode: 420
+            items: []
             secretName: trivy

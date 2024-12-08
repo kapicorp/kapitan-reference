@@ -18,6 +18,7 @@ spec:
       port: 9095
       protocol: TCP
       targetPort: tesoro-metrics
+  publishNotReadyAddresses:
   selector:
     name: tesoro
   sessionAffinity: None

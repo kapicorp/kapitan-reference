@@ -9,7 +9,10 @@ metadata:
   name: session-db
   namespace: sock-shop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: session-db
@@ -20,17 +23,23 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: session-db
     spec:
+      affinity: {}
       containers:
-        - image: redis:alpine
+        - args: []
+          command: []
+          image: redis:alpine
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: session-db
           ports:
             - containerPort: 6379
               name: redis
               protocol: TCP
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -39,5 +48,13 @@ spec:
                 - SETUID
               drop:
                 - all
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []

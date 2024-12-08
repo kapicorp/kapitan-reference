@@ -22,6 +22,7 @@ spec:
       port: 443
       protocol: TCP
       targetPort: webui
+  publishNotReadyAddresses:
   selector:
     name: pritunl
   sessionAffinity: None

@@ -15,6 +15,7 @@ spec:
       port: 80
       protocol: TCP
       targetPort: http
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/part-of: sock-shop
     name: orders

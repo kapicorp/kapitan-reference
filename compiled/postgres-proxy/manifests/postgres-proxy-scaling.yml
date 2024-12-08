@@ -28,6 +28,7 @@ metadata:
   name: postgres-proxy
   namespace: postgres-proxy
 spec:
+  resourcePolicy: {}
   targetRef:
     apiVersion: apps/v1
     kind: Deployment

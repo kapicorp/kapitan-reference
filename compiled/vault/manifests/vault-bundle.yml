@@ -11,15 +11,19 @@ metadata:
   name: vault
   namespace: vault
 spec:
+  minReadySeconds:
   replicas: 3
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/component: go
       app.kubernetes.io/version: 1.7.3
       name: vault
   serviceName: vault-internal
+  strategy: {}
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/component: go
         app.kubernetes.io/version: 1.7.3
@@ -141,21 +145,30 @@ spec:
           volumeMounts:
             - mountPath: /vault/config/extraconfig-from-values.hcl
               name: vault-config
+              readOnly:
               subPath: extraconfig-from-values.hcl
             - mountPath: /home/vault
               name: home
             - mountPath: /vault/data
               name: data
+      dnsPolicy:
       hostNetwork: false
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
       securityContext:
         fsGroup: 1000
       serviceAccountName: vault
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
-        - name: home
+        - emptyDir: {}
+          name: home
         - configMap:
             defaultMode: 420
+            items: []
             name: vault
           name: vault-config
   updateStrategy:

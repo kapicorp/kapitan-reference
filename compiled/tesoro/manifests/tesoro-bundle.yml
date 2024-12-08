@@ -105,7 +105,10 @@ metadata:
   name: tesoro
   namespace: tesoro
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: tesoro
@@ -116,17 +119,21 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: tesoro
     spec:
+      affinity: {}
       containers:
         - args:
             - --ca-file=/certs/cacert.pem
             - --cert-file=/certs/cert.pem
             - --key-file=/certs/cert.key
             - --port=443
+          command: []
           image: kapicorp/tesoro
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: tesoro
           ports:
             - containerPort: 443
@@ -135,6 +142,7 @@ spec:
             - containerPort: 9095
               name: tesoro-metrics
               protocol: TCP
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -144,11 +152,22 @@ spec:
           volumeMounts:
             - mountPath: /certs
               name: secrets
+              readOnly:
+              subPath:
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       serviceAccountName: tesoro
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - name: secrets
           secret:
             defaultMode: 420
+            items: []
             secretName: tesoro

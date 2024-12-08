@@ -9,18 +9,25 @@ metadata:
   name: mysql
   namespace: mysql
 spec:
+  minReadySeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: mysql
   serviceName: mysql
+  strategy: {}
   template:
     metadata:
+      annotations: {}
       labels:
         name: mysql
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: MYSQL_DATABASE
               value: ''
             - name: MYSQL_PASSWORD
@@ -37,26 +44,41 @@ spec:
               value: ''
           image: mysql:5.7.28
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: mysql
           ports:
             - containerPort: 3306
               name: mysql
               protocol: TCP
+          resources: {}
+          securityContext: {}
           volumeMounts:
             - mountPath: /etc/mysql/conf.d/
               name: config
+              readOnly:
+              subPath:
             - mountPath: /var/lib/mysql
               name: datadir
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - configMap:
             defaultMode: 420
+            items: []
             name: mysql
           name: config
         - name: secrets
           secret:
             defaultMode: 420
+            items: []
             secretName: mysql-0fa06206
   updateStrategy:
     rollingUpdate:

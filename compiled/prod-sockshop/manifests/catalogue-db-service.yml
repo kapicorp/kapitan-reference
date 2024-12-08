@@ -15,6 +15,7 @@ spec:
       port: 3306
       protocol: TCP
       targetPort: mysql
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/part-of: sock-shop
     name: catalogue-db

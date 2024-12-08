@@ -10,7 +10,10 @@ metadata:
   name: catalogue
   namespace: dev-sockshop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/part-of: sock-shop
@@ -22,10 +25,12 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/part-of: sock-shop
         name: catalogue
     spec:
+      affinity: {}
       containers:
         - args:
             - -port=80
@@ -33,9 +38,11 @@ spec:
             - /app
           image: weaveworksdemos/catalogue:0.3.5
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -51,6 +58,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -58,6 +66,7 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -67,5 +76,13 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 10001
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []

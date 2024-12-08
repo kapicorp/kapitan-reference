@@ -4,6 +4,7 @@ metadata:
   labels:
     name: managed-sockshop.kapicorp.com
   name: managed-sockshop.kapicorp.com
+  namespace:
 spec:
   domains:
     - managed-sockshop.kapicorp.com

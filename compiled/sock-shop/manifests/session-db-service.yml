@@ -14,6 +14,7 @@ spec:
       port: 6379
       protocol: TCP
       targetPort: redis
+  publishNotReadyAddresses:
   selector:
     name: session-db
   sessionAffinity: None

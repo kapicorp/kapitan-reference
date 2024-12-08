@@ -9,7 +9,10 @@ metadata:
   name: user
   namespace: dev-sockshop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: user
@@ -20,18 +23,24 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: user
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: mongo
               value: user-db:27017
           image: weaveworksdemos/user:0.4.7
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -47,6 +56,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -54,6 +64,7 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -65,8 +76,16 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - emptyDir:
             medium: Memory

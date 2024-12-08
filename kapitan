@@ -3,7 +3,7 @@ set -o nounset -o pipefail -o noclobber -o errexit
 
 DIR=$(dirname ${BASH_SOURCE[0]})
 ABS_PATH=$(cd "${DIR}"; pwd)
-KAPITAN_IMAGE=kapicorp/kapitan:test-omegaconf
+KAPITAN_IMAGE=kapicorp/kapitan:0.34.2
 
 KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w $PWD \
   -v $PWD:$PWD:delegated \

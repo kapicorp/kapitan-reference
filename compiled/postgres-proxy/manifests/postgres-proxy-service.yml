@@ -15,6 +15,7 @@ spec:
       port: 5432
       protocol: TCP
       targetPort: postgresql
+  publishNotReadyAddresses:
   selector:
     name: postgres-proxy
     tier: db

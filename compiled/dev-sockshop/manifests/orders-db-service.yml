@@ -15,6 +15,7 @@ spec:
       port: 27017
       protocol: TCP
       targetPort: mongo
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/part-of: sock-shop
     name: orders-db

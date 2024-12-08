@@ -9,7 +9,10 @@ metadata:
   name: logstash
   namespace: examples
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 2
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: logstash
@@ -20,6 +23,7 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: logstash
     spec:
@@ -45,8 +49,11 @@ spec:
                 topologyKey: topology.kubernetes.io/zone
               weight: 1
       containers:
-        - image: eu.gcr.io/antha-images/logstash:7.5.1
+        - args: []
+          command: []
+          image: eu.gcr.io/antha-images/logstash:7.5.1
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: logstash
           ports:
             - containerPort: 9600
@@ -55,6 +62,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /
               port: 9600
               scheme: HTTP
@@ -62,19 +70,35 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          resources: {}
+          securityContext: {}
           volumeMounts:
             - mountPath: /usr/share/logstash/config/
               name: config
+              readOnly:
+              subPath:
             - mountPath: /usr/share/logstash/pipeline/
               name: pipelines
+              readOnly:
+              subPath:
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - configMap:
             defaultMode: 420
+            items: []
             name: logstash-config
           name: config
         - configMap:
             defaultMode: 420
+            items: []
             name: logstash-pipelines
           name: pipelines

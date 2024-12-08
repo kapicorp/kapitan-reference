@@ -10,7 +10,10 @@ metadata:
   name: queue-master
   namespace: sock-shop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/part-of: sock-shop
@@ -22,12 +25,16 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/part-of: sock-shop
         name: queue-master
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: JAVA_OPTS
               value: -Xms64m -Xmx128m -XX:PermSize=32m -XX:MaxPermSize=64m -XX:+UseG1GC
                 -Djava.security.egd=file:/dev/urandom
@@ -35,9 +42,11 @@ spec:
               value: zipkin.jaeger.svc.cluster.local
           image: weaveworksdemos/queue-master:0.3.1
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -53,6 +62,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /health
               port: http
               scheme: HTTP
@@ -60,13 +70,22 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          resources: {}
           securityContext:
             readOnlyRootFilesystem: true
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - emptyDir:
             medium: Memory

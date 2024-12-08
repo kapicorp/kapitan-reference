@@ -7,8 +7,10 @@ metadata:
   labels:
     name: gke-managed-certificate
   name: gke-managed-certificate
+  namespace:
 spec:
   backend:
     service:
       name: frontend
       port: 80
+  rules: []

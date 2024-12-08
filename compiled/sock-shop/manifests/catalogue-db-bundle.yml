@@ -10,7 +10,10 @@ metadata:
   name: catalogue-db
   namespace: sock-shop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/part-of: sock-shop
@@ -22,24 +25,38 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/part-of: sock-shop
         name: catalogue-db
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: MYSQL_DATABASE
               value: socksdb
             - name: MYSQL_ROOT_PASSWORD
               value: i-navbnEcQdxu6kmpr6UVyO-hSm6JZYb0X98hTfkOdE
           image: weaveworksdemos/catalogue-db:0.3.0
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: catalogue-db
           ports:
             - containerPort: 3306
               name: mysql
               protocol: TCP
+          resources: {}
           securityContext:
             readOnlyRootFilesystem: false
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
