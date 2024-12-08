@@ -1,10 +1,10 @@
 {
   "provider": {
     "google": {
+      "impersonate_service_account": "terraform@kapicorp-terraform-admin.iam.gserviceaccount.com",
       "project": "kapicorp-terraform-admin",
       "region": "europe-west1",
-      "zone": "europe-west1-b",
-      "impersonate_service_account": "terraform@kapicorp-terraform-admin.iam.gserviceaccount.com"
+      "zone": "europe-west1-b"
     }
   }
 }
