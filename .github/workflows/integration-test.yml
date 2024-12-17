@@ -19,16 +19,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: compile
+        run: |
+          ./kapitan compile
+
       - uses: azure/setup-kubectl@v3
         id: install
 
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.2.0
-        with:
-          cluster_name: kind
-
-      - name: Check connectivity to the cluster
-        run: ./compiled/tutorial/scripts/kubectl get pods
+      - name: setups the cluster
+        run: |
+          ./compiled/tutorial/scripts/setup_cluster
+          ./compiled/tutorial/scripts/setup_context
+          ./compiled/tutorial/scripts/kubectl get pods
 
       - name: Run chart-testing (install)
         run: ./compiled/tutorial/scripts/apply
+
+      - name: setups the cluster
+        run: |
+         ./compiled/tutorial/scripts/kubectl rollout status deployment  echo-server -w --timeout=60s
