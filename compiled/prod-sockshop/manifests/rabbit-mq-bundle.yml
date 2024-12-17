@@ -10,7 +10,10 @@ metadata:
   name: rabbit-mq
   namespace: prod-sockshop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 2
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/part-of: sock-shop
@@ -22,13 +25,18 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/part-of: sock-shop
         name: rabbit-mq
     spec:
+      affinity: {}
       containers:
-        - image: rabbitmq:3.6.8-management
+        - args: []
+          command: []
+          image: rabbitmq:3.6.8-management
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: rabbit-mq
           ports:
             - containerPort: 15672
@@ -37,6 +45,7 @@ spec:
             - containerPort: 5672
               name: rabbitmq
               protocol: TCP
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -47,5 +56,13 @@ spec:
               drop:
                 - all
             readOnlyRootFilesystem: true
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []

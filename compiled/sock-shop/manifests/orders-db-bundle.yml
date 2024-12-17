@@ -10,7 +10,10 @@ metadata:
   name: orders-db
   namespace: sock-shop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       app.kubernetes.io/part-of: sock-shop
@@ -22,18 +25,24 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         app.kubernetes.io/part-of: sock-shop
         name: orders-db
     spec:
+      affinity: {}
       containers:
-        - image: mongo
+        - args: []
+          command: []
+          image: mongo
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: orders-db
           ports:
             - containerPort: 27017
               name: mongo
               protocol: TCP
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -46,8 +55,16 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - emptyDir:
             medium: Memory

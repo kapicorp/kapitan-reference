@@ -18,13 +18,13 @@ parameters:
             - NET_BIND_SERVICE
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           initial_delay_seconds: 120
           timeout_seconds: 3
         liveness:
-          type: http
+          type: HTTP
           port: http
           path: /health
           initial_delay_seconds: 120

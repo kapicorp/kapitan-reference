@@ -24,7 +24,7 @@ parameters:
         update_mode: Auto
       healthcheck:
         liveness:
-          type: tcp
+          type: TCP
           port: postgresql
           timeout_seconds: 1
       service:

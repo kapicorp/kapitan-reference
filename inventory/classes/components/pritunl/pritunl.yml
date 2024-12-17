@@ -21,13 +21,13 @@ parameters:
           service_port: 443
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           scheme: HTTPS
           port: webui
           path: /
           timeout_seconds: 3
         liveness:
-          type: http
+          type: HTTP
           scheme: HTTPS
           port: webui
           path: /

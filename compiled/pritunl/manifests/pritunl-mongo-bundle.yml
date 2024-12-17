@@ -9,18 +9,25 @@ metadata:
   name: pritunl-mongo
   namespace: pritunl
 spec:
+  minReadySeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: pritunl-mongo
-  serviceName: pritunl-mongo
+  serviceName:
+  strategy: {}
   template:
     metadata:
+      annotations: {}
       labels:
         name: pritunl-mongo
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: MONGODB_DATABASE
               value: pritunl
             - name: MONGODB_DISABLE_SYSTEM_LOG
@@ -42,6 +49,7 @@ spec:
               value: pritunl
           image: docker.io/bitnami/mongodb:4.2.6-debian-10-r23
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             exec:
               command:
@@ -69,21 +77,30 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
+          resources: {}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001
           volumeMounts:
             - mountPath: /bitnami/mongodb
               name: datadir
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
       securityContext:
         fsGroup: 1001
       serviceAccountName: pritunl-mongo
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - name: secrets
           secret:
             defaultMode: 420
+            items: []
             secretName: pritunl-mongo
   updateStrategy:
     rollingUpdate:

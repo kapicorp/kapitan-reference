@@ -6,11 +6,13 @@ metadata:
   labels:
     name: tls-certificate
   name: tls-certificate
+  namespace:
 spec:
   backend:
     service:
       name: frontend
       port: 80
+  rules: []
   tls:
     - hosts:
         - sockshop.kapicorp.com

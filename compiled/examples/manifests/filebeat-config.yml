@@ -13,6 +13,7 @@ data:
 kind: ConfigMap
 metadata:
   labels:
+    app.kapicorp.dev/component: filebeat
     name: filebeat
   name: filebeat
   namespace: examples

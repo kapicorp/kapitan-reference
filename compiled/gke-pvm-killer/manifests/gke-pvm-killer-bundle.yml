@@ -9,7 +9,10 @@ metadata:
   name: gke-pvm-killer
   namespace: gke-pvm-killer
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: gke-pvm-killer
@@ -20,11 +23,15 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: gke-pvm-killer
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: DRAIN_TIMEOUT
               value: '300'
             - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -33,9 +40,11 @@ spec:
               value: '600'
           image: estafette/estafette-gke-preemptible-killer:1.2.5
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /liveness
               port: liveness
               scheme: HTTP
@@ -54,6 +63,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /liveness
               port: liveness
               scheme: HTTP
@@ -61,11 +71,23 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
+          resources: {}
+          securityContext: {}
           volumeMounts:
             - mountPath: /opt/secrets
               name: secrets
+              readOnly:
+              subPath:
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - name: secrets
           secret:

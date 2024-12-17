@@ -9,6 +9,7 @@ data:
 kind: ConfigMap
 metadata:
   labels:
+    app.kapicorp.dev/component: echo-server
     name: echo-server
-  name: echo-server-caa935ba
+  name: echo-server-88d0d989
   namespace: echo-server

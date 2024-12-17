@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app.kapicorp.dev/component: catalogue-db
     app.kubernetes.io/part-of: sock-shop
@@ -13,6 +15,7 @@ spec:
       port: 3306
       protocol: TCP
       targetPort: mysql
+  publishNotReadyAddresses:
   selector:
     app.kubernetes.io/part-of: sock-shop
     name: catalogue-db

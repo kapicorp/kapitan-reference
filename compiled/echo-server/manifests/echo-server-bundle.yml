@@ -9,7 +9,10 @@ metadata:
   name: echo-server
   namespace: echo-server
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: echo-server
@@ -20,17 +23,22 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: echo-server
     spec:
+      affinity: {}
       containers:
-        - env:
+        - args: []
+          command: []
+          env:
             - name: NODENAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
           image: jmalloc/echo-server
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          lifecycle: {}
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -55,6 +63,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
+              httpHeaders:
               path: /_ready
               port: http
               scheme: HTTP
@@ -67,36 +76,57 @@ spec:
               memory: 1G
             requests:
               memory: 1G
+          securityContext: {}
           volumeMounts:
             - mountPath: /opt/echo-service/echo-service.conf
               name: config
+              readOnly:
               subPath: echo-service.conf
-        - image: nginx
+        - args: []
+          command: []
+          image: nginx
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: nginx
           ports:
             - containerPort: 80
               name: nginx
               protocol: TCP
+          resources: {}
+          securityContext: {}
           volumeMounts:
             - mountPath: /etc/nginx/conf.d/nginx.conf
               name: config
+              readOnly:
               subPath: nginx.conf
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
       initContainers:
-        - command:
+        - args: []
+          command:
             - /bin/touch
             - /initialised
           image: busybox
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: busybox
+          resources: {}
+          securityContext: {}
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - configMap:
             defaultMode: 360
-            name: echo-server-caa935ba
+            items: []
+            name: echo-server-88d0d989
           name: config
         - name: secret
           secret:
             defaultMode: 420
+            items: []
             secretName: echo-server

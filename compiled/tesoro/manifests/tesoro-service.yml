@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    manifests.kapicorp.com/generated: 'true'
   labels:
     app.kapicorp.dev/component: tesoro
     name: tesoro
@@ -16,6 +18,7 @@ spec:
       port: 9095
       protocol: TCP
       targetPort: tesoro-metrics
+  publishNotReadyAddresses:
   selector:
     name: tesoro
   sessionAffinity: None

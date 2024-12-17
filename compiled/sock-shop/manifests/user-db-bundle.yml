@@ -9,7 +9,10 @@ metadata:
   name: user-db
   namespace: sock-shop
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
   replicas: 1
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: user-db
@@ -20,17 +23,23 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations: {}
       labels:
         name: user-db
     spec:
+      affinity: {}
       containers:
-        - image: weaveworksdemos/user-db:0.3.0
+        - args: []
+          command: []
+          image: weaveworksdemos/user-db:0.3.0
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: user-db
           ports:
             - containerPort: 27017
               name: mongo
               protocol: TCP
+          resources: {}
           securityContext:
             capabilities:
               add:
@@ -42,8 +51,16 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: tmp-volume
+      dnsPolicy:
+      hostNetwork:
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - emptyDir:
             medium: Memory

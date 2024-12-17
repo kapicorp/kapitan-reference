@@ -10,7 +10,7 @@ parameters:
           container_port: 9600
       healthcheck:
         readiness:
-          type: http
+          type: HTTP
           port: 9600
           path: /
           timeout_seconds: 3

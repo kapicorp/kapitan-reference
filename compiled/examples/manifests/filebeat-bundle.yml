@@ -9,19 +9,25 @@ metadata:
   name: filebeat
   namespace: examples
 spec:
+  minReadySeconds:
+  progressDeadlineSeconds:
+  revisionHistoryLimit:
   selector:
     matchLabels:
       name: filebeat
   template:
     metadata:
+      annotations: {}
       labels:
         name: filebeat
     spec:
+      affinity: {}
       containers:
         - args:
             - -c
             - /etc/filebeat.yml
             - -e
+          command: []
           env:
             - name: ELASTICSEARCH_HOST
               value: elasticsearch
@@ -41,6 +47,7 @@ spec:
                   fieldPath: spec.nodeName
           image: docker.elastic.co/beats/filebeat:7.12.1
           imagePullPolicy: IfNotPresent
+          lifecycle: {}
           name: filebeat
           resources:
             limits:
@@ -63,10 +70,17 @@ spec:
             - mountPath: /var/log
               name: varlog
               readOnly: true
+      dnsPolicy:
       hostNetwork: true
+      hostPID:
+      imagePullSecrets: []
+      initContainers: []
+      nodeSelector: {}
       restartPolicy: Always
+      securityContext: {}
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
+      tolerations: []
       volumes:
         - hostPath:
             path: /var/lib/docker/containers
@@ -80,5 +94,6 @@ spec:
           name: data
         - configMap:
             defaultMode: 420
+            items: []
             name: filebeat
           name: config

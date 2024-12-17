@@ -4,9 +4,11 @@ metadata:
   labels:
     name: global
   name: global
+  namespace:
 spec:
   rules:
-    - http:
+    - host:
+      http:
         paths:
           - backend:
               service:
