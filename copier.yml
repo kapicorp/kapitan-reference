@@ -1,8 +1,8 @@
 kapitan_version:
     type: str
     help: What version of Kapitan
-    default: 0.32.0
+    default: 0.34.2
 
 _tasks:
   - git init --quiet
-  - ./kapitan compile
+  - kapitan compile
