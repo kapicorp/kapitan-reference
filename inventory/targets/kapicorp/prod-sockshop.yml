@@ -32,6 +32,7 @@ parameters:
             - sockshop.kapicorp.com
           secretName: sockshop.kapicorp.com
     gke-managed-certificate:
+      namespace: ${namespace}
       annotations:
         kubernetes.io/ingress.global-static-ip-name: sock-shop-managed
       managed_certificate: managed-sockshop.kapicorp.com
