@@ -1,0 +1,28 @@
+# Argo CD Application that renders its manifests through the Kapitan CMP.
+# Point repoURL at your fork and set KAPITAN_TARGET to the target you want.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: echo-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kapicorp/kapitan-reference.git
+    targetRevision: HEAD
+    path: examples/argocd-cmp
+    plugin:
+      # <plugin metadata.name>-<spec.version>
+      name: kapitan-v1.0
+      env:
+        - name: KAPITAN_TARGET
+          value: echo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

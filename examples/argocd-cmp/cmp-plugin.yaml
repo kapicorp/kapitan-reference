@@ -1,0 +1,25 @@
+# Argo CD Config Management Plugin (CMP) that compiles a Kapitan project and
+# hands the rendered manifests to Argo CD.
+#
+# Mount this as the plugin config of a sidecar container on argocd-repo-server.
+# The sidecar image must contain both the Kapitan binary and the
+# argocd-cmp-server binary (see README).
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: kapitan
+spec:
+  version: v1.0
+  # Apply this plugin to any repo path that contains a .kapitan file.
+  discover:
+    fileName: ".kapitan"
+  # Argo CD runs init once before generate; compile the requested target here.
+  init:
+    command: [sh, -c]
+    args:
+      - kapitan compile --targets "$ARGOCD_ENV_KAPITAN_TARGET"
+  # generate must print the manifests to stdout; Argo CD applies what it reads.
+  generate:
+    command: [sh, -c]
+    args:
+      - cat compiled/"$ARGOCD_ENV_KAPITAN_TARGET"/manifests/*.yaml
