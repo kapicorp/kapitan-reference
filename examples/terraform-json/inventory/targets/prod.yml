@@ -1,0 +1,14 @@
+classes:
+  - common
+  - terraform.network
+
+parameters:
+  target_name: prod
+  terraform:
+    region: europe-west4
+    network:
+      cidr_prefix: "10.20"
+      zones:
+        - a
+        - b
+        - c

@@ -1,0 +1,5 @@
+parameters:
+  generated_by: kapitan
+  kapitan:
+    vars:
+      target: ${target_name}

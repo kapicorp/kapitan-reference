@@ -1,0 +1,55 @@
+{
+  "locals": {
+    "network_name": "prod-net",
+    "region": "europe-west4"
+  },
+  "output": {
+    "subnets": {
+      "value": {
+        "a": {
+          "cidr_block": "10.20.0.0/24",
+          "name": "prod-net-a"
+        },
+        "b": {
+          "cidr_block": "10.20.1.0/24",
+          "name": "prod-net-b"
+        },
+        "c": {
+          "cidr_block": "10.20.2.0/24",
+          "name": "prod-net-c"
+        }
+      }
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "subnet_a": {
+        "input": {
+          "cidr_block": "10.20.0.0/24",
+          "name": "prod-net-a"
+        }
+      },
+      "subnet_b": {
+        "input": {
+          "cidr_block": "10.20.1.0/24",
+          "name": "prod-net-b"
+        }
+      },
+      "subnet_c": {
+        "input": {
+          "cidr_block": "10.20.2.0/24",
+          "name": "prod-net-c"
+        }
+      }
+    }
+  },
+  "terraform": {
+    "required_version": ">= 1.4"
+  },
+  "variable": {
+    "environment": {
+      "default": "prod",
+      "type": "string"
+    }
+  }
+}

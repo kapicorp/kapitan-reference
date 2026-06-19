@@ -1,0 +1,45 @@
+{
+  "locals": {
+    "network_name": "dev-net",
+    "region": "europe-west1"
+  },
+  "output": {
+    "subnets": {
+      "value": {
+        "a": {
+          "cidr_block": "10.10.0.0/24",
+          "name": "dev-net-a"
+        },
+        "b": {
+          "cidr_block": "10.10.1.0/24",
+          "name": "dev-net-b"
+        }
+      }
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "subnet_a": {
+        "input": {
+          "cidr_block": "10.10.0.0/24",
+          "name": "dev-net-a"
+        }
+      },
+      "subnet_b": {
+        "input": {
+          "cidr_block": "10.10.1.0/24",
+          "name": "dev-net-b"
+        }
+      }
+    }
+  },
+  "terraform": {
+    "required_version": ">= 1.4"
+  },
+  "variable": {
+    "environment": {
+      "default": "dev",
+      "type": "string"
+    }
+  }
+}

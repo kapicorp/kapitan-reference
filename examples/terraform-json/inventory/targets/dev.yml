@@ -1,0 +1,12 @@
+classes:
+  - common
+  - terraform.network
+
+parameters:
+  target_name: dev
+  terraform:
+    network:
+      cidr_prefix: "10.10"
+      zones:
+        - a
+        - b
