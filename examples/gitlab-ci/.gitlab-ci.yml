@@ -1,0 +1,33 @@
+# Minimal GitLab CI pipeline for a Kapitan project.
+#
+# compile  -> run "kapitan compile" and keep compiled/ as an artifact
+# validate -> check the generated Kubernetes manifests with kubeconform
+#
+# Both images ship their own entrypoint, so entrypoint: [""] is set to let
+# GitLab run the script through a shell.
+
+stages:
+  - compile
+  - validate
+
+compile:
+  stage: compile
+  image:
+    name: kapicorp/kapitan:0.36.1
+    entrypoint: [""]
+  script:
+    - kapitan compile
+  artifacts:
+    paths:
+      - compiled/
+    expire_in: 1 week
+
+validate:
+  stage: validate
+  needs:
+    - compile
+  image:
+    name: ghcr.io/yannh/kubeconform:v0.6.7-alpine
+    entrypoint: [""]
+  script:
+    - /kubeconform -summary -strict compiled/

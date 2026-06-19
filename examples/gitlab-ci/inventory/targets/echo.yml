@@ -1,0 +1,19 @@
+classes:
+  - common
+
+parameters:
+  target_name: echo
+  app:
+    name: echo
+    namespace: demo
+    image: ealen/echo-server:0.9.2
+    replicas: 2
+    port: 8080
+
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - components/manifests/app.jsonnet
+        output_path: manifests
+        output_type: yaml
