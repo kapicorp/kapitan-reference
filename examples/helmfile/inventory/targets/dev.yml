@@ -1,0 +1,8 @@
+classes:
+  - common
+  - helmfile.release
+
+parameters:
+  target_name: dev
+  podinfo:
+    replicaCount: 1

@@ -1,0 +1,31 @@
+parameters:
+  helmfile:
+    environment: ${target_name}
+    repositories:
+      - name: podinfo
+        url: https://stefanprodan.github.io/podinfo
+    release:
+      name: podinfo
+      namespace: ${target_name}
+      chart: podinfo/podinfo
+      version: 6.7.1
+
+  # Values rendered into values.yaml and consumed by the release above.
+  podinfo:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+    ingress:
+      enabled: false
+    ui:
+      message: "podinfo on ${target_name}"
+
+  kapitan:
+    compile:
+      - input_type: jinja2
+        input_paths:
+          - components/helmfile/helmfile.yaml
+          - components/helmfile/values.yaml
+        output_path: helmfile
