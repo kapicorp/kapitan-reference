@@ -1,0 +1,18 @@
+parameters:
+  terraform:
+    region: europe-west1
+    environment: ${target_name}
+    network:
+      name: ${target_name}-net
+      # Second octet of the /16 each environment carves subnets from.
+      cidr_prefix: "10.0"
+      # zones are set per target; reclass concatenates lists on merge, so
+      # keep the authoritative list in each target file rather than here.
+
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - components/terraform/network.tf.jsonnet
+        output_path: terraform
+        output_type: json
